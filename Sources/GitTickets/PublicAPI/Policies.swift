@@ -112,10 +112,12 @@ public struct DiagnosticsRedactor: Sendable {
         replacement: "[ip redacted]"
     )
 
-    /// Replaces IPv6 addresses with `[ip redacted]`.
+    /// Replaces IPv6 addresses (including `::` zero-compression forms) with
+    /// `[ip redacted]`. Errs toward over-redaction — colon-separated hex
+    /// groups that look IPv6-ish go too. Safer than leaking a real address.
     public static let ipv6 = DiagnosticsRedactor(
         name: "ipv6",
-        regex: unsafeRegex(#"\b(?:[A-F0-9]{1,4}:){2,7}[A-F0-9]{1,4}\b"#),
+        regex: unsafeRegex(#"\b[A-F0-9]{0,4}(?::[A-F0-9]{0,4}){2,7}\b"#),
         replacement: "[ip redacted]"
     )
 
