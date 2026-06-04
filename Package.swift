@@ -1,0 +1,30 @@
+// swift-tools-version:5.9
+import PackageDescription
+
+let package = Package(
+    name: "GitTickets",
+    defaultLocalization: "en",
+    platforms: [
+        .macOS(.v13),
+        .iOS(.v16),
+    ],
+    products: [
+        .library(name: "GitTickets", targets: ["GitTickets"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.17.0"),
+    ],
+    targets: [
+        .target(
+            name: "GitTickets",
+            dependencies: []
+        ),
+        .testTarget(
+            name: "GitTicketsTests",
+            dependencies: [
+                "GitTickets",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+            ]
+        ),
+    ]
+)

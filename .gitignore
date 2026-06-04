@@ -5,3 +5,30 @@ sessions/.raw/
 sessions/.index.json
 
 .claude/memophant-activity.log
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+!Examples/**/*.xcodeproj
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store
+
+# Vercel
+.vercel
+
+# Node (for /relay templates)
+node_modules/
+*.log
+
+# Test artifacts
+__Snapshots__/
+*.xccovreport
