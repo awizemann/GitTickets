@@ -73,4 +73,19 @@ final class RelaySignatureTests: XCTestCase {
         let signed = RelaySignature.sign(timestamp: timestamp, body: body, secret: secret)
         XCTAssertEqual(signed, expected)
     }
+
+    func test_lockedVectorMatchesRelayImplementations() {
+        // The same vector is asserted in
+        // relay/vercel/tests/hmac.test.ts → "matches the Swift SDK
+        // cross-language vector". If THIS test changes, that one breaks
+        // (and vice versa). If you must change the canonical signing input,
+        // bump RelayReportRequest.currentSchemaVersion on both sides.
+        let secret = SharedSecret(bytes: Data(repeating: 0x37, count: 32))
+        let body = Data(#"{"hello":"world"}"#.utf8)
+        let signed = RelaySignature.sign(timestamp: "1700000000", body: body, secret: secret)
+        XCTAssertEqual(
+            signed,
+            "sha256=54f12328229a172be47ba5bd5383957265a2f482cfa072373e82783f4805b1c6"
+        )
+    }
 }

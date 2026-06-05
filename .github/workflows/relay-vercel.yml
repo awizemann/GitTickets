@@ -1,0 +1,31 @@
+name: Relay (Vercel) — lint & test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "relay/vercel/**"
+      - "relay/shared/**"
+      - ".github/workflows/relay-vercel.yml"
+  pull_request:
+    paths:
+      - "relay/vercel/**"
+      - "relay/shared/**"
+      - ".github/workflows/relay-vercel.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: relay/vercel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: relay/vercel/package.json
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
