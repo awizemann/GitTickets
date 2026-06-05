@@ -6,7 +6,7 @@ import Foundation
 /// `permissionRequired` is the common one on macOS — Screen Recording in
 /// System Settings → Privacy & Security. The form falls back to "submit
 /// without screenshot" rather than treating it as a fatal error.
-enum ScreenshotCaptureError: Error, Equatable {
+public enum ScreenshotCaptureError: Error, Equatable {
     /// User has not granted Screen Recording permission (macOS).
     case permissionRequired
 
@@ -29,7 +29,12 @@ enum ScreenshotCaptureError: Error, Equatable {
 /// Returns PNG bytes ready to upload as an attachment. Errors are recoverable
 /// — the caller (form view) surfaces the failure inline and allows submission
 /// without a screenshot.
-enum ScreenshotCapture {
+///
+/// Public so hosts that present their own UI on top of
+/// ``GitTickets/submit(_:)`` can capture the screenshot the same way the
+/// built-in form (PR 12+) will. Pass the returned `Data` as
+/// ``Report/screenshot``.
+public enum ScreenshotCapture {
 
     /// Captures the current screen / key window.
     ///
@@ -37,7 +42,7 @@ enum ScreenshotCapture {
     /// to `CGWindowListCreateImage` if SCK is unavailable.
     ///
     /// iOS: renders the active window into a `UIGraphicsImageRenderer`.
-    static func capture() async -> Result<Data, ScreenshotCaptureError> {
+    public static func capture() async -> Result<Data, ScreenshotCaptureError> {
         await platformCapture()
     }
 }

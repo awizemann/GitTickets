@@ -6,7 +6,13 @@ import Foundation
 /// Hosts inject their own ``Bundle`` (typically `.main`) so SDK and host
 /// version info come from the right place. Log tailing is delegated to
 /// ``OSLogTailer``; redaction runs once at the end.
-enum DiagnosticsCollector {
+///
+/// Surfaced publicly so host apps that present their own UI on top of
+/// ``GitTickets/submit(_:)`` can pre-collect the same blob the built-in
+/// form (PR 12+) will. Pass the resulting `text` as
+/// ``Report/diagnosticsBlob`` so what the user sees in your form is what
+/// gets posted to GitHub.
+public enum DiagnosticsCollector {
 
     /// Collects diagnostics per the policy. Pure with respect to the inputs
     /// except for: process info, locale, bundle reads, filesystem volume
@@ -15,7 +21,7 @@ enum DiagnosticsCollector {
     /// - Parameter logger: Optional logger that receives a warning when
     ///   OSLog access fails (entitlement missing, sandbox quirk). Helps
     ///   host apps distinguish "no entries" from "OSLog unavailable".
-    static func collect(
+    public static func collect(
         policy: DiagnosticsPolicy,
         appBundle: Bundle = .main,
         logger: GitTicketsLogger? = nil,
