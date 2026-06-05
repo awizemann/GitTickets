@@ -30,15 +30,26 @@ final class RateLimitBackoffTests: XCTestCase {
     }
 
     func test_exponentialDelayGrowsAndCaps() {
-        let zero = RateLimitBackoff.exponentialDelay(attempt: 0, base: 0.5, maxDelay: 30)
-        let one = RateLimitBackoff.exponentialDelay(attempt: 1, base: 0.5, maxDelay: 30)
-        let big = RateLimitBackoff.exponentialDelay(attempt: 10, base: 0.5, maxDelay: 30)
+        // Use jitter: false to assert exact growth shape.
+        let zero = RateLimitBackoff.exponentialDelay(attempt: 0, base: 0.5, maxDelay: 30, jitter: false)
+        let one = RateLimitBackoff.exponentialDelay(attempt: 1, base: 0.5, maxDelay: 30, jitter: false)
+        let big = RateLimitBackoff.exponentialDelay(attempt: 10, base: 0.5, maxDelay: 30, jitter: false)
         XCTAssertEqual(zero, 0.5)
         XCTAssertEqual(one, 1.0)
         XCTAssertEqual(big, 30)
     }
 
+    func test_exponentialDelayJitterStaysInBand() {
+        // With jitter, the result is scaled by [0.5, 1.5). For 200 samples
+        // at attempt 2 (base*4 = 2.0), every value must fall in [1.0, 3.0).
+        for _ in 0..<200 {
+            let delay = RateLimitBackoff.exponentialDelay(attempt: 2, base: 0.5, maxDelay: 30, jitter: true)
+            XCTAssertGreaterThanOrEqual(delay, 1.0)
+            XCTAssertLessThan(delay, 3.0)
+        }
+    }
+
     func test_exponentialDelayTreatsNegativeAttemptAsBase() {
-        XCTAssertEqual(RateLimitBackoff.exponentialDelay(attempt: -1, base: 0.25), 0.25)
+        XCTAssertEqual(RateLimitBackoff.exponentialDelay(attempt: -1, base: 0.25, jitter: false), 0.25)
     }
 }

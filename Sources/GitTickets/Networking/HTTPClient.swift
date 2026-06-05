@@ -20,10 +20,14 @@ struct HTTPResponse: Sendable {
 /// client. Adds:
 ///
 /// - Per-request `User-Agent` header from ``UserAgent``.
-/// - Bounded retries on transport errors and 5xx responses.
-/// - `Retry-After`-aware backoff on 429 responses (returned to the caller —
-///   the caller decides whether to retry through us or surface as
-///   ``GitTicketsError/rateLimited(retryAfter:)``).
+/// - Bounded retries on 5xx responses for all methods.
+/// - Bounded retries on transport errors for **safe** (idempotent) methods
+///   only — POST/PUT/PATCH/DELETE are NOT retried on transport errors so
+///   that a connection drop after the server processed the request doesn't
+///   produce a duplicate side effect.
+/// - `Retry-After`-aware backoff on 5xx responses; exponential backoff with
+///   jitter as the fallback. 429 responses are surfaced to the caller (the
+///   relay client maps them to ``GitTicketsError/rateLimited(retryAfter:)``).
 ///
 /// Concurrency model: instances are `Sendable` and stateless beyond the
 /// configured `URLSession`.
@@ -34,8 +38,29 @@ struct HTTPClient: Sendable {
         var maxAttempts: Int
         var baseBackoff: TimeInterval
         var maxBackoff: TimeInterval
+        var jitter: Bool
 
-        public static let `default` = Configuration(maxAttempts: 3, baseBackoff: 0.5, maxBackoff: 30)
+        public static let `default` = Configuration(
+            maxAttempts: 3,
+            baseBackoff: 0.5,
+            maxBackoff: 30,
+            jitter: true
+        )
+
+        public init(
+            maxAttempts: Int,
+            baseBackoff: TimeInterval,
+            maxBackoff: TimeInterval,
+            jitter: Bool = true
+        ) {
+            // Guard against maxAttempts == 0, which would skip the request
+            // loop entirely and throw URLError(.unknown) with no actual
+            // transport ever firing.
+            self.maxAttempts = max(1, maxAttempts)
+            self.baseBackoff = baseBackoff
+            self.maxBackoff = maxBackoff
+            self.jitter = jitter
+        }
     }
 
     let session: URLSession
@@ -52,17 +77,23 @@ struct HTTPClient: Sendable {
         self.userAgent = userAgent
     }
 
-    /// Sends a request with bounded retry on transport errors and 5xx
-    /// responses. Returns the final response regardless of status — the
-    /// caller maps non-2xx into domain errors.
-    ///
-    /// - Note: 429 is NOT retried automatically. The caller inspects
-    ///   `Retry-After` via ``HTTPResponse/header(_:)`` to surface
-    ///   ``GitTicketsError/rateLimited(retryAfter:)``.
+    /// Sends a request with bounded retry. See type-level docs for which
+    /// methods/error classes are retried.
     func send(_ request: URLRequest) async throws -> HTTPResponse {
+        try await sendRetrying { _ in request }
+    }
+
+    /// Sends a request with bounded retry. The `buildRequest` closure runs
+    /// before every attempt — useful for signed requests so each retry can
+    /// be re-signed with a fresh timestamp (the relay's replay window is
+    /// only ~5 minutes, and reusing a stale signature across retries that
+    /// straddle that window turns transient 5xx into permanent 401).
+    func sendRetrying(buildRequest: (Int) async throws -> URLRequest) async throws -> HTTPResponse {
         var attempt = 0
         var lastError: (any Error)?
         while attempt < configuration.maxAttempts {
+            let request = try await buildRequest(attempt)
+            let isIdempotent = Self.isIdempotent(request)
             do {
                 let stamped = stamp(request)
                 let (data, response) = try await session.data(for: stamped)
@@ -76,15 +107,27 @@ struct HTTPClient: Sendable {
                 }
                 let envelope = HTTPResponse(statusCode: http.statusCode, headers: headers, body: data)
                 if (500...599).contains(http.statusCode), attempt + 1 < configuration.maxAttempts {
-                    try await Task.sleep(nanoseconds: backoffNanos(for: attempt))
+                    let delay = retryDelay(for: envelope, attempt: attempt)
+                    try await Task.sleep(nanoseconds: nanoseconds(from: delay))
                     attempt += 1
                     continue
                 }
                 return envelope
             } catch {
                 lastError = error
+                // Do not retry transport errors on non-idempotent methods —
+                // a connection dropped after the relay created the GitHub
+                // issue but before the response reached us would otherwise
+                // double-file.
+                guard isIdempotent else { throw error }
                 if attempt + 1 >= configuration.maxAttempts { break }
-                try await Task.sleep(nanoseconds: backoffNanos(for: attempt))
+                let delay = RateLimitBackoff.exponentialDelay(
+                    attempt: attempt,
+                    base: configuration.baseBackoff,
+                    maxDelay: configuration.maxBackoff,
+                    jitter: configuration.jitter
+                )
+                try await Task.sleep(nanoseconds: nanoseconds(from: delay))
                 attempt += 1
             }
         }
@@ -99,12 +142,28 @@ struct HTTPClient: Sendable {
         return stamped
     }
 
-    private func backoffNanos(for attempt: Int) -> UInt64 {
-        let seconds = RateLimitBackoff.exponentialDelay(
+    private static let idempotentMethods: Set<String> = ["GET", "HEAD", "OPTIONS"]
+
+    private static func isIdempotent(_ request: URLRequest) -> Bool {
+        let method = (request.httpMethod ?? "GET").uppercased()
+        return idempotentMethods.contains(method)
+    }
+
+    private func retryDelay(for response: HTTPResponse, attempt: Int) -> TimeInterval {
+        if let raw = response.header("Retry-After"),
+           let parsed = RateLimitBackoff.parseRetryAfter(raw) {
+            return min(parsed, configuration.maxBackoff)
+        }
+        return RateLimitBackoff.exponentialDelay(
             attempt: attempt,
             base: configuration.baseBackoff,
-            maxDelay: configuration.maxBackoff
+            maxDelay: configuration.maxBackoff,
+            jitter: configuration.jitter
         )
-        return UInt64(seconds * 1_000_000_000)
+    }
+
+    private func nanoseconds(from seconds: TimeInterval) -> UInt64 {
+        let clamped = max(0, seconds)
+        return UInt64(clamped * 1_000_000_000)
     }
 }

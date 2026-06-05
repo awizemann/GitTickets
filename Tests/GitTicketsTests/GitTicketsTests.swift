@@ -7,6 +7,14 @@ final class GitTicketsSurfaceTests: XCTestCase {
     private static let testRelayURL = URL(string: "https://example.com")!
     private static let testSecret = SharedSecret(bytes: Data(repeating: 0xAB, count: 32))
 
+    override func tearDown() {
+        // GitTickets._configuration is process-wide static state; reset it
+        // between tests so a `configure(...)` in one test doesn't bleed into
+        // an order-dependent failure in another.
+        GitTickets._resetConfigurationForTesting()
+        super.tearDown()
+    }
+
     func test_configureSetsConfiguration() {
         let config = Configuration(
             repo: Self.testRepo,
@@ -62,6 +70,22 @@ final class GitTicketsSurfaceTests: XCTestCase {
 
     func test_sharedSecretRejectsInvalidBase64() {
         XCTAssertNil(SharedSecret(base64: "!!!"))
+    }
+
+    /// C16: `vercel env pull` / 1Password copy leaves a trailing newline.
+    /// The init must tolerate it instead of returning nil.
+    func test_sharedSecretBase64ToleratesTrailingNewline() {
+        let secret = SharedSecret(base64: "3q2+7w==\n")
+        XCTAssertEqual(secret?.bytes, Data([0xde, 0xad, 0xbe, 0xef]))
+    }
+
+    func test_sharedSecretBase64ToleratesEmbeddedWhitespace() {
+        let secret = SharedSecret(base64: "  3q2+7w==  ")
+        XCTAssertEqual(secret?.bytes, Data([0xde, 0xad, 0xbe, 0xef]))
+    }
+
+    func test_sharedSecretHexToleratesWhitespaceAndCapitalPrefix() {
+        XCTAssertEqual(SharedSecret(hex: "  0XDEadBEEF\n")?.bytes, Data([0xde, 0xad, 0xbe, 0xef]))
     }
 
     func test_reportDefaultsGenerateSubmissionID() {

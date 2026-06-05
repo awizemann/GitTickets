@@ -93,17 +93,27 @@ public struct SharedSecret: Sendable, Hashable {
         self.bytes = bytes
     }
 
-    /// Initialize from a base64-encoded string. Returns `nil` if the string is
-    /// not valid base64.
+    /// Initialize from a base64-encoded string. Returns `nil` if the string
+    /// is not valid base64.
+    ///
+    /// Trims surrounding whitespace and accepts embedded whitespace —
+    /// matters because `vercel env pull`, 1Password copy, and most env-file
+    /// readers leave a trailing newline that the default `Data(base64Encoded:)`
+    /// would silently reject.
     public init?(base64: String) {
-        guard let data = Data(base64Encoded: base64) else { return nil }
+        let trimmed = base64.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let data = Data(base64Encoded: trimmed, options: [.ignoreUnknownCharacters]) else { return nil }
         self.bytes = data
     }
 
     /// Initialize from a hex-encoded string. Returns `nil` if the string is
-    /// not valid hex or has an odd length.
+    /// not valid hex or has an odd length. Accepts an optional `0x` prefix
+    /// and tolerates surrounding whitespace.
     public init?(hex: String) {
-        let trimmed = hex.hasPrefix("0x") ? String(hex.dropFirst(2)) : hex
+        var trimmed = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("0x") || trimmed.hasPrefix("0X") {
+            trimmed = String(trimmed.dropFirst(2))
+        }
         guard trimmed.count.isMultiple(of: 2) else { return nil }
         var data = Data(capacity: trimmed.count / 2)
         var index = trimmed.startIndex

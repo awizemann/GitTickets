@@ -160,4 +160,39 @@ final class IssueBodyBuilderTests: XCTestCase {
         )
         XCTAssertEqual(CorrelationMarker.extract(from: output), fixedID)
     }
+
+    // MARK: - Regression tests for code-review findings
+
+    /// C10: Diagnostics containing a triple-backtick must not collapse the
+    /// outer fence. The builder chooses a fence longer than any inner run.
+    func test_diagnosticsContainingBackticksKeepsFenceClosed() {
+        let diagnostics = "User code: ```swift\nprint(\"hi\")\n```\nrest of line"
+        let output = IssueBodyBuilder.build(
+            report: makeReport(),
+            diagnostics: diagnostics,
+            screenshotURL: nil,
+            attachments: []
+        )
+        // The outer fence must be at least 4 backticks long.
+        XCTAssertTrue(output.contains("````text"), "expected outer fence wider than the inner ```")
+        // Inner triple-backticks must be preserved verbatim, not collapsed.
+        XCTAssertTrue(output.contains("```swift"))
+        // The correlation marker must still be outside any code block.
+        let marker = CorrelationMarker.render(for: fixedID)
+        XCTAssertTrue(output.hasSuffix(marker), "marker must remain at end and not be swallowed by a leaky fence")
+    }
+
+    /// C11: URLs containing literal `)` must be escaped so they don't
+    /// terminate the markdown link early.
+    func test_urlWithCloseParenIsEscaped() {
+        let url = URL(string: "https://cdn.example.com/blob.png?key=a)b")!
+        let output = IssueBodyBuilder.build(
+            report: makeReport(),
+            diagnostics: nil,
+            screenshotURL: url,
+            attachments: []
+        )
+        XCTAssertTrue(output.contains("%29"), "literal `)` should be percent-encoded in markdown URL")
+        XCTAssertFalse(output.contains("?key=a)b"), "raw `)` would terminate the link early")
+    }
 }

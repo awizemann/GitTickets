@@ -11,9 +11,14 @@ enum DiagnosticsCollector {
     /// Collects diagnostics per the policy. Pure with respect to the inputs
     /// except for: process info, locale, bundle reads, filesystem volume
     /// metadata, and OSLog (when enabled).
+    ///
+    /// - Parameter logger: Optional logger that receives a warning when
+    ///   OSLog access fails (entitlement missing, sandbox quirk). Helps
+    ///   host apps distinguish "no entries" from "OSLog unavailable".
     static func collect(
         policy: DiagnosticsPolicy,
         appBundle: Bundle = .main,
+        logger: GitTicketsLogger? = nil,
         clock: @Sendable () -> Date = { Date() }
     ) -> DiagnosticsBlob {
         var sections: [(key: String, value: String)] = []
@@ -43,6 +48,7 @@ enum DiagnosticsCollector {
             let entries = OSLogTailer.recentEntries(
                 subsystems: policy.osLogSubsystems,
                 lookback: policy.osLogLookback,
+                logger: logger,
                 clock: clock
             )
             if !entries.isEmpty {

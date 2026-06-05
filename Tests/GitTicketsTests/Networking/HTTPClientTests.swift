@@ -118,15 +118,62 @@ final class HTTPClientTests: XCTestCase {
 }
 
 /// URLProtocol mock that dispatches per-URL closures.
+///
+/// Handler registration is serialized through a lock so parallel tests
+/// (`swift test --parallel`, Xcode's default test runner) don't race on
+/// the shared dictionary.
 final class MockURLProtocol: URLProtocol, @unchecked Sendable {
 
-    nonisolated(unsafe) static var handlers: [URL: (URLRequest) throws -> (HTTPURLResponse, Data)] = [:]
+    private struct HandlerBox {
+        let handler: (URLRequest) throws -> (HTTPURLResponse, Data)
+    }
+
+    nonisolated(unsafe) private static var _handlers: [URL: HandlerBox] = [:]
+    private static let handlersLock = NSLock()
+
+    /// Test-facing handler accessor. Get/set/removeAll go through a lock
+    /// to keep parallel test runs safe.
+    static var handlers: HandlersProxy {
+        get { HandlersProxy() }
+    }
+
+    struct HandlersProxy {
+        subscript(url: URL) -> ((URLRequest) throws -> (HTTPURLResponse, Data))? {
+            get {
+                MockURLProtocol.handlersLock.lock()
+                defer { MockURLProtocol.handlersLock.unlock() }
+                return MockURLProtocol._handlers[url]?.handler
+            }
+            nonmutating set {
+                MockURLProtocol.handlersLock.lock()
+                defer { MockURLProtocol.handlersLock.unlock() }
+                if let newValue {
+                    MockURLProtocol._handlers[url] = HandlerBox(handler: newValue)
+                } else {
+                    MockURLProtocol._handlers.removeValue(forKey: url)
+                }
+            }
+        }
+
+        func removeAll() {
+            MockURLProtocol.handlersLock.lock()
+            defer { MockURLProtocol.handlersLock.unlock() }
+            MockURLProtocol._handlers.removeAll()
+        }
+    }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        guard let url = request.url, let handler = Self.handlers[url] else {
+        guard let url = request.url else {
+            client?.urlProtocol(self, didFailWithError: URLError(.unsupportedURL))
+            return
+        }
+        Self.handlersLock.lock()
+        let box = Self._handlers[url]
+        Self.handlersLock.unlock()
+        guard let handler = box?.handler else {
             client?.urlProtocol(self, didFailWithError: URLError(.unsupportedURL))
             return
         }

@@ -57,13 +57,19 @@ public struct GitTicketsTheme: Sendable {
 }
 
 /// Source for an optional image (e.g. ``GitTicketsTheme/headerImage``).
+///
+/// All cases are `Sendable`-safe: the `.named` case carries a bundle
+/// identifier string rather than a `Bundle` reference, because `Bundle` is
+/// a non-`Sendable` reference type and embedding one in this enum would be
+/// a Sendable lie.
 public enum GitTicketsImageSource: Sendable {
 
     /// An SF Symbol name, e.g. `"exclamationmark.bubble"`.
     case systemSymbol(String)
 
-    /// An asset name in the given bundle.
-    case named(String, bundle: Bundle)
+    /// An asset name; loaded from the bundle with the given identifier, or
+    /// from `Bundle.main` when `bundleIdentifier` is `nil`.
+    case named(String, bundleIdentifier: String? = nil)
 
     /// Raw image data (PNG or JPEG).
     case data(Data)

@@ -41,7 +41,26 @@ final class SubmissionCache: @unchecked Sendable {
         }
         self.db = handle
 
+        // Restrict the SQLite file (and its WAL/SHM siblings if/when they
+        // appear) to the owning user. On non-sandboxed macOS the umask
+        // default (0644) would leave the cache world-readable, exposing
+        // cached issue bodies to any other local user. Best-effort: failures
+        // are not fatal.
+        try? Self.restrictPermissions(at: databaseURL)
+
         try queue.sync { try runMigrations() }
+    }
+
+    private static func restrictPermissions(at databaseURL: URL) throws {
+        let manager = FileManager.default
+        let attributes: [FileAttributeKey: Any] = [.posixPermissions: 0o600]
+        try manager.setAttributes(attributes, ofItemAtPath: databaseURL.path)
+        for suffix in ["-wal", "-shm"] {
+            let sibling = databaseURL.path + suffix
+            if manager.fileExists(atPath: sibling) {
+                try? manager.setAttributes(attributes, ofItemAtPath: sibling)
+            }
+        }
     }
 
     deinit {

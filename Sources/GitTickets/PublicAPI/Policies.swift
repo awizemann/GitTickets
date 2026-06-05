@@ -33,8 +33,11 @@ public struct DiagnosticsPolicy: Sendable {
     /// How far back to read OSLog entries. Default: 5 minutes.
     public var osLogLookback: TimeInterval
 
-    /// Redactor pipeline applied to the assembled diagnostics blob before display.
-    /// Default: `[.email, .ipv4, .ipv6, .bearerToken]`.
+    /// Redactor pipeline applied to free-form diagnostics text before display.
+    ///
+    /// Default: `[.bearerToken, .email, .ipv4, .ipv6]`. Bearer tokens run
+    /// first so that IPv4/IPv6 redactions inside a token don't corrupt the
+    /// token's surrounding charset and let the leftover halves leak.
     public var redactors: [DiagnosticsRedactor]
 
     /// Whether the diagnostics block is shown expanded by default in the form.
@@ -50,7 +53,7 @@ public struct DiagnosticsPolicy: Sendable {
         includeFreeDisk: Bool = true,
         osLogSubsystems: [String] = [],
         osLogLookback: TimeInterval = 300,
-        redactors: [DiagnosticsRedactor] = [.email, .ipv4, .ipv6, .bearerToken],
+        redactors: [DiagnosticsRedactor] = [.bearerToken, .email, .ipv4, .ipv6],
         showByDefault: Bool = true
     ) {
         self.includeOSVersion = includeOSVersion
@@ -106,18 +109,31 @@ public struct DiagnosticsRedactor: Sendable {
     )
 
     /// Replaces IPv4 addresses with `[ip redacted]`.
+    ///
+    /// Validates each octet is 0–255. Excludes paren / dot / digit context
+    /// on either side so:
+    /// - a four-part build number wrapped in parens like
+    ///   `App: MyApp 1.0.0 (1.0.0.123)` is left alone (the close-paren
+    ///   lookahead and open-paren lookbehind both reject it);
+    /// - substrings of longer numeric runs don't match.
     public static let ipv4 = DiagnosticsRedactor(
         name: "ipv4",
-        regex: unsafeRegex(#"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"#),
+        regex: unsafeRegex(#"(?<![0-9.(])(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}(?![0-9.)])"#),
         replacement: "[ip redacted]"
     )
 
     /// Replaces IPv6 addresses (including `::` zero-compression forms) with
-    /// `[ip redacted]`. Errs toward over-redaction — colon-separated hex
-    /// groups that look IPv6-ish go too. Safer than leaking a real address.
+    /// `[ip redacted]`.
+    ///
+    /// The lookahead requires the match to contain either at least one hex
+    /// letter (real address with `A-F` digits) OR a `::` zero-compression
+    /// marker (`::1`, `2001:db8::`). That excludes all-decimal colon runs
+    /// like clock timestamps (`12:34:56`) which contain neither. The
+    /// surrounding `(?<![A-F0-9:])` / `(?![A-F0-9:])` anchors handle
+    /// addresses that start with `:` where `\b` would fail.
     public static let ipv6 = DiagnosticsRedactor(
         name: "ipv6",
-        regex: unsafeRegex(#"\b[A-F0-9]{0,4}(?::[A-F0-9]{0,4}){2,7}\b"#),
+        regex: unsafeRegex(#"(?<![A-F0-9:])(?=[A-F0-9:]*(?:[A-F]|::))[A-F0-9]{0,4}(?::[A-F0-9]{0,4}){2,7}(?![A-F0-9:])"#),
         replacement: "[ip redacted]"
     )
 

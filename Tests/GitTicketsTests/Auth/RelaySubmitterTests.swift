@@ -90,7 +90,8 @@ final class RelaySubmitterTests: XCTestCase {
                 issueNumber: 42,
                 issueURL: "https://github.com/alanw/Test/issues/42",
                 title: "Crash on launch",
-                createdAt: "2026-06-04T12:00:00Z"
+                createdAt: "2026-06-04T12:00:00Z",
+                appliedLabels: ["bug", "gittickets"]
             )
             let data = try JSONEncoder().encode(response)
             return (
@@ -132,7 +133,8 @@ final class RelaySubmitterTests: XCTestCase {
                 issueNumber: 1,
                 issueURL: "https://github.com/x/y/issues/1",
                 title: "t",
-                createdAt: "2026-06-04T12:00:00Z"
+                createdAt: "2026-06-04T12:00:00Z",
+                appliedLabels: nil
             )
             return (
                 HTTPURLResponse(url: reportURL, statusCode: 200, httpVersion: nil, headerFields: nil)!,
@@ -174,7 +176,8 @@ final class RelaySubmitterTests: XCTestCase {
                 issueNumber: 1,
                 issueURL: "https://x/y/1",
                 title: "t",
-                createdAt: "2026-06-04T12:00:00Z"
+                createdAt: "2026-06-04T12:00:00Z",
+                appliedLabels: nil
             )
             return (
                 HTTPURLResponse(url: reportURL, statusCode: 200, httpVersion: nil, headerFields: nil)!,
@@ -243,7 +246,7 @@ final class RelaySubmitterTests: XCTestCase {
 
     func test_500MapsToRelayRejected() async {
         let reportURL = relayURL.appendingPathComponent("report")
-        let envelope = RelayErrorEnvelope(error: "internal", message: "kaboom")
+        let envelope = RelayErrorEnvelope(error: "internal", message: "kaboom", byteLimit: nil)
         let data = try! JSONEncoder().encode(envelope)
         MockURLProtocol.handlers[reportURL] = { _ in
             (HTTPURLResponse(url: reportURL, statusCode: 500, httpVersion: nil, headerFields: nil)!, data)
@@ -257,6 +260,77 @@ final class RelaySubmitterTests: XCTestCase {
         } catch {
             XCTFail("Unexpected: \(error)")
         }
+    }
+
+    // MARK: - Dropped-labels detection (C22)
+
+    func test_relayDroppedLabelsSurfaceInMissingLabels() async throws {
+        let reportURL = relayURL.appendingPathComponent("report")
+        MockURLProtocol.handlers[reportURL] = { _ in
+            // Relay only confirms `bug` — `gittickets` was silently dropped.
+            let response = RelayReportResponse(
+                issueNumber: 1,
+                issueURL: "https://x/y/1",
+                title: "t",
+                createdAt: "2026-06-04T12:00:00Z",
+                appliedLabels: ["bug"]
+            )
+            return (
+                HTTPURLResponse(url: reportURL, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                try JSONEncoder().encode(response)
+            )
+        }
+        let submitted = try await makeSubmitter().submit(makeReport())
+        XCTAssertEqual(submitted.missingLabels, ["gittickets"])
+    }
+
+    func test_nilAppliedLabelsLeavesMissingLabelsNil() async throws {
+        let reportURL = relayURL.appendingPathComponent("report")
+        MockURLProtocol.handlers[reportURL] = { _ in
+            let response = RelayReportResponse(
+                issueNumber: 1,
+                issueURL: "https://x/y/1",
+                title: "t",
+                createdAt: "2026-06-04T12:00:00Z",
+                appliedLabels: nil
+            )
+            return (
+                HTTPURLResponse(url: reportURL, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                try JSONEncoder().encode(response)
+            )
+        }
+        let submitted = try await makeSubmitter().submit(makeReport())
+        XCTAssertNil(submitted.missingLabels)
+    }
+
+    // MARK: - Pre-submission cache dedupe (C4)
+
+    func test_cachedSubmissionIsReturnedWithoutHittingRelay() async throws {
+        let report = makeReport()
+        // Seed the cache directly.
+        let preExisting = SubmissionRecord(
+            submissionID: report.submissionID,
+            issueNumber: 99,
+            issueURL: URL(string: "https://github.com/x/y/issues/99")!,
+            title: "Already filed",
+            kind: .bug,
+            body: "Cached body",
+            deviceID: "device-1",
+            createdAt: Date(timeIntervalSince1970: 1_600_000_000),
+            submittedAt: Date(timeIntervalSince1970: 1_600_000_000)
+        )
+        try cache.upsert(preExisting)
+
+        let reportURL = relayURL.appendingPathComponent("report")
+        var relayCalled = false
+        MockURLProtocol.handlers[reportURL] = { _ in
+            relayCalled = true
+            return (HTTPURLResponse(url: reportURL, statusCode: 500, httpVersion: nil, headerFields: nil)!, Data())
+        }
+
+        let submitted = try await makeSubmitter().submit(report)
+        XCTAssertFalse(relayCalled, "cache hit must short-circuit the network path")
+        XCTAssertEqual(submitted.issueNumber, 99)
     }
 
     // MARK: - ISO8601 parser

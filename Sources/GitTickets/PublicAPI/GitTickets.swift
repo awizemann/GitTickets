@@ -26,12 +26,12 @@ public enum GitTickets {
     ///
     /// - Parameter configuration: The active configuration.
     public static func configure(_ configuration: Configuration) {
-        _configuration = configuration
+        configurationStorage.set(configuration)
     }
 
     /// The active configuration, or `nil` if ``configure(_:)`` has not been called.
     public static var configuration: Configuration? {
-        _configuration
+        configurationStorage.get()
     }
 
     /// Submits a report through the configured auth mode.
@@ -53,5 +53,34 @@ public enum GitTickets {
 
     // MARK: - Internal storage
 
-    private nonisolated(unsafe) static var _configuration: Configuration?
+    /// Resets the active configuration. Test-only.
+    static func _resetConfigurationForTesting() {
+        configurationStorage.set(nil)
+    }
+
+    private static let configurationStorage = ConfigurationStorage()
+}
+
+/// Thread-safe holder for the active ``Configuration``.
+///
+/// `Configuration` is a non-trivial value type containing a `URL`, a
+/// `SharedSecret` (Data), and several policy structs. Assignment is not
+/// atomic, so concurrent `configure(_:)` and `configuration` access would
+/// race if we stored it in a bare `nonisolated(unsafe) static var`. Wrapping
+/// the read/write in an `NSLock` makes both publish/consume atomic.
+private final class ConfigurationStorage: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: Configuration?
+
+    func get() -> Configuration? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func set(_ value: Configuration?) {
+        lock.lock()
+        self.value = value
+        lock.unlock()
+    }
 }

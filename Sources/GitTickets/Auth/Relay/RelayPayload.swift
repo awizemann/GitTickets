@@ -10,16 +10,20 @@ import Foundation
 // MARK: - POST /report
 
 /// Request body sent to `POST /report`.
+///
+/// Note on omitted fields:
+/// - `kind` is not sent on the wire — `labels` already encodes it via
+///   ``BodyTemplates/defaultLabels(for:)``.
+/// - `userAgent` is not sent in the body — the HTTP `User-Agent` header is
+///   the single source of truth; the relay reads it from there.
 struct RelayReportRequest: Codable, Sendable, Hashable {
     let schemaVersion: Int
     let title: String
     let body: String
-    let kind: String
     let labels: [String]
     let submissionID: String
     let deviceID: String
     let attachmentURLs: [String]
-    let userAgent: String
 
     /// Wire-format schema version. Bumped only on breaking changes.
     static let currentSchemaVersion = 1
@@ -27,22 +31,18 @@ struct RelayReportRequest: Codable, Sendable, Hashable {
     init(
         title: String,
         body: String,
-        kind: String,
         labels: [String],
         submissionID: String,
         deviceID: String,
-        attachmentURLs: [String],
-        userAgent: String
+        attachmentURLs: [String]
     ) {
         self.schemaVersion = Self.currentSchemaVersion
         self.title = title
         self.body = body
-        self.kind = kind
         self.labels = labels
         self.submissionID = submissionID
         self.deviceID = deviceID
         self.attachmentURLs = attachmentURLs
-        self.userAgent = userAgent
     }
 }
 
@@ -52,6 +52,10 @@ struct RelayReportResponse: Codable, Sendable, Hashable {
     let issueURL: String
     let title: String
     let createdAt: String  // ISO 8601 with fractional seconds, UTC
+    /// Labels GitHub actually applied to the issue. Compared against the
+    /// requested labels so the SDK can surface drops via
+    /// ``SubmittedIssue/missingLabels``.
+    let appliedLabels: [String]?
 }
 
 // MARK: - POST /attachment
@@ -73,8 +77,13 @@ struct MyIssuesRequest: Codable, Sendable, Hashable {
     let submissionIDs: [String]
     let deviceID: String
 
+    /// Wire-format schema version for the `/my-issues` endpoint. Versioned
+    /// independently of ``RelayReportRequest`` so the two endpoints can
+    /// evolve without forcing simultaneous bumps.
+    static let currentSchemaVersion = 1
+
     init(submissionIDs: [String], deviceID: String) {
-        self.schemaVersion = RelayReportRequest.currentSchemaVersion
+        self.schemaVersion = Self.currentSchemaVersion
         self.submissionIDs = submissionIDs
         self.deviceID = deviceID
     }
@@ -104,21 +113,29 @@ struct MyIssuesItem: Codable, Sendable, Hashable {
 struct RelayErrorEnvelope: Codable, Sendable, Hashable {
     let error: String
     let message: String?
+    /// Optional server-communicated byte limit for 413 responses. The SDK
+    /// surfaces this via ``GitTicketsError/attachmentTooLarge(byteLimit:)``
+    /// instead of a hardcoded constant so operators that raise the relay's
+    /// limit don't end up with clients that lie about the cap.
+    let byteLimit: Int?
 }
 
 // MARK: - JSON helpers
 
 enum RelayJSON {
+    /// Encoder used for relay request bodies.
+    ///
+    /// `.sortedKeys` is critical for HMAC stability — the signature is
+    /// computed over the encoded bytes, so the dictionary key order must
+    /// be deterministic across runs.
     static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        encoder.dateEncodingStrategy = .iso8601
         return encoder
     }()
 
     static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
         return decoder
     }()
 }

@@ -106,6 +106,33 @@ public struct Report: Sendable {
         self.deviceID = deviceID
         self.submissionID = submissionID
     }
+
+    /// Convenience initializer for programmatic callers that have a
+    /// ``DiagnosticsCollector`` blob in hand. Pulls the redacted `.text` out
+    /// of the structured ``DiagnosticsBlob`` so callers can't accidentally
+    /// pass `String(describing: blob)` and leak pre-redaction fields.
+    init(
+        kind: ReportKind,
+        title: String,
+        body: String,
+        screenshot: Data? = nil,
+        attachments: [ReportAttachment] = [],
+        diagnostics: DiagnosticsBlob?,
+        deviceID: String = "",
+        submissionID: UUID = UUID()
+    ) {
+        self.init(
+            kind: kind,
+            title: title,
+            body: body,
+            screenshot: screenshot,
+            attachments: attachments,
+            includeDiagnostics: diagnostics != nil,
+            diagnosticsBlob: diagnostics?.text,
+            deviceID: deviceID,
+            submissionID: submissionID
+        )
+    }
 }
 
 /// The result of a successful ``GitTickets/submit(_:)`` call.
@@ -138,6 +165,17 @@ public struct SubmittedIssue: Sendable, Identifiable, Hashable {
     /// Comments the user has not yet seen in the in-app "My Issues" view.
     public var unreadReplyCount: Int
 
+    /// Labels that were requested but did not appear on the created GitHub
+    /// issue. Common cause: a Device-Flow user who lacks `Issues: write`
+    /// permission on the target repo — GitHub silently drops the labels
+    /// from the create request. Empty array means every requested label
+    /// stuck.
+    ///
+    /// `nil` means the relay did not report which labels stuck (older
+    /// relays). Callers that depend on label filtering for "My Issues"
+    /// correlation should treat `nil` as "unknown" rather than "all stuck".
+    public var missingLabels: [String]?
+
     public init(
         id: UUID,
         issueNumber: Int,
@@ -146,7 +184,8 @@ public struct SubmittedIssue: Sendable, Identifiable, Hashable {
         createdAt: Date,
         latestReplyAt: Date? = nil,
         replyCount: Int = 0,
-        unreadReplyCount: Int = 0
+        unreadReplyCount: Int = 0,
+        missingLabels: [String]? = nil
     ) {
         self.id = id
         self.issueNumber = issueNumber
@@ -156,5 +195,6 @@ public struct SubmittedIssue: Sendable, Identifiable, Hashable {
         self.latestReplyAt = latestReplyAt
         self.replyCount = replyCount
         self.unreadReplyCount = unreadReplyCount
+        self.missingLabels = missingLabels
     }
 }

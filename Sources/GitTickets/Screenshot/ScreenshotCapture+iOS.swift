@@ -24,10 +24,19 @@ extension ScreenshotCapture {
 
     @MainActor
     private static func activeKeyWindow() -> UIWindow? {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first(where: { $0.isKeyWindow })
+        // On iPad with Split View / multiple scenes, several windows may have
+        // `isKeyWindow == true` cached. Restrict to the scene the user is
+        // actually looking at so the screenshot matches the foreground UI.
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        if let active = scenes.first(where: { $0.activationState == .foregroundActive }),
+           let window = active.windows.first(where: { $0.isKeyWindow }) ?? active.windows.first {
+            return window
+        }
+        if let inactive = scenes.first(where: { $0.activationState == .foregroundInactive }),
+           let window = inactive.windows.first(where: { $0.isKeyWindow }) ?? inactive.windows.first {
+            return window
+        }
+        return scenes.flatMap(\.windows).first(where: { $0.isKeyWindow })
     }
 }
 #endif
