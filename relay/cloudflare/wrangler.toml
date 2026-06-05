@@ -1,0 +1,48 @@
+name = "gittickets-relay"
+main = "src/worker.ts"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+# Default knobs — override in production via dashboard or wrangler.
+[vars]
+GITTICKETS_LABEL = "gittickets"
+GITTICKETS_IP_HOURLY_LIMIT = "30"
+GITTICKETS_DEVICE_HOURLY_LIMIT = "10"
+GITTICKETS_ATTACHMENT_BYTE_LIMIT = "5242880"
+GITTICKETS_REPLAY_WINDOW_SECONDS = "300"
+
+# ──────────────────────────────────────────────────────────────────────
+# Bindings — uncomment and fill in after running:
+#
+#   wrangler r2 bucket create gittickets-attachments
+#   wrangler kv namespace create RATE_LIMIT
+#   wrangler kv namespace create IDEMPOTENCY
+#
+# The CLI prints the IDs; paste them below.
+# ──────────────────────────────────────────────────────────────────────
+
+# [[r2_buckets]]
+# binding = "BLOB"
+# bucket_name = "gittickets-attachments"
+
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "<paste id from `wrangler kv namespace create`>"
+
+# [[kv_namespaces]]
+# binding = "IDEMPOTENCY"
+# id = "<paste id>"
+
+# ──────────────────────────────────────────────────────────────────────
+# Secrets — set via:
+#
+#   wrangler secret put GITHUB_APP_ID
+#   wrangler secret put GITHUB_APP_PRIVATE_KEY_BASE64
+#   wrangler secret put GITHUB_INSTALLATION_ID
+#   wrangler secret put GITHUB_OWNER
+#   wrangler secret put GITHUB_REPO
+#   wrangler secret put GITTICKETS_SHARED_SECRET
+#
+# Optional R2 public domain (for stable attachment URLs):
+#   GITTICKETS_R2_PUBLIC_BASE_URL = "https://attachments.your-app.com"
+# ──────────────────────────────────────────────────────────────────────
