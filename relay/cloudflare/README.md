@@ -107,7 +107,9 @@ RELAY_URL=https://gittickets-relay.<your-account>.workers.dev
 SECRET=<your-shared-secret-hex>
 TIMESTAMP=$(date +%s)
 BODY='{"schemaVersion":1,"title":"Smoke","body":"Body long enough to pass spam filter.\n\n<!-- gittickets-id: 11111111-2222-3333-4444-555555555555 -->","labels":["bug"],"submissionID":"11111111-2222-3333-4444-555555555555","deviceID":"smoke","attachmentURLs":[]}'
-SIG=$(printf '%s.%s' "$TIMESTAMP" "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -binary | xxd -p -c 256)
+# The shared secret is hex; the relay and Swift SDK both HMAC with the
+# DECODED 32 bytes. -macopt hexkey:$SECRET handles the decode for us.
+SIG=$(printf '%s.%s' "$TIMESTAMP" "$BODY" | openssl dgst -sha256 -mac HMAC -macopt hexkey:$SECRET -binary | xxd -p -c 256)
 
 curl -X POST "$RELAY_URL/report" \
   -H "Content-Type: application/json" \

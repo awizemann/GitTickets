@@ -6,6 +6,7 @@
  * obscure crypto error inside the JWT signer.
  */
 
+
 interface RequiredEnv {
   githubAppId: string;
   githubAppPrivateKey: string; // decoded PEM, ready for jose.importPKCS8
