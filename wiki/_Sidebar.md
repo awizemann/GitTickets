@@ -21,4 +21,5 @@ permalink: gittickets-wiki/sidebar
 - [Build Sequence](Build-Sequence)
 
 **Reference**
+- [Patterns & Gotchas](Patterns-and-Gotchas)
 - [Wiki Maintenance](Wiki-Maintenance)

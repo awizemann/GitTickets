@@ -62,5 +62,20 @@ Adopters must re-declare these in their app's privacy manifest. `docs/privacy.md
 
 `SECURITY.md` at repo root has the disclosure process. SDK and relay templates are both in scope.
 
+## Class-level pitfalls surfaced by code review
+
+Specific traps the PR 1–8 code review caught and the conventions that now prevent recurrence. Each entry links to a footgun note with the full write-up.
+
+- **HMAC re-signing on retry** — sign per attempt, not before the retry loop. Stale timestamps surface transient 5xx as `signatureMismatch`. [[Footgun — HMAC Signature Stale on Retry]]
+- **Non-idempotent POST retries** — never retry POSTs on transport errors without an idempotency key + cache lookup. [[Footgun — Retry Non-Idempotent POST Without Idempotency Key]]
+- **Redactor over-match** — naive IPv4/IPv6 regexes match version strings and clock timestamps. Bearer redaction must run first so embedded IPs don't corrupt the token charset. [[Footgun — Redactor Regexes Over-Match]]
+- **Multipart header injection** — sanitize filename, allowlist + CRLF-reject MIME. [[Footgun — Multipart Header Injection via Filename and MIME]]
+- **Keychain platform defaults** — set `kSecAttrSynchronizable: false` explicitly; namespace service by host bundle. [[Footgun — Keychain Synchronizable Default Leaks Across iCloud]]
+- **Sendable lies** — `nonisolated(unsafe) static var` is not atomic; Sendable enums need Sendable associated values; CheckedContinuation guards. [[Footgun — Sendable Lies in Public Types]]
+- **Markdown injection** — dynamic fence length, escape URLs and link text. [[Footgun — Markdown Injection in GitHub Issue Body]]
+- **SQLite file permissions** — chmod 0600 after open on non-sandboxed macOS. [[Footgun — SQLite Cache File Default Permissions]]
+
+The consolidated cheat-sheet view is [[Patterns and Gotchas]] in the wiki.
+
 ---
-_Last updated: 2026-06-04 — initial threat model_
+_Last updated: 2026-06-04 — pitfalls section added after PR 1–8 code review_

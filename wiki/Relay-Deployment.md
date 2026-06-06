@@ -87,7 +87,9 @@ RELAY_URL=https://your-deploy.vercel.app
 SECRET=your-shared-secret-hex
 TIMESTAMP=$(date +%s)
 BODY='{"title":"Test","body":"This is a test","kind":"bug","submissionID":"00000000-0000-0000-0000-000000000001","deviceID":"test-device"}'
-SIG=$(printf '%s%s' "$TIMESTAMP" "$BODY" | openssl dgst -sha256 -hmac "$SECRET" -binary | xxd -p -c 256)
+# Canonical string is "<timestamp>.<body>" — note the literal '.' separator.
+# Must match RelaySignature.sign in the Swift SDK byte-for-byte.
+SIG=$(printf '%s.%s' "$TIMESTAMP" "$BODY" | openssl dgst -sha256 -mac HMAC -macopt hexkey:$SECRET -binary | xxd -p -c 256)
 
 curl -X POST "$RELAY_URL/report" \
   -H "Content-Type: application/json" \
