@@ -31,9 +31,13 @@ public enum ScreenshotCaptureError: Error, Equatable {
 /// without a screenshot.
 ///
 /// Public so hosts that present their own UI on top of
-/// ``GitTickets/submit(_:)`` can capture the screenshot the same way the
-/// built-in form (PR 12+) will. Pass the returned `Data` as
-/// ``Report/screenshot``.
+/// ``GitTickets/submit(_:)`` can capture a screenshot. Pass the returned
+/// `Data` as ``Report/screenshot``.
+///
+/// > Note: On macOS this requires Screen Recording permission. Hosts that
+/// > don't want to ask for that permission can use an `NSOpenPanel` for an
+/// > image file instead — the result lands in the same ``Report/screenshot``
+/// > / ``Report/attachments`` slots.
 public enum ScreenshotCapture {
 
     /// Captures the current screen / key window.

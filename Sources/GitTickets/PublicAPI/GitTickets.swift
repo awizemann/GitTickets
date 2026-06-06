@@ -43,8 +43,9 @@ public enum GitTickets {
     /// 2. Fills `report.deviceID` from the per-install ``DeviceIdentity`` when
     ///    blank, so per-device rate limiting and Phase 2 "My Issues"
     ///    correlation work even when the caller didn't supply one.
-    /// 3. Resolves the active ``AuthMode`` to a submitter (``RelaySubmitter``
-    ///    for `.relay`; a Device Flow submitter lands in PR 11).
+    /// 3. Resolves the active ``AuthMode`` to a submitter
+    ///    (``RelaySubmitter`` for `.relay`; the Device Flow submitter is
+    ///    not yet implemented).
     /// 4. Forwards to the submitter, which uploads attachments, assembles the
     ///    body, POSTs to GitHub (via relay), and writes the result into the
     ///    shared ``SubmissionCache``.
@@ -80,8 +81,10 @@ public enum GitTickets {
     // MARK: - Helpers
 
     /// Resolves the active ``AuthMode`` into a submitter. Production code
-    /// hits the relay path; ``AuthMode/deviceFlow(clientID:scopes:)`` lands
-    /// in PR 11; ``AuthMode/mock`` is test-only.
+    /// hits the relay path; ``AuthMode/deviceFlow(clientID:scopes:)`` is
+    /// declared but its submitter is not yet implemented;
+    /// ``AuthMode/mock`` exists for tests that want a no-op auth slot but
+    /// has no production dispatch.
     private static func resolveSubmitter(
         configuration: Configuration
     ) throws -> any IssueSubmitter {
@@ -96,11 +99,11 @@ public enum GitTickets {
             return submitter
         case .deviceFlow:
             throw GitTicketsError.payloadInvalid(
-                reason: "Device Flow submitter ships in PR 11."
+                reason: "Device Flow submitter is not yet implemented. Use AuthMode.relay for now."
             )
         case .mock:
             throw GitTicketsError.payloadInvalid(
-                reason: "AuthMode.mock has no production submitter."
+                reason: "AuthMode.mock has no production submitter. Use AuthMode.relay."
             )
         }
     }

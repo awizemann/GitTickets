@@ -66,16 +66,26 @@ public enum AuthMode: Sendable {
     case relay(url: URL, sharedSecret: SharedSecret)
 
     /// Opt-in mode. End-user authenticates to GitHub via OAuth Device Flow;
-    /// submissions are posted directly to the GitHub Issues API using the
-    /// resulting user token (no relay needed).
+    /// submissions would be posted directly to the GitHub Issues API using
+    /// the resulting user token (no relay needed).
+    ///
+    /// > Not yet implemented. ``GitTickets/submit(_:)`` throws
+    /// > ``GitTicketsError/payloadInvalid(reason:)`` when this case is
+    /// > active. Use ``relay(url:sharedSecret:)`` until the Device Flow
+    /// > submitter ships.
     ///
     /// - Parameters:
     ///   - clientID: OAuth App client ID. See [Device Flow docs](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow).
     ///   - scopes: OAuth scopes to request. Default `[.publicRepo]`.
     case deviceFlow(clientID: String, scopes: [DeviceFlowScope] = [.publicRepo])
 
-    /// Test-only mode. Captures submissions in memory; never hits the network.
-    /// Used by unit and snapshot tests.
+    /// Reserved test-only slot for hosts that want to stand up
+    /// ``Configuration`` without choosing a real auth mode.
+    ///
+    /// > Not dispatched in production: ``GitTickets/submit(_:)`` throws
+    /// > ``GitTicketsError/payloadInvalid(reason:)`` when this case is
+    /// > active. Useful when seeding `@Previews` or test fixtures that
+    /// > never call `submit(_:)`.
     case mock
 }
 

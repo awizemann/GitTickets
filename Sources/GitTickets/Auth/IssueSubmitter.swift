@@ -1,13 +1,15 @@
 import Foundation
 
-/// Abstract submission entry point. Both ``RelaySubmitter`` (PR 8) and
-/// `DeviceFlowSubmitter` (PR 11) conform to it. The UI layer (PR 12+)
-/// dispatches against this protocol so it never branches on ``AuthMode``.
+/// Abstract submission entry point. ``RelaySubmitter`` is the only
+/// production conformer today; a Device Flow submitter is on the roadmap.
+/// The UI layer dispatches against this protocol so it never branches on
+/// ``AuthMode``.
 ///
-/// Phase 2 surface — `fetchMyIssues` and `fetchReplies` — has default
-/// implementations that throw a not-supported error so submitters can opt
-/// in incrementally (RelaySubmitter overrides them; an early Device Flow
-/// submitter can ship without).
+/// Phase 2 surface — ``fetchMyIssues(submissionIDs:deviceID:)`` and
+/// ``fetchReplies(submissionID:deviceID:)`` — have default implementations
+/// that throw `.payloadInvalid("This submitter does not support ...")` so
+/// submitters can opt in incrementally. ``RelaySubmitter`` overrides both
+/// against the relay's `/my-issues` endpoint.
 protocol IssueSubmitter: Sendable {
     /// Submits the report and returns the created issue.
     func submit(_ report: Report) async throws -> SubmittedIssue
@@ -23,10 +25,10 @@ protocol IssueSubmitter: Sendable {
 
 extension IssueSubmitter {
     func fetchMyIssues(submissionIDs: [UUID], deviceID: String) async throws -> [SubmittedIssue] {
-        throw GitTicketsError.payloadInvalid(reason: "This submitter does not support My Issues lookup yet.")
+        throw GitTicketsError.payloadInvalid(reason: "This submitter does not support My Issues lookup.")
     }
 
     func fetchReplies(submissionID: UUID, deviceID: String) async throws -> (replyCount: Int, latestReplyAt: Date?) {
-        throw GitTicketsError.payloadInvalid(reason: "This submitter does not support reply polling yet.")
+        throw GitTicketsError.payloadInvalid(reason: "This submitter does not support reply polling.")
     }
 }

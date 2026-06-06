@@ -341,6 +341,128 @@ final class RelaySubmitterTests: XCTestCase {
         XCTAssertNil(RelaySubmitter.parseISO8601("not a date"))
     }
 
+    // MARK: - Phase 2 — fetchMyIssues / fetchReplies
+
+    /// Regression: RelaySubmitter used to inherit the protocol's
+    /// throws-not-supported default for fetchMyIssues — same shape as the
+    /// pre-fix submit() bug. This test locks the real wiring.
+    func test_fetchMyIssuesPostsToRelayAndMergesWithCache() async throws {
+        let id = UUID()
+        let myIssuesURL = relayURL.appendingPathComponent("my-issues")
+        MockURLProtocol.handlers[myIssuesURL] = { _ in
+            let response = MyIssuesResponse(issues: [
+                MyIssuesItem(
+                    submissionID: id.uuidString,
+                    issueNumber: 7,
+                    issueURL: "https://github.com/x/y/issues/7",
+                    title: "Updated title",
+                    state: "open",
+                    createdAt: "2026-06-04T12:00:00Z",
+                    updatedAt: "2026-06-05T13:00:00Z",
+                    replyCount: 3,
+                    latestReplyAt: "2026-06-05T13:00:00Z"
+                )
+            ])
+            let data = try RelayJSON.encoder.encode(response)
+            return (HTTPURLResponse(url: myIssuesURL, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
+        }
+
+        // Seed the cache with an existing record so the merge path runs.
+        let seeded = SubmissionRecord(
+            submissionID: id,
+            issueNumber: 7,
+            issueURL: URL(string: "https://github.com/x/y/issues/7")!,
+            title: "Original title",
+            kind: .bug,
+            body: "seed",
+            deviceID: "device-1",
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+            submittedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            latestReplyAt: nil,
+            replyCount: 0,
+            readReplyCount: 1
+        )
+        try cache.upsert(seeded)
+
+        let issues = try await makeSubmitter().fetchMyIssues(
+            submissionIDs: [id],
+            deviceID: "device-1"
+        )
+
+        XCTAssertEqual(issues.count, 1)
+        let issue = try XCTUnwrap(issues.first)
+        XCTAssertEqual(issue.id, id)
+        XCTAssertEqual(issue.replyCount, 3)
+        // unreadReplyCount = max(0, 3 - 1) = 2 via cache merge.
+        XCTAssertEqual(issue.unreadReplyCount, 2)
+
+        // Cache should now carry the latest reply state.
+        let updated = try XCTUnwrap(try cache.record(submissionID: id))
+        XCTAssertEqual(updated.replyCount, 3)
+        XCTAssertNotNil(updated.latestReplyAt)
+        // Read state must NOT have been clobbered.
+        XCTAssertEqual(updated.readReplyCount, 1)
+    }
+
+    func test_fetchMyIssuesEmptyInputShortCircuits() async throws {
+        // No handler registered — if the submitter doesn't short-circuit, the
+        // MockURLProtocol fallback throws .unsupportedURL.
+        let issues = try await makeSubmitter().fetchMyIssues(
+            submissionIDs: [],
+            deviceID: "device-1"
+        )
+        XCTAssertTrue(issues.isEmpty)
+    }
+
+    func test_fetchRepliesDelegatesToMyIssues() async throws {
+        let id = UUID()
+        let myIssuesURL = relayURL.appendingPathComponent("my-issues")
+        var capturedBody: Data?
+        MockURLProtocol.handlers[myIssuesURL] = { request in
+            capturedBody = request.httpBody ?? Self.bodyFromBodyStream(request)
+            let response = MyIssuesResponse(issues: [
+                MyIssuesItem(
+                    submissionID: id.uuidString,
+                    issueNumber: 9,
+                    issueURL: "https://github.com/x/y/issues/9",
+                    title: "t",
+                    state: "open",
+                    createdAt: "2026-06-04T12:00:00Z",
+                    updatedAt: "2026-06-04T13:00:00Z",
+                    replyCount: 5,
+                    latestReplyAt: "2026-06-04T13:00:00Z"
+                )
+            ])
+            let data = try RelayJSON.encoder.encode(response)
+            return (HTTPURLResponse(url: myIssuesURL, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
+        }
+        let result = try await makeSubmitter().fetchReplies(
+            submissionID: id,
+            deviceID: "device-1"
+        )
+        XCTAssertEqual(result.replyCount, 5)
+        XCTAssertNotNil(result.latestReplyAt)
+        // The relay request body should carry exactly one submission ID.
+        let bodyString = String(data: capturedBody ?? Data(), encoding: .utf8) ?? ""
+        XCTAssertTrue(bodyString.contains(id.uuidString.uppercased())
+                      || bodyString.contains(id.uuidString.lowercased()))
+    }
+
+    func test_fetchRepliesUnknownSubmissionReturnsZero() async throws {
+        let myIssuesURL = relayURL.appendingPathComponent("my-issues")
+        MockURLProtocol.handlers[myIssuesURL] = { _ in
+            let response = MyIssuesResponse(issues: [])
+            let data = try RelayJSON.encoder.encode(response)
+            return (HTTPURLResponse(url: myIssuesURL, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
+        }
+        let result = try await makeSubmitter().fetchReplies(
+            submissionID: UUID(),
+            deviceID: "device-1"
+        )
+        XCTAssertEqual(result.replyCount, 0)
+        XCTAssertNil(result.latestReplyAt)
+    }
+
     // MARK: - Helpers
 
     private static func bodyFromBodyStream(_ request: URLRequest) -> Data {

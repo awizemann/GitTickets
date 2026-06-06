@@ -215,6 +215,73 @@ struct RelaySubmitter: IssueSubmitter {
         case attachment(UploadedAttachment)
     }
 
+    // MARK: - Phase 2 — My Issues + replies
+
+    /// Fetches the relay's view of the supplied submissions and projects
+    /// each match into a ``SubmittedIssue``. The local ``SubmissionCache``
+    /// holds the canonical "read" state (the relay can't know whether the
+    /// user has opened a reply on THIS device), so when a record is in
+    /// cache we update its `replyCount` + `latestReplyAt` from the relay,
+    /// upsert, and return the cache-derived projection (which carries the
+    /// correct `unreadReplyCount`). Cache miss → return the wire-only
+    /// projection.
+    func fetchMyIssues(submissionIDs: [UUID], deviceID: String) async throws -> [SubmittedIssue] {
+        guard !submissionIDs.isEmpty else { return [] }
+        let request = MyIssuesRequest(
+            submissionIDs: submissionIDs.map { $0.uuidString },
+            deviceID: deviceID
+        )
+        let response = try await client.fetchMyIssues(request)
+        return response.issues.compactMap { item -> SubmittedIssue? in
+            guard let id = UUID(uuidString: item.submissionID) else { return nil }
+            let wireProjection = Self.project(item)
+            if let cache, var record = try? cache.record(submissionID: id) {
+                record.replyCount = item.replyCount
+                record.latestReplyAt = item.latestReplyAt.flatMap { Self.parseISO8601($0) }
+                try? cache.upsert(record)
+                return record.asSubmittedIssue
+            }
+            return wireProjection
+        }
+    }
+
+    /// Cheap single-issue reply lookup. Delegates to the same `/my-issues`
+    /// path as ``fetchMyIssues(submissionIDs:deviceID:)`` with a one-element
+    /// list — the relay's API only exposes the list endpoint today, so this
+    /// is the minimum-cost path.
+    func fetchReplies(
+        submissionID: UUID,
+        deviceID: String
+    ) async throws -> (replyCount: Int, latestReplyAt: Date?) {
+        let issues = try await fetchMyIssues(submissionIDs: [submissionID], deviceID: deviceID)
+        guard let match = issues.first(where: { $0.id == submissionID }) else {
+            return (0, nil)
+        }
+        return (match.replyCount, match.latestReplyAt)
+    }
+
+    /// Wire-format → public ``SubmittedIssue`` projection. Returns nil when
+    /// the relay response is malformed (bad UUID, unparseable URL) — the
+    /// caller filters nils out rather than throwing partial-data errors
+    /// across the API boundary.
+    private static func project(_ item: MyIssuesItem) -> SubmittedIssue? {
+        guard
+            let id = UUID(uuidString: item.submissionID),
+            let url = URL(string: item.issueURL),
+            let createdAt = parseISO8601(item.createdAt)
+        else { return nil }
+        let latestReplyAt = item.latestReplyAt.flatMap { parseISO8601($0) }
+        return SubmittedIssue(
+            id: id,
+            issueNumber: item.issueNumber,
+            issueURL: url,
+            title: item.title,
+            createdAt: createdAt,
+            latestReplyAt: latestReplyAt,
+            replyCount: item.replyCount
+        )
+    }
+
     private static func validate(_ report: Report) throws {
         let trimmedTitle = report.title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedTitle.isEmpty {

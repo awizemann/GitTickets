@@ -8,10 +8,10 @@ import Foundation
 /// ``OSLogTailer``; redaction runs once at the end.
 ///
 /// Surfaced publicly so host apps that present their own UI on top of
-/// ``GitTickets/submit(_:)`` can pre-collect the same blob the built-in
-/// form (PR 12+) will. Pass the resulting `text` as
-/// ``Report/diagnosticsBlob`` so what the user sees in your form is what
-/// gets posted to GitHub.
+/// ``GitTickets/submit(_:)`` can pre-collect the diagnostics blob and show
+/// the user exactly what they're about to send. Pass the resulting `text`
+/// as ``Report/diagnosticsBlob`` so what the user sees in your form is
+/// byte-identical to what gets posted to GitHub.
 public enum DiagnosticsCollector {
 
     /// Collects diagnostics per the policy. Pure with respect to the inputs

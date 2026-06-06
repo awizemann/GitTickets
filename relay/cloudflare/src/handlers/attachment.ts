@@ -24,7 +24,12 @@ export async function handleAttachment(
   try {
     raw = await readBody(request, MAX_BODY_BYTES);
   } catch {
-    return jsonError(413, "attachment_too_large", `Request body exceeds ${MAX_BODY_BYTES} bytes.`, MAX_BODY_BYTES);
+    // Envelope-level rejection — the request body exceeds the hard ceiling
+    // before we even parse multipart. Use `body_too_large` (matching Vercel)
+    // and DO NOT report `byteLimit`: that field is contractually the
+    // configured per-attachment cap, and surfacing the 10 MB envelope here
+    // would mislead clients into believing the per-file cap is also 10 MB.
+    return jsonError(413, "body_too_large", `Request body exceeds ${MAX_BODY_BYTES} bytes.`);
   }
 
   const now = Math.floor(Date.now() / 1000);
