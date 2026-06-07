@@ -9,7 +9,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)"
 [ -z "$ROOT" ] && ROOT="${CLAUDE_PROJECT_DIR:-${CODEX_PROJECT_DIR:-${GEMINI_PROJECT_DIR:-.}}}"
 echo '## Repo memory (managed by Memophant) — the single source of truth'
 echo 'Use the repo memory; record durable decisions/learnings here, not in session-private memory.'
-echo 'Search: basic-memory tool search-notes --project gittickets "<query>"  (fallback: grep .memory/ and wiki/).'
+echo 'Search via the `memophant` MCP server tools (search_notes, read_note, build_context). Fallback: grep .memory/ and wiki/.'
 if [ -d "$ROOT/.memory" ]; then
   echo ''
   total=$(find "$ROOT/.memory" -type f -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
@@ -21,16 +21,16 @@ if [ -d "$ROOT/.memory" ]; then
     find "$ROOT/.memory" -type f -name '*.md' 2>/dev/null | sed "s#^$ROOT/.memory/##" | sed 's#/.*##' | sort | uniq -c | while read -r c d; do echo "- $d ($c)"; done
     echo 'Most recently updated:'
     git -C "$ROOT" log -n 80 --diff-filter=ACMRT --name-only --pretty=format: -- "$ROOT/.memory" 2>/dev/null | grep '\.md$' | sed 's#^.*\.memory/##' | awk 'NF && !seen[$0]++' | head -n 10 | while IFS= read -r n; do echo "- $n"; done
-    echo 'Search the rest: basic-memory tool search-notes --project gittickets "<query>"  (or: find .memory -name "*.md").'
+    echo 'Search the rest via the `memophant` MCP server (search_notes "<query>") or: find .memory -name "*.md".'
   fi
 fi
 if [ -d "$ROOT/wiki" ]; then
   echo ''
-  echo 'Wiki present (wiki/): search --project gittickets-wiki or grep wiki/.'
+  echo 'Wiki present (wiki/): search the `gittickets-wiki` project via the memophant MCP server, or grep wiki/.'
 fi
 if [ -d "$ROOT/design" ]; then
   echo ''
-  echo 'Design tier present (design/): consult before UI work — search --project gittickets-design or grep design/.'
+  echo 'Design tier present (design/): consult before UI work — search the `gittickets-design` project via the memophant MCP server, or grep design/.'
 fi
 if [ -f "$ROOT/TASKS.md" ]; then
   echo ''
@@ -40,8 +40,10 @@ if [ -f "$ROOT/TASKS.md" ]; then
 fi
 # MCP server status — populated by Memophant.app's health check (passive on project
 # open, active via the "Recheck" button on the memory dashboard). Lets a Claude session
-# know up front whether the native memophant tools are usable, so it can fall back to
-# the basic-memory CLI commands above when the engine isn't responding.
+# know up front whether the native memophant tools are usable. When the server is down
+# the fallback is grep over .memory/ and wiki/ directly — basic-memory has been retired
+# from production as of 2026-06-06; see wiki/Memory-Engine-Test-Suite.md if you need to
+# re-enable it for regression testing.
 HEALTH_FILE="$ROOT/.memophant/mcp/health.json"
 if [ -f "$HEALTH_FILE" ]; then
   echo ''
@@ -51,7 +53,7 @@ if [ -f "$HEALTH_FILE" ]; then
   else
     reason=$(grep -o '"reason"[[:space:]]*:[[:space:]]*"[^"]*"' "$HEALTH_FILE" | sed 's/.*"\([^"]*\)"$/\1/' | head -n 1)
     echo "MCP server: ✗ memophant${reason:+ — $reason}"
-    echo "  → open Memophant.app to reinstall, or fall back to the basic-memory CLI commands above."
+    echo "  → open Memophant.app to reinstall, or grep .memory/ + wiki/ directly until the server is back."
   fi
 fi
 exit 0

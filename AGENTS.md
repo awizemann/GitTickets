@@ -2,30 +2,30 @@
 ## Memory System (managed by Memophant)
 
 This project uses a layered memory system so any agent session — Claude Code, Codex, Cursor,
-Gemini, Copilot, or any other — is productive immediately. Memophant (a macOS app) manages it,
-but everything is plain files + the `basic-memory` CLI, so you can use it directly. This block is
-regenerated between the `memophant` markers — edit anything outside them freely.
+Gemini, Copilot, or any other — is productive immediately. Memophant (a macOS app) manages it;
+everything is plain files + a native MCP server (`memophant-mcp`) so you can read and write the
+memory directly. This block is regenerated between the `memophant` markers — edit anything
+outside them freely.
 
 **Use this repo's memory as the single source of truth — every session, any agent.** Read it
-before starting work, and record durable decisions and learnings as **Basic Memory notes or wiki
-pages** — not in this file, and not in any session-private or model-specific memory — so every
-session stays consistent and nothing is lost. Keep `AGENTS.md` and the per-agent shims
-(`CLAUDE.md` / `GEMINI.md` / `.github/copilot-instructions.md` / `.cursor/rules/memophant.mdc`)
-**minimal**: they point at the memory system, they don't BE the memory system.
+before starting work, and record durable decisions and learnings as **notes or wiki pages** —
+not in this file, and not in any session-private or model-specific memory — so every session
+stays consistent and nothing is lost. Keep `AGENTS.md` and the per-agent shims (`CLAUDE.md` /
+`GEMINI.md` / `.github/copilot-instructions.md` / `.cursor/rules/memophant.mdc`) **minimal**:
+they point at the memory system, they don't BE the memory system.
 
-**Memory engine.** Memophant ships an in-repo native MCP server (`memophant-mcp`) that replaces
-the basic-memory CLI as the primary read/write surface. When the server is loaded by your
-agent, the tools below show up directly — call them rather than shelling out. basic-memory
-remains installed during the transition window as fallback (handy when you need bm-only
-features the native server hasn't ported yet).
+**Memory engine.** Memophant ships an in-repo native MCP server (`memophant-mcp`) that owns the
+memory backend end-to-end. When the server is loaded by your agent, the tools below show up
+directly — call them. The basic-memory CLI was retired from production on 2026-06-06; if the
+MCP tools aren't present in this session, fall back to grep over `.memory/` and `wiki/` until
+the server is restored, rather than reaching for `basic-memory`.
 
 - Native MCP tools (preferred): `search_notes`, `read_note`, `view_note`, `write_note`,
   `edit_note`, `move_note`, `delete_note`, `list_directory`, `list_memory_projects`,
   `recent_activity`, `build_context`. All accept a `project` argument (default
-  gittickets). Tool shapes match basic-memory's 1:1 so prompts targeting bm work
-  unchanged.
-- Fallback (only if the MCP tools above are not present in this session):
-  `basic-memory tool search-notes --project gittickets "<query>"` and friends.
+  gittickets).
+- Fallback (only if the MCP tools above are not present in this session): grep `.memory/` and
+  `wiki/` directly — `grep -rn "<query>" .memory/ wiki/`.
 
 **1. Basic Memory (`.memory/`) — structured atomic facts.** A searchable knowledge graph
 of observations and relations. Search it before assuming; it is the source of truth for past
@@ -35,6 +35,12 @@ decisions and learnings.
   (they're committed with the repo and visible to every session).
 - Grammar: each note is markdown with `## Observations` (`- [category] fact text #tag`) and
   `## Relations` (`- relation_type [[Target Note]]`).
+- **Filenames are `dashed-slug.md`** — lowercase, hyphen-separated, derived deterministically
+  from the title. The display title comes from frontmatter `title:` (always), with the
+  prettified filename as a fallback. So title `"GitHub Status Service"` → file
+  `github-status-service.md`, and the UI renders `GitHub Status Service`. Use `write_note`
+  for new notes — it slug-generates correctly. **Folder names** are lowercase singular:
+  `architecture`, `decisions`, `conventions`, `operations`, `project`, `roadmap`.
 - Reindex happens automatically after every write_note / edit_note; for direct file edits,
   use the Memophant app's "Reindex" action or restart the MCP server.
 - Optional provenance frontmatter — `source_paths` (repo files a note depends on) + `source_sha`
@@ -85,7 +91,89 @@ language isn't yet supported (Phase 1 indexes Swift only), or you need a verb th
 - Symbols + curated notes both surface under `memophant code search`; use it as the default
   structural-discovery verb when you don't already know the symbol name.
 
-**5. Tasks (`TASKS.md`) — the work board.** A repo-resident kanban in plain Markdown: `## Todo`,
+**5. Documents (`documents/`) — per-project file store.** Arbitrary files the user or an
+agent wants alongside the codebase: PDFs, exported reports, screenshots, source briefs,
+scanned receipts — anything that's project context but isn't memory, wiki, design, or code.
+Schema-less by design: any file extension is welcome. Browse + open + add via the
+Memophant app's Documents tier; the folder is committed with the repo so docs travel with
+the project. Phase 1 is browse + open; Phase 2 will add an optional "mine this document for
+memory observations" action (Claude reads the document, proposes `.memory/` notes).
+
+**Plans AND generated documents go in `documents/`.** Whenever you produce a file-shaped
+artifact for this project — a plan, design proposal, audit report, comparison matrix,
+meeting summary, research brief, exported data, analysis write-up, scratch notes the user
+asked you to keep — save it under `documents/`. This is the durable home for
+agent-generated content; without it, the user has to copy/paste from the chat transcript
+to keep anything you produce.
+- **Plans** (intent BEFORE action — refactor plans, migration plans, feature scoping,
+  architecture proposals): `documents/plans/YYYY-MM-DD-short-kebab-slug.md`. Save BEFORE
+  you start executing so the file survives the session and gives the next agent (and
+  the user) a permanent record of the intent — not just the diff.
+- **Reports / analyses / write-ups** (work output): pick a sensible subfolder by kind —
+  `documents/reports/`, `documents/audits/`, `documents/research/`, `documents/exports/`
+  — or land flat in `documents/` if no clear category. Same ISO-date kebab-slug filename
+  convention.
+- **Scratch / drafts**: `documents/scratch/` if the user explicitly asks you to keep
+  something rough; otherwise don't write it.
+- Default to Markdown (`.md`); use other formats only when the user asks (PDF / CSV /
+  JSON / etc. — all welcome, the folder is schema-less).
+- This is durable history; `.memory/` is for the eventual SHIPPED decision (after the
+  work lands). Code outputs still go in the actual codebase, not here.
+- **No credentials or secrets in `documents/`** — the folder is committed with the repo.
+
+**6. Vendors (`vendors/`) — per-project third-party service registry.** Markdown records
+(one file per vendor at `vendors/<slug>.md`) with YAML frontmatter for typed fields (name,
+type, login_url, signup_url, username, keychain_ref, account_email, monthly_cost, tags)
+and a free-form `## Notes` body. Tracks the services this project depends on — payments,
+hosting, email, dns, monitoring, analytics, anything billed or credentialed.
+- **Credentials live in the iCloud-synced Keychain via the Memophant app, NEVER in the
+  vendor file.** The frontmatter's `keychain_ref` field is the NAME of the Keychain item
+  (the vendor slug), not the secret. The writer HARD-blocks any save whose serialized form
+  contains anything that looks like an API key, JWT, or long-base64 secret — no soft
+  warning, no override.
+- Search via `search_notes(query: "<text>", project: "gittickets-vendors")` — the
+  tier registers its own engine index, so hybrid search ("which vendor handles
+  email?") returns the right hit even when the term lives in notes, not the typed
+  frontmatter.
+- When you discover a vendor a project uses (via code references, README, env vars), add
+  a record via the Memophant app's Vendors tier; don't write the file by hand from an
+  agent session unless the user asks — the editor wires up the Keychain credential
+  atomically with the file.
+
+**7. Packages (`packages/`) — reusable starter kits.** Folder-per-package at
+`packages/<slug>/` with a required `manifest.md` (YAML frontmatter + canonical body
+sections: Prerequisites / Steps / Variables / Verification) and an optional
+`templates/` subfolder of files the apply step copies + parameterises into the
+project. Packages capture "how to add Paddle payments" or "wire up SendGrid email"
+so the next project starts from a working scaffold instead of from scratch.
+- **The `/memophant-package <description>` convention.** When the user types a
+  message beginning with `/memophant-package`, treat the remainder as a brief naming
+  the package they want applied. Steps: (1) `list_directory(dirname: "packages",
+  project: "gittickets")` to enumerate available packages; (2) `read_note` the
+  best matching `manifest.md`; (3) confirm the Prerequisites section with the user
+  BEFORE any file write; (4) walk the Steps section top-to-bottom, substituting
+  Variables, copying templates from the package's `templates/` subfolder, reporting
+  progress; (5) run the Verification checks and report status. The plan-first
+  convention applies — write the apply plan to `documents/plans/` before executing.
+- Search via `search_notes(query: "<text>", project: "gittickets-packages")` —
+  the tier registers its own engine index, so hybrid search ("set up Paddle
+  payments") returns the right hit even when the slug is something generic like
+  `payments-1`.
+- **No raw credentials in manifests or templates.** Templates ship PLACEHOLDER values
+  (`{{ PADDLE_API_TOKEN }}`, `<your-key-here>`, `replace_me`) that the apply step
+  substitutes at install time. Concrete-looking credentials are HARD-blocked by the
+  writer on save. When a package needs a credential, it points at a Vendor record via
+  `vendor_refs:` in the manifest frontmatter — the Vendor owns the Keychain item, the
+  package just references it.
+- **Creating a package** from an existing project is currently a manual flow — Add
+  Package from the Memophant app, then fill in the manifest sections that describe
+  the integration. The Claude-assisted "Extract from this project…" agent flow is
+  deferred to a later phase.
+- **Sharing a package** between projects: copy the `packages/<slug>/` folder from one
+  repo into another. The Memophant app surfaces a "Copy to another project…" action
+  in a later phase; for now, plain filesystem copy works.
+
+**8. Tasks (`TASKS.md`) — the work board.** A repo-resident kanban in plain Markdown: `## Todo`,
 `## Doing`, `## Done` sections, each a checklist (`- [ ]` / `- [x]`). It travels with the repo and
 is yours to edit directly.
 - **Read `TASKS.md` at the start of work.** When you pick up a task, move its line into `## Doing`;
@@ -95,23 +183,33 @@ is yours to edit directly.
 - Memophant renders this as a live kanban, so your edits to `TASKS.md` show up on the board as you
   work — keep it current.
 
-**Commits for `.memory/`, `wiki/`, `design/`, `code/`, `sessions/`, and `TASKS.md` are
-owned by Memophant.** When you write_note, edit a wiki/design/code page, move a task on the
-board, or import a session, those files become dirty in git — **do NOT `git add` or `git commit`
-them yourself.** The user runs each tier's commit through Memophant's commit modal, which routes
-every change through the two-tier secret scan and stages per-tier paths in isolation (so a stray
-edit elsewhere can't piggyback into a memory commit).
+**Commits for `.memory/`, `wiki/`, `design/`, `code/`, `sessions/`, `documents/`,
+`vendors/`, `packages/`, and `TASKS.md` are owned by Memophant.** When you write_note, edit a wiki/design/code page, move a
+task on the board, drop a file into `documents/`, or import a session, those files become dirty
+in git — **do NOT `git add` or `git commit` them yourself.** The user runs each tier's commit
+through Memophant's commit modal, which routes every change through the two-tier secret scan
+and stages per-tier paths in isolation (so a stray edit elsewhere can't piggyback into a memory
+commit).
 - **Yours to commit:** application code, configs, scripts, infrastructure — anything OUTSIDE the
   tier folders above. Use plain `git add` / `git commit` like any other repo.
 - **Memophant's to commit:** anything under `.memory/`, `wiki/`, `design/`, `code/`,
-  `sessions/`, and `TASKS.md`. After your task, **leave these files dirty** if the work touched
-  them — Memophant's commit bar shows per-tier "uncommitted" chips with counts so the user
-  decides when to commit each tier with its own secret-scanned message.
+  `sessions/`, `documents/`, `vendors/`, `packages/`, and `TASKS.md`. After your task, **leave these files
+  dirty** if the work touched them — Memophant's commit bar shows per-tier "uncommitted"
+  chips with counts so the user decides when to commit each tier with its own secret-scanned
+  message.
 - The boundary is by FOLDER, not by your task scope. Editing
   `Memophant/Services/Wiki/PublishWikiSheet.swift` is app code → yours. Editing
   `wiki/Publish-Pipeline.md` is the wiki tier → Memophant's.
 - If you find a Memophant-owned file already staged in your session's index, `git restore
   --staged` it before continuing — don't carry it into your commit.
+- **Pre-existing dirty Memophant-owned files at session start are normal**, not a problem to
+  fix. Memophant batches them into per-tier commits the user makes through the app's commit
+  bar. Don't suggest committing them, don't propose discarding them, and don't mention them
+  in your end-of-task summary as something for the user to address — the user already knows
+  and that's how Memophant works. Treat them as background state when you read `git status`
+  to understand the repo. (Exception: if your own work modified the SAME files and you'd
+  unintentionally be carrying forward a prior session's abandoned changes, flag that
+  specifically.)
 
 **Memophant (the app)** is the management surface: browse, search, and edit notes, wiki and design
 pages, track and run tasks on the kanban, migrate existing docs into memory, and commit/publish
