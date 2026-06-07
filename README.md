@@ -2,7 +2,7 @@
 
 A drop-in Swift package (macOS 13+ / iOS 16+) that gives any app a "Report an Issue / Feature Request" surface backed by the app's own GitHub repository.
 
-End-users get a native form, screenshots, diagnostics, and a privacy banner. Submissions land directly as issues in your repo. Phase 2 (also in v1): users browse their past submissions and see your replies as a thread, inside the app.
+End-users get a native form, screenshots, diagnostics, and a privacy banner. Submissions land directly as issues in your repo. Users browse their past submissions and see your replies as a thread, inside the app.
 
 Bar: Sparkle-easy to integrate. Add the package, point it at your relay, drop `GitTicketsCommands { … }` into your SwiftUI `Commands` builder.
 
