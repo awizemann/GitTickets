@@ -1,0 +1,203 @@
+/* ───────────────────────────────────────────────────────────────────────────
+ * GitTickets — tokens-generic.css
+ *
+ * A NEUTRAL, brand-agnostic token layer for the GitTickets reference render.
+ * Same custom-property names as the Memophant token file, but values are
+ * platform-default: Apple system blue as the accent (the most universally
+ * compatible choice for a drop-in package that inherits each host's accent),
+ * neutral system grays, standard semantic colors. No brand identity.
+ *
+ * Light is default; [data-theme="dark"] / .dark flips surfaces + accent.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ───── Accent — Apple system blue (platform default; theme-overridable) ───── */
+  --accent:        #007AFF;
+  --accent-hover:  #0067DB;
+  --accent-active: #0056B8;
+  --accent-tint:   rgba(0, 122, 255, 0.10);
+  --accent-tint-strong: rgba(0, 122, 255, 0.18);
+  --on-accent:     #FFFFFF;
+
+  --brand-indigo:  #5A5DC8;   /* retained, unused */
+
+  /* Blue ramp (under the legacy green-* names so nothing renders green) */
+  --green-50:  #E6F1FF;
+  --green-100: #D6E8FF;
+  --green-200: #ADD0FF;
+  --green-300: #7DB4FF;
+  --green-400: #4A9BFF;
+  --green-500: #007AFF;
+  --green-600: #0067DB;
+  --green-700: #0056B8;
+  --green-800: #004291;
+  --green-900: #002E66;
+
+  /* ───── Neutrals — cool system grays (no warm/cream, no violet) ───── */
+  --gray-0:   #FFFFFF;
+  --gray-50:  #F4F5F7;
+  --gray-100: #ECEDF0;
+  --gray-200: #E1E2E6;
+  --gray-300: #CFD1D6;
+  --gray-400: #A8AAB0;
+  --gray-500: #7E8089;
+  --gray-600: #5E606A;
+  --gray-700: #44464C;
+  --gray-800: #2A2B30;
+  --gray-900: #1C1C1E;
+  --gray-950: #0E0E10;
+
+  /* ───── Semantic status ───── */
+  --success:     #1C9E5E;
+  --success-tint:#D6EFE0;
+  --warning:     #C77B2E;
+  --warning-tint:#F6E7D2;
+  --destructive: #E0544E;
+  --destructive-tint: #F7DCDA;
+  --info:        #007AFF;
+  --info-tint:   #D6E8FF;
+
+  /* ───── Badge / accent hues (generic system colors, not a brand system) ───── */
+  --tier-memories:      #C77B2E;  --tier-memories-tint: #F6E7D2;  --tier-memories-fg: #9A5A1C;
+  --tier-wiki:          #2F7BD6;  --tier-wiki-tint:     #DCE9F8;  --tier-wiki-fg:     #235FA8;
+  --tier-design:        #8A63C8;  --tier-design-tint:   #E7DEF5;  --tier-design-fg:   #6A45A0;
+  --tier-tasks:         #C2607C;  --tier-tasks-tint:    #F4E0E8;  --tier-tasks-fg:    #9E4763;
+
+  /* ───── Surfaces (light) ───── */
+  --fg:        #1C1C1E;
+  --fg-muted:  #5E606A;
+  --fg-faint:  #8A8C93;
+  --bg:        #F4F5F7;
+  --bg-card:   #FFFFFF;
+  --bg-tertiary:   rgba(60, 60, 67, 0.08);
+  --bg-quaternary: rgba(60, 60, 67, 0.05);
+  --border:        rgba(60, 60, 67, 0.13);
+  --border-strong: rgba(60, 60, 67, 0.22);
+
+  /* ───── Type stacks ───── */
+  --font-sans:    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif;
+  --font-mono:    ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* ───── Type scale (px) ───── */
+  --text-caption2: 10px;
+  --text-caption:  12px;
+  --text-footnote: 13px;
+  --text-body:     14px;
+  --text-callout:  15px;
+  --text-subhead:  16px;
+  --text-headline: 17px;
+  --text-title3:   20px;
+  --text-title2:   23px;
+  --text-title1:   29px;
+  --text-largeTitle: 36px;
+
+  --leading-tight:   1.2;
+  --leading-snug:    1.35;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.62;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ───── Radii ───── */
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 9px;
+  --radius-xl: 13px;
+  --radius-2xl: 16px;
+  --radius-window: 14px;
+  --radius-pill: 999px;
+
+  /* ───── Spacing (4px grid) ───── */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px; --space-20: 80px; --space-24: 96px;
+
+  /* ───── Elevation — soft neutral shadows ───── */
+  --shadow-sm: 0 1px 2px rgba(20, 22, 28, 0.05);
+  --shadow-md: 0 1px 2px rgba(20, 22, 28, 0.04), 0 4px 12px rgba(20, 22, 28, 0.05);
+  --shadow-lg: 0 2px 4px rgba(20, 22, 28, 0.06), 0 10px 28px rgba(20, 22, 28, 0.08);
+  --shadow-xl: 0 4px 8px rgba(20, 22, 28, 0.08), 0 20px 48px rgba(20, 22, 28, 0.12);
+  --focus-ring: 0 0 0 3px rgba(0, 122, 255, 0.28);
+
+  /* ───── Gradients (neutral blue; used only for the small header chip) ───── */
+  --gradient-brand: linear-gradient(135deg, #4AA0FF 0%, #007AFF 50%, #0059C2 100%);
+  --gradient-brand-soft: linear-gradient(150deg, #DCEBFF 0%, #BBD8FF 100%);
+
+  /* ───── Motion ───── */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+  --ease-primary:  cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"], .dark {
+  --accent:        #0A84FF;
+  --accent-hover:  #3D9BFF;
+  --accent-active: #007AFF;
+  --accent-tint:   rgba(10, 132, 255, 0.18);
+  --accent-tint-strong: rgba(10, 132, 255, 0.28);
+
+  --gray-0:  #2C2C2E;
+
+  --fg:        #EDEDEF;
+  --fg-muted:  #9B9BA1;
+  --fg-faint:  #6A6A70;
+  --bg:        #1C1C1E;
+  --bg-card:   #2C2C2E;
+  --bg-tertiary:   rgba(235, 235, 245, 0.10);
+  --bg-quaternary: rgba(235, 235, 245, 0.06);
+  --border:        rgba(235, 235, 245, 0.12);
+  --border-strong: rgba(235, 235, 245, 0.20);
+
+  --success:     #34C77B;
+  --warning:     #E0A569;
+  --destructive: #FF6961;
+  --info:        #0A84FF;
+
+  --tier-memories: #E0A569;  --tier-memories-tint: rgba(199, 123, 46, 0.20);  --tier-memories-fg: #E0A569;
+  --tier-wiki:     #6FAAE6;  --tier-wiki-tint:     rgba(47, 123, 214, 0.22);  --tier-wiki-fg:     #6FAAE6;
+  --tier-design:   #B79AE0;  --tier-design-tint:   rgba(138, 99, 200, 0.22);  --tier-design-fg:   #B79AE0;
+  --tier-tasks:    #DB9DB2;  --tier-tasks-tint:    rgba(194, 96, 124, 0.20);  --tier-tasks-fg:    #DB9DB2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 4px 8px rgba(0, 0, 0, 0.4), 0 20px 48px rgba(0, 0, 0, 0.55);
+  --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.34);
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Semantic type roles (identical to the base layer)
+ * ─────────────────────────────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.display { font-family: var(--font-display); font-size: clamp(40px, 6vw, 64px); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; }
+h1, .h1 { font-family: var(--font-display); font-size: var(--text-largeTitle); font-weight: 600; line-height: 1.15; letter-spacing: -0.022em; }
+h2, .h2 { font-family: var(--font-display); font-size: var(--text-title1); font-weight: 600; line-height: 1.18; letter-spacing: -0.018em; }
+h3, .h3 { font-family: var(--font-display); font-size: var(--text-title2); font-weight: 600; line-height: 1.3;  letter-spacing: -0.012em; }
+.headline { font-family: var(--font-sans); font-size: var(--text-headline); font-weight: 600; line-height: 1.35; }
+.lead { font-size: var(--text-subhead); line-height: 1.55; color: var(--fg-muted); }
+p, .body { font-size: var(--text-body); line-height: var(--leading-normal); }
+.reader-body { font-size: var(--text-callout); line-height: var(--leading-relaxed); }
+.callout { font-size: var(--text-callout); }
+.footnote { font-size: var(--text-footnote); color: var(--fg-muted); }
+.caption { font-size: var(--text-caption); color: var(--fg-muted); }
+.eyebrow { font-size: var(--text-caption); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-faint); }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+.code { font-family: var(--font-mono); font-size: 0.9em; background: var(--bg-quaternary); padding: 1px 5px; border-radius: var(--radius-sm); }

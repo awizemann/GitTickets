@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GitTickets — Redesign reference render (Generic)</title>
+<link rel="stylesheet" href="assets/tokens-generic.css" />
+<link rel="stylesheet" href="render.css" />
+</head>
+<body>
+
+<div class="page-bar">
+  <div class="lock" title="Memophant-flavored default theme">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10V7a5 5 0 0 1 10 0v3"/><rect x="4" y="10" width="16" height="11" rx="2"/></svg>
+  </div>
+  <div>
+    <h1>GitTickets — view redesign</h1>
+    <div class="sub">Reference render · neutral default theme (system blue) · maps 1:1 to the SwiftUI handoff</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="seg" id="theme-seg">
+    <button class="on" data-theme-set="light">Light</button>
+    <button data-theme-set="dark">Dark</button>
+  </div>
+</div>
+
+<div class="canvas">
+
+  <!-- intro -->
+  <div class="callout-pin" style="margin-bottom:var(--space-12)">
+    <div>
+      <b>How to read this.</b> Both screens use a clean, brand-neutral native style — no design-system identity — and are fully driven by
+      <span class="code">GitTicketsTheme</span> (accent, fonts, corner radius, header icon). The demo accent is the platform-default
+      system blue, the most compatible choice for a drop-in package; in a host app it inherits that app's accent. The form reads
+      top-to-bottom as a single story — <b>privacy → what's wrong → what we'll send → submit</b> — and the privacy banner + consent
+      toggle share one visual language so they feel like one trust flow. Toggle Light/Dark above. The SwiftUI code matches this exactly.
+    </div>
+  </div>
+
+  <!-- ════════════════ SECTION 1 — THE FORM ════════════════ -->
+  <section class="section">
+    <header>
+      <span class="eyebrow">GitTicketsView · the report form</span>
+      <h2>One refined direction</h2>
+      <p class="note">Header → trust banner (privacy) → kind cards → title &amp; description → diagnostics (expanded, with redactions highlighted) → consent docked above a pinned Cancel / Submit bar. Large-title behavior on iOS, inline title on macOS.</p>
+    </header>
+
+    <div class="boards">
+
+      <!-- ───── macOS form ───── -->
+      <div class="board">
+        <div class="label"><span class="name">macOS — sheet</span><span class="meta">560pt · inline title</span><span class="tag">Field style A · inset</span></div>
+        <div class="mac">
+          <div class="mac-bar">
+            <div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+            <div class="title">Report an issue</div>
+          </div>
+          <div class="sheet">
+            <div class="gt-body">
+
+              <div class="gt-header">
+                <div class="icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.5 9h.01"/><path d="M14.5 9h.01"/><path d="M9.5 13.5a3.5 3.5 0 0 0 5 0"/></svg>
+                </div>
+                <div>
+                  <h2>Report an issue</h2>
+                  <div class="lead">Tell us what happened — it lands as a GitHub issue we can reply to.</div>
+                </div>
+              </div>
+
+              <!-- PRIVACY (trust banner) -->
+              <div>
+                <span class="eyebrow" style="display:block;margin-bottom:var(--space-2)">Privacy</span>
+                <div class="gt-trust-banner">
+                  <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+                  <div class="txt">
+                    This is filed publicly to <span class="repo">acme/lumen</span> — anyone can read it.
+                    <span class="vis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Public repository</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- WHAT'S WRONG -->
+              <div>
+                <span class="eyebrow" style="display:block;margin-bottom:var(--space-3)">What's wrong</span>
+                <div class="gt-kinds">
+                  <button class="gt-kind sel">
+                    <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span>
+                    <span class="k-name">Bug</span>
+                    <span class="k-hint">Something's broken</span>
+                  </button>
+                  <button class="gt-kind">
+                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+                    <span class="k-name">Feature</span>
+                    <span class="k-hint">An idea to improve</span>
+                  </button>
+                  <button class="gt-kind">
+                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+                    <span class="k-name">Question</span>
+                    <span class="k-hint">How does this work?</span>
+                  </button>
+                </div>
+
+                <div style="margin-top:var(--space-3)" class="gt-group">
+                  <div class="gt-row">
+                    <div class="rl">Title</div>
+                    <div class="field-text">Sync stalls when switching networks</div>
+                  </div>
+                  <div class="gt-row">
+                    <div class="rl">Description</div>
+                    <div class="field-text gt-editor">If I'm on Wi-Fi and walk out to cellular mid-sync, the spinner just hangs. Pull-to-refresh doesn't recover it — I have to force-quit. Started after 2.4.</div>
+                  </div>
+                  <div class="gt-row">
+                    <div class="rl">Attachments</div>
+                    <div class="gt-attach">
+                      <span class="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg> Add image</span>
+                      <div class="gt-thumb"><div class="shot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></div><span class="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DIAGNOSTICS -->
+              <div>
+                <span class="eyebrow" style="display:block;margin-bottom:var(--space-3)">Diagnostics we'll attach</span>
+                <div class="gt-diag">
+                  <div class="head">
+                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+                    <span class="ht"><span class="t">Diagnostics</span><span class="s">Attached as-is. Highlighted values are redacted before they leave your device.</span></span>
+                    <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span>
+                  </div>
+<pre><span class="key">App</span>      Lumen 2.4.1 (build 1487)
+<span class="key">OS</span>       macOS 14.5 (23F79)
+<span class="key">Device</span>   MacBook Pro (M2, 2023)
+<span class="key">Locale</span>   en_US · Memory nominal · 84.2 GB free
+<span class="key">User</span>     <span class="redact">[email redacted]</span>
+<span class="key">Sync</span>     2026-06-04 14:22 · from <span class="redact">[ip redacted]</span>
+<span class="key">Auth</span>     Bearer <span class="redact">[token redacted]</span></pre>
+                  <div class="foot">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    Redacted on-device — what you see is exactly what's sent.
+                    <span class="legend"><i></i> redacted</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- CONSENT + ACTIONS (the trust flow closes here, linked to the banner) -->
+            <div style="padding:0 var(--space-5) var(--space-4)">
+              <div class="gt-consent checked">
+                <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <span class="ct"><b>I understand this report and the diagnostics above will be posted to <span class="code" style="font-size:.85em">acme/lumen</span>.</b><span class="sub">Same place the banner points to. Required before you submit.</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="gt-actions">
+            <button class="btn btn-secondary">Cancel</button>
+            <button class="btn btn-primary"><span class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg> Submit issue</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── iOS form ───── -->
+      <div class="board">
+        <div class="label"><span class="name">iOS — sheet</span><span class="meta">large title</span><span class="tag">consent unchecked → Submit off</span></div>
+        <div class="ios">
+          <div class="ios-screen">
+            <div class="ios-status">
+              <span>9:41</span>
+              <span class="dynamic"></span>
+              <span class="right">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v3H2zM6 14h2v6H6zM10 11h2v9h-2zM14 8h2v12h-2zM18 5h2v15h-2z"/></svg>
+                <svg viewBox="0 0 28 14" fill="none"><rect x="1" y="1.5" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="3" y="3.5" width="16" height="7" rx="1.5" fill="currentColor"/><rect x="24.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg>
+              </span>
+            </div>
+            <div class="sheet">
+              <div class="gt-body">
+                <div class="gt-header">
+                  <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.5 9h.01"/><path d="M14.5 9h.01"/><path d="M9.5 13.5a3.5 3.5 0 0 0 5 0"/></svg></div>
+                  <div><h2>Report an issue</h2><div class="lead">Lands as a GitHub issue we can reply to.</div></div>
+                </div>
+
+                <div>
+                  <span class="eyebrow" style="display:block;margin-bottom:var(--space-2)">Privacy</span>
+                  <div class="gt-trust-banner">
+                    <div class="sh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+                    <div class="txt">This is filed publicly to <span class="repo">acme/lumen</span> — anyone can read it.<span class="vis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Public repository</span></div>
+                  </div>
+                </div>
+
+                <div>
+                  <span class="eyebrow" style="display:block;margin-bottom:var(--space-3)">What's wrong</span>
+                  <div class="gt-kinds">
+                    <button class="gt-kind sel">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span>
+                      <span class="txt"><span class="k-name">Bug</span><span class="k-hint">Something's broken</span></span>
+                      <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                    </button>
+                    <button class="gt-kind">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+                      <span class="txt"><span class="k-name">Feature</span><span class="k-hint">An idea to improve</span></span>
+                    </button>
+                    <button class="gt-kind">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+                      <span class="txt"><span class="k-name">Question</span><span class="k-hint">How does this work?</span></span>
+                    </button>
+                  </div>
+                  <div style="margin-top:var(--space-3)" class="gt-group">
+                    <div class="gt-row"><div class="rl">Title</div><div class="field-text">Sync stalls when switching networks</div></div>
+                    <div class="gt-row"><div class="rl">Description</div><div class="field-text gt-editor">Spinner hangs when I move from Wi-Fi to cellular mid-sync. Have to force-quit to recover.</div></div>
+                    <div class="gt-row"><div class="rl">Attachments</div><div class="gt-attach"><span class="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg> Add image</span></div></div>
+                  </div>
+                </div>
+
+                <div>
+                  <span class="eyebrow" style="display:block;margin-bottom:var(--space-3)">Diagnostics we'll attach</span>
+                  <div class="gt-diag">
+                    <div class="head">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+                      <span class="ht"><span class="t">Diagnostics</span><span class="s">Highlighted values are redacted on-device.</span></span>
+                      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span>
+                    </div>
+<pre><span class="key">App</span>    Lumen 2.4.1 (1487)
+<span class="key">OS</span>     iOS 17.5
+<span class="key">Device</span> iPhone 15 Pro
+<span class="key">User</span>   <span class="redact">[email redacted]</span>
+<span class="key">Auth</span>   Bearer <span class="redact">[token redacted]</span></pre>
+                    <div class="foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> What you see is what's sent.<span class="legend"><i></i> redacted</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="padding:0 var(--space-4) var(--space-3)">
+                <div class="gt-consent">
+                  <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span class="ct"><b>I understand this will be posted publicly to acme/lumen.</b><span class="sub">Tap to agree — required to submit.</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="gt-actions">
+              <button class="btn btn-secondary">Cancel</button>
+              <div class="grow"></div>
+              <button class="btn btn-primary" disabled><span class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg> Submit</span></button>
+            </div>
+            <div class="ios-home"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════ SECTION 1B — FIELD STYLE OPTIONS ════════════════ -->
+  <section class="section">
+    <header>
+      <span class="eyebrow">Explore · field &amp; section styling</span>
+      <h2>Two ways to dress the "What's wrong" fields</h2>
+      <p class="note">Everything else stays identical. Pick the texture: <b>A</b> is the iOS-Settings inset-grouped card (shown in the full form above); <b>B</b> is flat bordered fields with focus rings — quieter, more "document," reads a touch more macOS-native.</p>
+    </header>
+    <div class="boards">
+      <div class="board">
+        <div class="label"><span class="name">Option A</span><span class="meta">Inset grouped card</span></div>
+        <div class="mac" style="width:420px">
+          <div class="mac-bar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div></div>
+          <div class="sheet"><div style="padding:var(--space-5)">
+            <span class="eyebrow" style="display:block;margin-bottom:var(--space-3)">What's wrong</span>
+            <div class="gt-group">
+              <div class="gt-row"><div class="rl">Title</div><div class="field-text">Sync stalls when switching networks</div></div>
+              <div class="gt-row"><div class="rl">Description</div><div class="field-text gt-editor">Spinner hangs moving from Wi-Fi to cellular mid-sync…</div></div>
+              <div class="gt-row"><div class="rl">Attachments</div><div class="gt-attach"><span class="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg> Add image</span></div></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <div class="board">
+        <div class="label"><span class="name">Option B</span><span class="meta">Flat bordered fields · focus ring</span></div>
+        <div class="mac" style="width:420px">
+          <div class="mac-bar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div></div>
+          <div class="sheet"><div style="padding:var(--space-5)">
+            <span class="eyebrow" style="display:block;margin-bottom:var(--space-3)">What's wrong</span>
+            <div class="gt-stack">
+              <div>
+                <span class="gt-label">Title</span>
+                <div class="gt-field"><div class="field-text">Sync stalls when switching networks</div></div>
+              </div>
+              <div>
+                <span class="gt-label">Description</span>
+                <div class="gt-field focus"><div class="field-text gt-editor">Spinner hangs moving from Wi-Fi to cellular mid-sync. Pull-to-refresh doesn't recover it — I have to force-quit.</div></div>
+                <div class="gt-counter">214 / 4000</div>
+              </div>
+              <div>
+                <span class="gt-label">Attachments</span>
+                <div class="gt-attach"><span class="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg> Add image</span><div class="gt-thumb"><div class="shot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></div></div></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════ SECTION 1C — MY REPORTS LIST ════════════════ -->
+  <section class="section">
+    <header>
+      <span class="eyebrow">GitTicketsMyIssuesView · the entry point</span>
+      <h2>My Reports — the list that opens the detail</h2>
+      <p class="note">Past submissions from <span class="code">GitTickets.cachedSubmissions()</span>, sorted by latest activity. Each row carries the kind, status, and an unread-reply badge (driven by <span class="code">SubmittedIssue.unreadReplyCount</span>). Tapping a row pushes <span class="code">IssueDetailView</span>. Pull-to-refresh on iOS, ⌘R on macOS.</p>
+    </header>
+    <div class="boards">
+
+      <!-- macOS list -->
+      <div class="board">
+        <div class="label"><span class="name">macOS</span><span class="meta">inline title · ⌘R refresh</span></div>
+        <div class="mac">
+          <div class="mac-bar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="title">My Reports</div></div>
+          <div class="sheet">
+            <div class="gt-list-body">
+              <div class="gt-list-head">
+                <h2>My Reports</h2>
+                <span class="gt-new-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Report an issue</span>
+              </div>
+              <div class="gt-list">
+                <div class="gt-report-row">
+                  <div class="ic bug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></div>
+                  <div class="main">
+                    <div class="title-line"><span class="unread-dot"></span><span class="rtitle">Sync stalls when switching networks</span></div>
+                    <div class="rsub"><span class="num">#128</span><span class="sep"></span>Filed Jun 3<span class="sep"></span><span class="status open"><i></i>Open</span></div>
+                  </div>
+                  <div class="trail"><span class="new-pill">2 NEW</span><span class="when">4h ago</span></div>
+                </div>
+                <div class="gt-report-row">
+                  <div class="ic feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div>
+                  <div class="main">
+                    <div class="title-line"><span class="rtitle">Export notes as Markdown</span></div>
+                    <div class="rsub"><span class="num">#131</span><span class="sep"></span>Filed today<span class="sep"></span><span class="status open"><i></i>Open</span></div>
+                  </div>
+                  <div class="trail"><span class="when">Today</span></div>
+                </div>
+                <div class="gt-report-row">
+                  <div class="ic question"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></div>
+                  <div class="main">
+                    <div class="title-line"><span class="rtitle">How do I export a single note to PDF?</span></div>
+                    <div class="rsub"><span class="num">#126</span><span class="sep"></span>Filed May 28<span class="sep"></span><span class="status closed"><i></i>Closed</span></div>
+                  </div>
+                  <div class="trail"><span class="when">May 30</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- iOS list -->
+      <div class="board">
+        <div class="label"><span class="name">iOS</span><span class="tag">large title · pull-to-refresh</span></div>
+        <div class="ios">
+          <div class="ios-screen">
+            <div class="ios-status"><span>9:41</span><span class="dynamic"></span><span class="right"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v3H2zM6 14h2v6H6zM10 11h2v9h-2zM14 8h2v12h-2zM18 5h2v15h-2z"/></svg><svg viewBox="0 0 28 14" fill="none"><rect x="1" y="1.5" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="3" y="3.5" width="16" height="7" rx="1.5" fill="currentColor"/><rect x="24.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg></span></div>
+            <div class="sheet">
+              <div class="gt-list-body">
+                <div class="gt-list-head"><h2>My Reports</h2><span class="gt-new-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span></div>
+                <div class="gt-list">
+                  <div class="gt-report-row">
+                    <div class="ic bug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/></svg></div>
+                    <div class="main">
+                      <div class="title-line"><span class="unread-dot"></span><span class="rtitle">Sync stalls when switching…</span></div>
+                      <div class="rsub"><span class="num">#128</span><span class="sep"></span><span class="status open"><i></i>Open</span></div>
+                    </div>
+                    <div class="trail"><span class="new-pill">2 NEW</span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span></div>
+                  </div>
+                  <div class="gt-report-row">
+                    <div class="ic feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/></svg></div>
+                    <div class="main">
+                      <div class="title-line"><span class="rtitle">Export notes as Markdown</span></div>
+                      <div class="rsub"><span class="num">#131</span><span class="sep"></span><span class="status open"><i></i>Open</span></div>
+                    </div>
+                    <div class="trail"><span class="when">Today</span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span></div>
+                  </div>
+                  <div class="gt-report-row">
+                    <div class="ic question"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></div>
+                    <div class="main">
+                      <div class="title-line"><span class="rtitle">How do I export to PDF?</span></div>
+                      <div class="rsub"><span class="num">#126</span><span class="sep"></span><span class="status closed"><i></i>Closed</span></div>
+                    </div>
+                    <div class="trail"><span class="when">May 30</span><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ios-home"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- empty state -->
+      <div class="board">
+        <div class="label"><span class="name">iOS</span><span class="tag">No reports yet</span></div>
+        <div class="ios">
+          <div class="ios-screen">
+            <div class="ios-status"><span>9:41</span><span class="dynamic"></span><span class="right"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v3H2zM6 14h2v6H6zM10 11h2v9h-2zM14 8h2v12h-2zM18 5h2v15h-2z"/></svg><svg viewBox="0 0 28 14" fill="none"><rect x="1" y="1.5" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="3" y="3.5" width="16" height="7" rx="1.5" fill="currentColor"/><rect x="24.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg></span></div>
+            <div class="sheet">
+              <div class="gt-list-body">
+                <div class="gt-list-head"><h2>My Reports</h2></div>
+                <div style="flex:1; display:flex; align-items:center; padding:var(--space-10) 0;">
+                  <div class="gt-empty none" style="width:100%">
+                    <div class="ill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+                    <h3>No reports yet</h3>
+                    <p>When you file an issue, it shows up here so you can track replies from the team.</p>
+                    <div class="acts"><button class="btn btn-primary"><span class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg> Report an issue</span></button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ios-home"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════ SECTION 2 — DETAIL VIEW ════════════════ -->
+  <section class="section">
+    <header>
+      <span class="eyebrow">IssueDetailView · the report you filed</span>
+      <h2>Showing your original report — two placements</h2>
+      <p class="note">The cached <span class="code">SubmissionRecord.body</span> is now surfaced so the screen is never just a header over a void. Option 1 keeps it in a distinct "Your report" card above the thread; Option 2 folds it in as the first post, GitHub-issue style.</p>
+    </header>
+    <div class="boards">
+
+      <!-- Detail variant 1 — macOS, "Your report" card + thread -->
+      <div class="board">
+        <div class="label"><span class="name">macOS</span><span class="tag">Option 1 · "Your report" card</span></div>
+        <div class="mac">
+          <div class="mac-bar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="title">Issue #128</div></div>
+          <div class="sheet scrolls">
+            <div class="gt-detail-body">
+              <div class="gt-issue-head">
+                <div class="meta-row">
+                  <span class="gt-badge bug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M5 12a7 7 0 0 1 14 0"/></svg> Bug</span>
+                  <span class="gt-badge open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg> Open</span>
+                  <span class="gt-num">acme/lumen #128</span>
+                </div>
+                <h2>Sync stalls when switching networks</h2>
+                <div class="submeta">Filed Jun 3, 2026<span class="dot"></span>2 replies<span class="dot"></span>last reply 4h ago</div>
+                <button class="gt-gh-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> Open on GitHub</button>
+              </div>
+
+              <div class="gt-op">
+                <div class="op-head"><span class="av">YOU</span><span class="who">Your report</span><span class="when">Jun 3, 2026</span></div>
+                <div class="op-body">
+                  <p>If I'm on Wi-Fi and walk out to cellular mid-sync, the spinner just hangs. Pull-to-refresh doesn't recover it — I have to force-quit. Started after <code>2.4</code>.</p>
+                  <div class="diag-fold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Diagnostics attached · <span style="color:var(--accent);font-weight:600;cursor:pointer">Show</span></div>
+                </div>
+              </div>
+
+              <div class="gt-thread-label"><span class="t">Replies</span><span class="c">2</span><span class="line"></span></div>
+
+              <div class="gt-comment">
+                <div class="av maint">AW</div>
+                <div class="bubble">
+                  <div class="b-head"><span class="name">alanw</span><span class="role">Maintainer</span><span class="time">Jun 4</span></div>
+                  <div class="b-body">Thanks for the detail. This smells like the reachability watcher not firing on interface change. Can you confirm it happens on cellular→Wi-Fi too, or only Wi-Fi→cellular?</div>
+                </div>
+              </div>
+              <div class="gt-comment">
+                <div class="av maint">AW</div>
+                <div class="bubble">
+                  <div class="b-head"><span class="name">alanw</span><span class="role">Maintainer</span><span class="time">4h ago</span></div>
+                  <div class="b-body">Reproduced. Fix is in <code>2.4.2</code> — the sync task now cancels and retries on path change. Beta out shortly.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail variant 2 — iOS, OP as first thread item -->
+      <div class="board">
+        <div class="label"><span class="name">iOS</span><span class="tag">Option 2 · report as first post</span></div>
+        <div class="ios">
+          <div class="ios-screen">
+            <div class="ios-status"><span>9:41</span><span class="dynamic"></span><span class="right"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v3H2zM6 14h2v6H6zM10 11h2v9h-2zM14 8h2v12h-2zM18 5h2v15h-2z"/></svg><svg viewBox="0 0 28 14" fill="none"><rect x="1" y="1.5" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="3" y="3.5" width="16" height="7" rx="1.5" fill="currentColor"/><rect x="24.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg></span></div>
+            <div class="gt-nav"><span class="nav-btn">‹ Reports</span><span class="nav-title">#128</span><span class="nav-btn muted"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></span></div>
+            <div class="sheet scrolls">
+              <div class="gt-detail-body">
+                <div class="gt-issue-head">
+                  <div class="meta-row"><span class="gt-badge bug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M5 12a7 7 0 0 1 14 0"/></svg> Bug</span><span class="gt-badge open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg> Open</span></div>
+                  <h2>Sync stalls when switching networks</h2>
+                  <div class="submeta">acme/lumen #128<span class="dot"></span>2 replies</div>
+                </div>
+                <div class="gt-thread-label"><span class="t">Conversation</span><span class="line"></span></div>
+                <div class="gt-comment">
+                  <div class="av" style="background:var(--accent)">YOU</div>
+                  <div class="bubble">
+                    <div class="b-head"><span class="name">You</span><span class="role" style="color:var(--accent);background:var(--accent-tint)">Reporter</span><span class="time">Jun 3</span></div>
+                    <div class="b-body">Spinner hangs when I move from Wi-Fi to cellular mid-sync. Pull-to-refresh doesn't recover it — have to force-quit. Started after <code>2.4</code>.
+                    <div class="diag-fold" style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;display:flex;align-items:center;gap:7px;font-size:var(--text-caption);color:var(--fg-muted)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Diagnostics attached · <span style="color:var(--accent);font-weight:600">Show</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="gt-comment">
+                  <div class="av maint">AW</div>
+                  <div class="bubble">
+                    <div class="b-head"><span class="name">alanw</span><span class="role">Maintainer</span><span class="time">4h ago</span></div>
+                    <div class="b-body">Reproduced. Fix is in <code>2.4.2</code> — the sync task now cancels and retries on path change.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ios-home"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════ SECTION 3 — EMPTY / ERROR ════════════════ -->
+  <section class="section">
+    <header>
+      <span class="eyebrow">IssueDetailView · empty &amp; error states</span>
+      <h2>A focused card — never a void</h2>
+      <p class="note">The cached report stays pinned at top, so even with no replies (or a failed fetch) the screen has substance. The state itself is a centered card with a plain explanation, "Open on GitHub", and Retry — not a banner floating in empty space.</p>
+    </header>
+    <div class="boards">
+
+      <!-- error — macOS -->
+      <div class="board">
+        <div class="label"><span class="name">macOS</span><span class="tag">Couldn't load replies</span></div>
+        <div class="mac">
+          <div class="mac-bar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="title">Issue #128</div></div>
+          <div class="sheet">
+            <div class="gt-detail-body">
+              <div class="gt-issue-head">
+                <div class="meta-row"><span class="gt-badge bug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M5 12a7 7 0 0 1 14 0"/></svg> Bug</span><span class="gt-num">acme/lumen #128</span></div>
+                <h2>Sync stalls when switching networks</h2>
+                <div class="submeta">Filed Jun 3, 2026</div>
+                <button class="gt-gh-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> Open on GitHub</button>
+              </div>
+              <div class="gt-op">
+                <div class="op-head"><span class="av">YOU</span><span class="who">Your report</span><span class="when">Jun 3, 2026</span></div>
+                <div class="op-body"><p>If I'm on Wi-Fi and walk out to cellular mid-sync, the spinner just hangs. Pull-to-refresh doesn't recover it — I have to force-quit. Started after <code>2.4</code>.</p></div>
+              </div>
+              <div class="gt-empty err">
+                <div class="ill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div>
+                <h3>Couldn't load replies</h3>
+                <p>We saved your report above. Replies live on GitHub — check your connection and try again.</p>
+                <div class="acts"><button class="btn btn-secondary">Open on GitHub</button><button class="btn btn-primary">Retry</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- empty (no replies) — iOS, elephant -->
+      <div class="board">
+        <div class="label"><span class="name">iOS</span><span class="tag">No replies yet</span></div>
+        <div class="ios">
+          <div class="ios-screen">
+            <div class="ios-status"><span>9:41</span><span class="dynamic"></span><span class="right"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v3H2zM6 14h2v6H6zM10 11h2v9h-2zM14 8h2v12h-2zM18 5h2v15h-2z"/></svg><svg viewBox="0 0 28 14" fill="none"><rect x="1" y="1.5" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="3" y="3.5" width="16" height="7" rx="1.5" fill="currentColor"/><rect x="24.5" y="5" width="2" height="4" rx="1" fill="currentColor" fill-opacity=".5"/></svg></span></div>
+            <div class="gt-nav"><span class="nav-btn">‹ Reports</span><span class="nav-title">#131</span><span class="nav-btn muted"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></span></div>
+            <div class="sheet">
+              <div class="gt-detail-body">
+                <div class="gt-issue-head">
+                  <div class="meta-row"><span class="gt-badge feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/></svg> Feature</span><span class="gt-num">#131</span></div>
+                  <h2>Export notes as Markdown</h2>
+                  <div class="submeta">Filed today</div>
+                </div>
+                <div class="gt-op">
+                  <div class="op-head"><span class="av">YOU</span><span class="who">Your request</span><span class="when">Today</span></div>
+                  <div class="op-body"><p>Would love a "Export as .md" option in the share sheet so I can drop notes straight into my repo.</p></div>
+                </div>
+                <div class="gt-empty none">
+                  <div class="ill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div>
+                  <h3>No replies yet</h3>
+                  <p>Sent just now. We'll surface replies here the moment a maintainer responds.</p>
+                  <div class="acts"><button class="btn btn-secondary">Open on GitHub</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="ios-home"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="callout-pin">
+    <div><b>Next:</b> these renders are the spec. The paste-ready SwiftUI lives in <span class="code">SwiftUI/</span> — <span class="code">GitTicketsView.swift</span>, <span class="code">IssueDetailView.swift</span>, and shared components — all driven by <span class="code">GitTicketsTheme</span> and gated with <span class="code">#if os(macOS)</span> / <span class="code">iOS</span> for title behavior. Tell me which field style (A or B) and which detail placement (1 or 2) to lock in and I'll trim the alternates from the code.</div>
+  </div>
+
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="22" fill="#007AFF"/><g transform="translate(30 30)" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10V7a5 5 0 0 1 10 0v3" transform="scale(1.6)"/><rect x="4" y="10" width="16" height="11" rx="2" transform="scale(1.6)"/></g></svg>
+</template>
+
+<script>
+  const seg = document.getElementById('theme-seg');
+  seg.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.documentElement.dataset.theme = b.dataset.themeSet;
+    seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  });
+</script>
+</body>
+</html>
