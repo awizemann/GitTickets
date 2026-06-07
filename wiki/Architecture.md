@@ -62,35 +62,40 @@ GitTickets.configure(.init(
 
 One menu integration per UI framework:
 
-- SwiftUI: `.commands { GitTicketsCommands() }` — adds "Report an Issue…" and "My Reports…" to the Help menu (macOS) or wires a `.gitTicketsReportButton()` modifier (iOS).
-- AppKit: `GitTicketsMenuItemFactory.makeReportIssueItem()` returns an `NSMenuItem` you add wherever you like.
-- UIKit: `present(GitTicketsViewController(kind: .bug), animated: true)`.
+- SwiftUI: `.commands { GitTicketsCommands { showingReport = true } }` — drops "Report an Issue…" into the Help menu (or whichever `CommandGroupPlacement` you pass). Pair with `GitTicketsMyIssuesCommands { showingMyIssues = true }` for the Phase 2 list. Both items carry default SF Symbol icons (`exclamationmark.bubble` + `tray`).
+- AppKit: `GitTicketsMenuItemFactory.makeReportIssueItem()` returns an `NSMenuItem` (with the matching SF Symbol set on `item.image`) wired to `ReportWindowController.shared` by default.
+- UIKit: `present(UINavigationController(rootViewController: GitTicketsViewController()), animated: true)`. The view controller subclasses `UIHostingController<GitTicketsView>` and ships with `title = "Report an Issue"`.
 
 ## Module layout
 
 See [Build Sequence](Build-Sequence) for the PR ordering. The file tree under `Sources/GitTickets/`:
 
-- `PublicAPI/` — `GitTickets.swift`, `Configuration.swift`, `AuthMode.swift`, `Models.swift`, errors, theme.
-- `Auth/` — `IssueSubmitter` protocol; `Relay/` (HMAC, payload, client); `DeviceFlow/` (coordinator, token store).
-- `Networking/` — `HTTPClient`, `GitHubAPI` for `GET /issues` and `GET /comments`, rate-limit backoff.
-- `Storage/` — `SubmissionCache` (SQLite), `DeviceIdentity`, `Keychain` wrapper.
+- `PublicAPI/` — `GitTickets.swift`, `Configuration.swift`, `AuthMode.swift`, `Models.swift` (incl. `IssueComment` + `CachedReport`), errors, theme.
+- `Auth/` — `IssueSubmitter` protocol; `Relay/` (HMAC, payload, client, submitter); `DeviceFlow/` (coordinator, token store, submitter).
+- `Networking/` — `HTTPClient`, `RateLimitBackoff`, `UserAgent`. The two submitters each own their GitHub-side API calls (relay path → `RelayClient`; device-flow path → inline `GET /repos/.../issues/N` + `/comments` helpers on `DeviceFlowSubmitter`).
+- `Storage/` — `SubmissionCache` (SQLite), `DeviceIdentity`, `TokenStore`, `Keychain` wrapper.
 - `Diagnostics/` — collector, blob, redaction pipeline, `OSLogTailer`, `DeviceInfo`.
-- `Screenshot/` — platform impls (macOS uses ScreenCaptureKit + CGWindowList fallback; iOS uses `UIGraphicsImageRenderer`).
-- `UI/SwiftUI/`, `UI/AppKit/`, `UI/UIKit/` — the three integration paths.
-- `Bodybuilder/` — assembles the markdown body, embeds the correlation marker.
+- `Screenshot/` — platform impls (macOS uses `ScreenCaptureKit` on macOS 14+ with a 13 fallback; iOS uses `UIGraphicsImageRenderer`).
+- `UI/SwiftUI/`, `UI/AppKit/`, `UI/UIKit/` — the three integration paths plus the redesigned form / detail / My Reports views.
+- `Bodybuilder/` — assembles the markdown body, embeds the correlation marker; ships an `extractUserBody(from:)` helper that the detail view's "Your report" card uses to strip the diagnostics block + marker.
 
 ## Phase 2 — My Issues
 
-Submission IDs are UUIDs embedded as `<!-- gittickets-id: UUID -->` HTML comments in the issue body. The SDK caches every submitted ID locally (SQLite). `GitTicketsMyIssuesView` queries either:
+Submission IDs are UUIDs embedded as `<!-- gittickets-id: UUID -->` HTML comments in the issue body. The SDK caches every submitted ID + the assembled body + the kind locally (SQLite). `GitTicketsMyIssuesView` reads `GitTickets.cachedSubmissions()` for instant first paint and `GitTickets.refreshMyIssues()` to ask the active submitter for fresh state.
 
-- **Relay path**: `POST {relayURL}/my-issues` with the local ID list. Relay does `GET /repos/.../issues?labels=gittickets&state=all`, matches embedded UUIDs server-side, returns metadata + comment counts.
-- **Device Flow path**: SDK calls `GET /repos/.../issues?creator=@me&labels=gittickets` directly with the user's token (no relay needed; OAuth identity is the filter).
+- **Relay path**: `POST {relayURL}/my-issues` with the local ID list. Relay does `GET /repos/.../issues?labels=gittickets&state=all`, matches embedded UUIDs server-side, returns metadata + comment counts. Comments load via `POST {relayURL}/comments` per opened issue.
+- **Device Flow path**: SDK walks the cache's known issue numbers and `GET /repos/.../issues/N` per record (cheaper than walking GitHub Search). Comments load via `GET /repos/.../issues/N/comments` directly with the user's token. A 401 from either endpoint wipes the dead token and throws `.deviceFlowNotAuthorized` so the form re-prompts.
 
-Tapping a row opens `IssueDetailView` which fetches `GET /repos/.../issues/{n}/comments` via the same path and renders each comment with `AttributedString(markdown:)`. Mark-as-read state lives in SQLite.
+Tapping a row opens `IssueDetailView` which surfaces three sections: the cached issue body (via `GitTickets.cachedReport(for:)`), an "Open on GitHub" link, and the comment thread rendered through `AttributedString(markdown:)` with `interpretedSyntax: .inlineOnlyPreservingWhitespace`. Mark-as-read state lives in SQLite via `GitTickets.markRepliesRead(submissionID:count:)`.
 
 ## Theming
 
-`GitTicketsTheme` (fonts, accent override, corner radius, optional header image) injected via `.environment(\.gitTicketsTheme, .myTheme)`. Defaults inherit the host app's `.accentColor` and system fonts — most apps need no customization.
+`GitTicketsTheme` (accent override, three fonts, corner radius, header image source enum, submit button style enum) reaches the views via two paths, in precedence order:
+
+1. `Configuration.theme` — set at app launch via `GitTickets.configure(_:)`. The top-level views (`GitTicketsView`, `GitTicketsMyIssuesView`, `IssueDetailView`) all resolve `configuration?.theme ?? envTheme`, so this wins for most adopters.
+2. `\.gitTicketsTheme` SwiftUI environment value — useful when you want a per-presentation override without rewiring `Configuration`.
+
+Defaults inherit the host app's `Color.accentColor` and use system semantic surface colors (`.windowBackgroundColor` / `.systemGroupedBackground` etc.), so the package adapts to light/dark and any host accent automatically. The visual look + tokens for the v1.0 design come from `design/design_handoff_gittickets_views_generic/` — see [the design folder's README](../design/design_handoff_gittickets_views_generic/README.md) for the full equivalences table.
 
 ## What we deliberately don't do
 
@@ -98,7 +103,7 @@ Tapping a row opens `IssueDetailView` which fetches `GET /repos/.../issues/{n}/c
 - Don't auto-capture screenshots. User must tap "Add Screenshot."
 - Don't bundle fonts or color assets. Borrowed appearance beats imposed appearance.
 - Don't depend on any production Swift package. System frameworks only.
-- Don't try to render `.github/ISSUE_TEMPLATE/*.yml` Issue Forms in v1 — that's a v1.1 magic move ([Wiki Footgun](https://example.com/footguns)).
+- Don't try to render `.github/ISSUE_TEMPLATE/*.yml` Issue Forms in v1 — see [Footgun — Issue Forms Are Web-UI-Only](../.memory/footguns/) (web-UI-only field semantics; the GitHub API exposes raw markdown). v1.1 candidate.
 
 ---
-_Last updated: 2026-06-04 — initial architecture seed_
+_Last updated: 2026-06-06 — refreshed for v1.0 shipped (UI inits + Phase 2 paths + theming precedence)_

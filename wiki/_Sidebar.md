@@ -4,7 +4,7 @@ type: note
 permalink: gittickets-wiki/sidebar
 ---
 
-**Getting Started**
+**Start here**
 - [Home](Home)
 - [Getting Started](Getting-Started)
 
@@ -17,9 +17,13 @@ permalink: gittickets-wiki/sidebar
 - [Device Flow](Device-Flow)
 - [Diagnostics & Screenshots](Diagnostics-and-Screenshots)
 
-**Planning**
-- [Build Sequence](Build-Sequence)
-
 **Reference**
 - [Patterns & Gotchas](Patterns-and-Gotchas)
+- [Build Sequence](Build-Sequence) — shipped record
 - [Wiki Maintenance](Wiki-Maintenance)
+
+**Adopter-facing docs**
+- [`/docs/`](../docs/)
+
+**Design**
+- [`/design/`](../design/)

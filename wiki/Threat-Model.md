@@ -50,13 +50,13 @@ Vercel Blob free-tier URLs are time-limited (90 days). After expiry, attached im
 
 ## App Store / privacy review
 
-A `PrivacyInfo.xcprivacy` ships with the package, declaring:
+A `PrivacyInfo.xcprivacy` ships with the package (declared as a target resource via `Package.swift`'s `.copy(...)`), declaring:
 
-- `NSPrivacyTracking: false`
-- Collected data types: CrashData (the bug body, if user describes a crash), PerformanceData (memory/disk diagnostics), OtherDiagnosticData, DeviceID (our deviceID UUID) — all linked-to-app-functionality, none linked-to-tracking.
-- Required-reasons APIs: `DiskSpace` reason `85F4.1`, `UserDefaults` reason `CA92.1`.
+- `NSPrivacyTracking: false`, no tracking domains.
+- Three collected data types — `OtherDiagnosticData` (the diagnostics blob), `DeviceID` (the per-install UUID from `DeviceIdentity`), `PhotosorVideos` (user-attached images). All `Linked=false / Tracking=false / Purpose=AppFunctionality`.
+- One required-reasons API: `DiskSpace` reason `85F4.1` (for `URL.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])` in `DiagnosticsCollector.freeDiskDescription`).
 
-Adopters must re-declare these in their app's privacy manifest. `docs/privacy.md` provides reviewer-facing paste copy.
+The PR 18 audit dropped the speculative `CrashData` / `PerformanceData` / `UserDefaults` claims from the initial draft after `grep` confirmed zero use. Adopters must declare these in their app's privacy manifest too. `docs/privacy.md` provides reviewer-facing paste copy + the manifest-merge semantics.
 
 ## Reporting vulnerabilities
 
@@ -78,4 +78,4 @@ Specific traps the PR 1–8 code review caught and the conventions that now prev
 The consolidated cheat-sheet view is [[Patterns and Gotchas]] in the wiki.
 
 ---
-_Last updated: 2026-06-04 — pitfalls section added after PR 1–8 code review_
+_Last updated: 2026-06-06 — privacy-manifest declarations refreshed against the shipped `PrivacyInfo.xcprivacy`_

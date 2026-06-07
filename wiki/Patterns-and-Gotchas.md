@@ -222,11 +222,34 @@ Detail: [[Footgun — Sendable Lies in Public Types]]
 
 **Rule:** When the SDK has a public `GitTicketsLogger` protocol, propagate it through every layer where a best-effort failure could otherwise be invisible. Cache writes, OSLog reads, file permission changes — all candidates.
 
+## AppKit menu item targets are weak
+
+**Trap:** Build an `NSMenuItem` in a factory function with a target that's a fresh class instance — `let target = MenuActionTarget(...)`. Once the factory returns, `target` is the only strong reference. `NSMenuItem.target` is weak. The trampoline deallocates immediately; the menu click does nothing in production. Code review can't see this because the factory returns "a fully configured menu item."
+
+**Rule:** Always stash the action target in `NSMenuItem.representedObject` (which IS strong) so its lifetime is tied to the menu item. The `GitTicketsMenuItemFactory` test `test_targetIsRetainedAcrossScope` builds inside an inner closure to force the local-scope `target` to go out before the assertion fires.
+
+Detail: [[Footgun — NSMenuItem Target Is Weak]]
+
+## iOS Sim XCTest can't reach the Keychain
+
+**Trap:** Add a Keychain-backed feature with full unit tests. `swift test` passes on macOS. `xcodebuild test` against an iOS Simulator fails 26 tests with `errSecMissingEntitlement (-34018)` — the SPM test bundle has no `keychain-access-groups` entitlement and no host-app context to supply one.
+
+**Rule:** Don't trust a green iOS Sim BUILD as proof Keychain code works on iOS — run `xcodebuild test` periodically. Three known fix paths: host-app target with `keychain-access-groups` entitlement (Apple's standard pattern); `kSecUseDataProtectionKeychain: true` (one-line change in `Keychain.swift`); or `#if !targetEnvironment(simulator)` skip with a clear marker.
+
+**Rule:** Don't enable iOS-Sim `xcodebuild test` in CI until this is fixed. The badge would go permanently red on a non-bug.
+
+Detail: [[Footgun — iOS Sim XCTest Has No Keychain Entitlement]]
+
 ## How to use this page
 
 - New PR that touches networking / signing → re-read the HMAC and Networking sections, plus their footguns.
 - New PR that touches the issue body or any caller-controlled string → re-read Markdown and Multipart.
 - New PR that introduces concurrent state → re-read Swift concurrency.
 - New PR that touches storage → re-read SQLite and Keychain.
+- New PR that wires AppKit / Cocoa-target callbacks → re-read **AppKit menu item targets are weak**.
+- New PR that touches CI or iOS-Sim test runs → re-read **iOS Sim XCTest can't reach the Keychain**.
 
 Add a new section here when a code review surfaces a class of bug we want to remember. Each section should pair a concrete trap with the concrete rule that prevents recurrence — abstract advice doesn't survive contact with the next reviewer.
+
+---
+_Last updated: 2026-06-06 — added NSMenuItem-weak-target + iOS-Sim-Keychain entries from this session's PRs_
