@@ -113,6 +113,7 @@ final class GitTicketsSurfaceTests: XCTestCase {
             .deviceFlowDenied,
             .deviceFlowExpired,
             .deviceFlowPending,
+            .deviceFlowNotAuthorized,
             .attachmentTooLarge(byteLimit: 5_242_880),
             .attachmentNotSupportedInDeviceFlow,
             .payloadInvalid(reason: "title empty"),
@@ -120,6 +121,32 @@ final class GitTicketsSurfaceTests: XCTestCase {
         ]
         for error in cases {
             XCTAssertFalse(error.description.isEmpty, "Description empty for \(error)")
+        }
+    }
+
+    /// Shape-match check: when `.deviceFlow` is configured but no token is in the Keychain,
+    /// `submit()` must reach the DeviceFlowSubmitter and surface `.deviceFlowNotAuthorized`
+    /// — NOT the throwing stub the resolver used to carry. This locks the wiring so a
+    /// future regression that swaps the dispatch back to a stub gets caught.
+    func test_deviceFlowDispatchReachesSubmitter() async throws {
+        // Ensure no token is left behind from another test in this process — `TokenStore`'s
+        // default service is shared across the test runner's lifetime.
+        try? TokenStore().delete()
+        let config = Configuration(
+            repo: Self.testRepo,
+            auth: .deviceFlow(clientID: "Iv1.test", scopes: [.publicRepo])
+        )
+        GitTickets.configure(config)
+        let report = Report(kind: .bug, title: "Test", body: "Body")
+        do {
+            _ = try await GitTickets.submit(report)
+            XCTFail("Expected deviceFlowNotAuthorized")
+        } catch GitTicketsError.deviceFlowNotAuthorized {
+            // expected — no token in the host's Keychain for this clientID, so the
+            // submitter rejects before any HTTP. Confirms dispatch reached the real
+            // submitter rather than the old payloadInvalid stub.
+        } catch {
+            XCTFail("Unexpected error: \(error)")
         }
     }
 }

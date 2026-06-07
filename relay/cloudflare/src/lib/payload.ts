@@ -6,6 +6,7 @@ import { z } from "zod";
 
 export const CURRENT_REPORT_SCHEMA_VERSION = 1;
 export const CURRENT_MY_ISSUES_SCHEMA_VERSION = 1;
+export const CURRENT_COMMENTS_SCHEMA_VERSION = 1;
 
 export const ReportRequestSchema = z.object({
   schemaVersion: z.literal(CURRENT_REPORT_SCHEMA_VERSION),
@@ -31,6 +32,14 @@ export const MyIssuesRequestSchema = z.object({
 });
 
 export type MyIssuesRequest = z.infer<typeof MyIssuesRequestSchema>;
+
+export const CommentsRequestSchema = z.object({
+  schemaVersion: z.literal(CURRENT_COMMENTS_SCHEMA_VERSION),
+  issueNumber: z.number().int().positive(),
+  deviceID: z.string().min(1).max(128),
+});
+
+export type CommentsRequest = z.infer<typeof CommentsRequestSchema>;
 
 export const ALLOWED_MIME_TYPES = new Set([
   "image/png",

@@ -10,11 +10,15 @@
     },
     "api/my-issues.ts": {
       "maxDuration": 15
+    },
+    "api/comments.ts": {
+      "maxDuration": 15
     }
   },
   "rewrites": [
     { "source": "/report", "destination": "/api/report" },
     { "source": "/attachment", "destination": "/api/attachment" },
-    { "source": "/my-issues", "destination": "/api/my-issues" }
+    { "source": "/my-issues", "destination": "/api/my-issues" },
+    { "source": "/comments", "destination": "/api/comments" }
   ]
 }

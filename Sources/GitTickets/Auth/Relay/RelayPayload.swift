@@ -106,6 +106,38 @@ struct MyIssuesItem: Codable, Sendable, Hashable {
     let latestReplyAt: String?
 }
 
+// MARK: - POST /comments
+
+/// Request body sent to `POST /comments`. The relay proxies to GitHub's
+/// `GET /repos/:owner/:name/issues/:n/comments`.
+struct CommentsRequest: Codable, Sendable, Hashable {
+    let schemaVersion: Int
+    let issueNumber: Int
+    let deviceID: String
+
+    /// Wire-format schema version for the `/comments` endpoint. Versioned
+    /// independently of the other endpoints so they can evolve apart.
+    static let currentSchemaVersion = 1
+
+    init(issueNumber: Int, deviceID: String) {
+        self.schemaVersion = Self.currentSchemaVersion
+        self.issueNumber = issueNumber
+        self.deviceID = deviceID
+    }
+}
+
+/// Response from `POST /comments`. Ordered oldest comment first.
+struct CommentsResponse: Codable, Sendable, Hashable {
+    let comments: [CommentsItem]
+}
+
+struct CommentsItem: Codable, Sendable, Hashable {
+    let id: Int
+    let author: String
+    let body: String
+    let createdAt: String  // ISO 8601 with fractional seconds, UTC
+}
+
 // MARK: - Generic error
 
 /// Relay error envelope, returned with non-2xx responses when the relay

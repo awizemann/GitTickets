@@ -164,6 +164,44 @@ Only matched submissions are returned. The relay lists issues with the `gitticke
 
 ---
 
+## `POST /comments`
+
+Returns every comment on one GitHub issue, oldest first. Backs the
+SDK's `IssueDetailView` reply thread.
+
+### Request body (JSON)
+
+```jsonc
+{
+  "schemaVersion": 1,
+  "issueNumber": 42,
+  "deviceID": "stable-per-install-id"
+}
+```
+
+### Response body (JSON, HTTP 200)
+
+```jsonc
+{
+  "comments": [
+    {
+      "id": 1234567890,
+      "author": "alanw",
+      "body": "Thanks — can you share your OS version?",
+      "createdAt": "2026-06-04T13:30:00Z"
+    }
+  ]
+}
+```
+
+Implementations page through GitHub's `GET /repos/:owner/:name/issues/:n/comments`
+up to 5 pages × 100 (= 500 comments). A 404 from GitHub (issue gone or
+not visible to the installation) is mapped to `200` with an empty
+`comments` array — the SDK renders "no replies yet" rather than a hard
+error, which is the right UX for either case.
+
+---
+
 ## Error envelope (non-2xx)
 
 When the relay returns a non-2xx status with a JSON body, the body MUST conform to:

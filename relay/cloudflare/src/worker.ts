@@ -10,6 +10,7 @@ import { parseEnv, EnvError, type WorkerEnv } from "./lib/env.js";
 import { handleReport } from "./handlers/report.js";
 import { handleAttachment } from "./handlers/attachment.js";
 import { handleMyIssues } from "./handlers/myIssues.js";
+import { handleComments } from "./handlers/comments.js";
 import { jsonError } from "./lib/responses.js";
 import { log } from "./lib/logger.js";
 
@@ -42,6 +43,9 @@ export default {
         case "/my-issues":
         case "/api/my-issues":
           return await handleMyIssues(request, parsed);
+        case "/comments":
+        case "/api/comments":
+          return await handleComments(request, parsed);
         default:
           return jsonError(404, "not_found");
       }

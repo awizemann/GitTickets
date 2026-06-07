@@ -32,11 +32,15 @@ The package builds on macOS 13+ and iOS 16+ (Swift 5.9 toolchain).
 
 ## Workflow
 
-1. Pick the lowest unstarted item from `TASKS.md` `## Todo`.
+1. Pick the lowest unstarted item from [`TASKS.md`](TASKS.md) `## Todo`. The 20-PR v1.0 build sequence has shipped (see [wiki/Build-Sequence.md](wiki/Build-Sequence.md) for the historical record); remaining items are post-v1 polish + v1.1 candidates.
 2. Move it to `## Doing`.
 3. Branch off `main` (`git checkout -b prN-short-description`).
-4. Implement. Each PR is one merge; the build plan is in [wiki/Build-Sequence.md](wiki/Build-Sequence.md).
-5. Run `swift test` locally. CI must be green.
+4. Implement.
+5. Run the baselines locally:
+   - `swift test` for the SDK (~210 cases).
+   - `cd relay/vercel && npm test` (~37 vitest cases).
+   - `cd relay/cloudflare && npm test` (~32 vitest cases).
+   - `xcodebuild -scheme GitTickets -destination 'generic/platform=iOS Simulator' build` for the iOS compile check.
 6. Open a PR. Reference the task line in the description.
 7. After merge, move the task to `## Done`.
 

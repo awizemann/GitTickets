@@ -260,6 +260,23 @@ struct RelaySubmitter: IssueSubmitter {
         return (match.replyCount, match.latestReplyAt)
     }
 
+    /// Fetches the comment thread for one issue via the relay's `/comments`
+    /// endpoint. Ordered oldest first so the UI can render top-down without
+    /// re-sorting.
+    func fetchComments(issueNumber: Int, deviceID: String) async throws -> [IssueComment] {
+        let request = CommentsRequest(issueNumber: issueNumber, deviceID: deviceID)
+        let response = try await client.fetchComments(request)
+        return response.comments.compactMap { item -> IssueComment? in
+            guard let createdAt = Self.parseISO8601(item.createdAt) else { return nil }
+            return IssueComment(
+                id: item.id,
+                author: item.author,
+                body: item.body,
+                createdAt: createdAt
+            )
+        }
+    }
+
     /// Wire-format → public ``SubmittedIssue`` projection. Returns nil when
     /// the relay response is malformed (bad UUID, unparseable URL) — the
     /// caller filters nils out rather than throwing partial-data errors

@@ -73,6 +73,19 @@ struct RelayClient: Sendable {
         return try decode(response, as: MyIssuesResponse.self)
     }
 
+    // MARK: - POST /comments
+
+    func fetchComments(_ request: CommentsRequest) async throws -> CommentsResponse {
+        let body = try RelayJSON.encoder.encode(request)
+        let response = try await postSigned(
+            path: "comments",
+            body: body,
+            contentType: "application/json",
+            idempotencyKey: nil
+        )
+        return try decode(response, as: CommentsResponse.self)
+    }
+
     // MARK: - Private helpers
 
     /// Builds a signed POST request, sends it via ``HTTPClient``, and maps

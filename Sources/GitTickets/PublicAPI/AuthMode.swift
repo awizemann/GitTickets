@@ -66,13 +66,18 @@ public enum AuthMode: Sendable {
     case relay(url: URL, sharedSecret: SharedSecret)
 
     /// Opt-in mode. End-user authenticates to GitHub via OAuth Device Flow;
-    /// submissions would be posted directly to the GitHub Issues API using
-    /// the resulting user token (no relay needed).
+    /// submissions are posted directly to the GitHub Issues API using the
+    /// resulting user token (no relay needed). Issues are authored by the
+    /// end-user, not the developer.
     ///
-    /// > Not yet implemented. ``GitTickets/submit(_:)`` throws
-    /// > ``GitTicketsError/payloadInvalid(reason:)`` when this case is
-    /// > active. Use ``relay(url:sharedSecret:)`` until the Device Flow
-    /// > submitter ships.
+    /// Image attachments are NOT supported in this mode — GitHub has no public
+    /// attachment upload API and Device Flow has no relay-side storage.
+    /// Submissions with attachments throw ``GitTicketsError/attachmentNotSupportedInDeviceFlow``.
+    ///
+    /// Submissions before the user has completed the OAuth flow throw
+    /// ``GitTicketsError/deviceFlowNotAuthorized``. The form must drive
+    /// `DeviceFlowCoordinator` and persist the resulting token via
+    /// `TokenStore` before calling ``GitTickets/submit(_:)``.
     ///
     /// - Parameters:
     ///   - clientID: OAuth App client ID. See [Device Flow docs](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow).

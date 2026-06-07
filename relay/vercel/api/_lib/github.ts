@@ -124,6 +124,55 @@ export interface GitHubComment {
   createdAt: string;
 }
 
+export interface GitHubFullComment {
+  id: number;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
+/**
+ * Pages through up to 5 pages × 100 comments on the given issue, sorted
+ * oldest first. Bounded so a single hot issue with thousands of bot
+ * comments doesn't time out the function — the SDK only renders a few
+ * dozen anyway, so capping at 500 is well above any realistic UI need.
+ */
+export async function listComments(args: {
+  owner: string;
+  repo: string;
+  issueNumber: number;
+  installationToken: string;
+  fetchFn?: typeof fetch;
+}): Promise<GitHubFullComment[]> {
+  const fetchFn = args.fetchFn ?? fetch;
+  const all: GitHubFullComment[] = [];
+  for (let page = 1; page <= 5; page += 1) {
+    const url =
+      `https://api.github.com/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}/issues/${args.issueNumber}/comments` +
+      `?per_page=100&page=${page}`;
+    const response = await fetchFn(url, { headers: githubHeaders(args.installationToken) });
+    if (!response.ok) {
+      throw new GitHubAPIError(response.status, await response.text());
+    }
+    const items = (await response.json()) as Array<{
+      id: number;
+      body: string | null;
+      created_at: string;
+      user: { login: string } | null;
+    }>;
+    for (const item of items) {
+      all.push({
+        id: item.id,
+        author: item.user?.login ?? "",
+        body: item.body ?? "",
+        createdAt: item.created_at,
+      });
+    }
+    if (items.length < 100) break; // last page
+  }
+  return all;
+}
+
 export async function latestComment(args: {
   owner: string;
   repo: string;

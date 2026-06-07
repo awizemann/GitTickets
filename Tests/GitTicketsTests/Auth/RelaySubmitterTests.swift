@@ -463,6 +463,50 @@ final class RelaySubmitterTests: XCTestCase {
         XCTAssertNil(result.latestReplyAt)
     }
 
+    // MARK: - PR 15 — fetchComments
+
+    func test_fetchCommentsRoundTrips() async throws {
+        let commentsURL = relayURL.appendingPathComponent("comments")
+        var capturedBody: Data?
+        MockURLProtocol.handlers[commentsURL] = { request in
+            capturedBody = request.httpBody ?? Self.bodyFromBodyStream(request)
+            let response = CommentsResponse(comments: [
+                CommentsItem(id: 100, author: "maintainer", body: "Got it.", createdAt: "2026-06-04T13:00:00Z"),
+                CommentsItem(id: 101, author: "reporter", body: "Thanks!", createdAt: "2026-06-04T14:00:00Z"),
+            ])
+            let data = try RelayJSON.encoder.encode(response)
+            return (HTTPURLResponse(url: commentsURL, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
+        }
+
+        let comments = try await makeSubmitter().fetchComments(issueNumber: 42, deviceID: "device-1")
+        XCTAssertEqual(comments.count, 2)
+        XCTAssertEqual(comments[0].id, 100)
+        XCTAssertEqual(comments[0].author, "maintainer")
+        XCTAssertEqual(comments[0].body, "Got it.")
+        XCTAssertEqual(comments[1].id, 101)
+
+        // Body must carry the issueNumber so the relay knows which thread to fetch.
+        let body = String(data: capturedBody ?? Data(), encoding: .utf8) ?? ""
+        XCTAssertTrue(body.contains("\"issueNumber\":42"))
+        XCTAssertTrue(body.contains("\"deviceID\":\"device-1\""))
+    }
+
+    func test_fetchCommentsSkipsMalformedDates() async throws {
+        let commentsURL = relayURL.appendingPathComponent("comments")
+        MockURLProtocol.handlers[commentsURL] = { _ in
+            let response = CommentsResponse(comments: [
+                CommentsItem(id: 1, author: "x", body: "ok", createdAt: "not-a-date"),
+                CommentsItem(id: 2, author: "y", body: "fine", createdAt: "2026-06-04T13:00:00Z"),
+            ])
+            let data = try RelayJSON.encoder.encode(response)
+            return (HTTPURLResponse(url: commentsURL, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
+        }
+        let comments = try await makeSubmitter().fetchComments(issueNumber: 5, deviceID: "d")
+        // Malformed-date row dropped (compactMap), well-formed row survives.
+        XCTAssertEqual(comments.count, 1)
+        XCTAssertEqual(comments[0].id, 2)
+    }
+
     // MARK: - Helpers
 
     private static func bodyFromBodyStream(_ request: URLRequest) -> Data {

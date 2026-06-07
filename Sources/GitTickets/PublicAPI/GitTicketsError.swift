@@ -32,6 +32,12 @@ public enum GitTicketsError: Error, Sendable {
     /// `DeviceFlowCoordinator` directly should keep polling.
     case deviceFlowPending
 
+    /// `AuthMode.deviceFlow` is configured but no token is stored yet (the user
+    /// hasn't completed the OAuth flow on this install), or the previously
+    /// stored token was revoked server-side. Hosts should drive
+    /// `DeviceFlowCoordinator` and retry the submission once a token is in hand.
+    case deviceFlowNotAuthorized
+
     /// Attachment exceeds the configured byte limit (default 5 MB).
     case attachmentTooLarge(byteLimit: Int)
 
@@ -66,6 +72,8 @@ extension GitTicketsError: CustomStringConvertible {
             return "Device Flow user code expired before authorization completed."
         case .deviceFlowPending:
             return "Device Flow authorization is still pending."
+        case .deviceFlowNotAuthorized:
+            return "Device Flow has not been authorized on this install. Run DeviceFlowCoordinator and store the resulting token before submitting."
         case .attachmentTooLarge(let byteLimit):
             return "Attachment exceeds the \(byteLimit)-byte limit."
         case .attachmentNotSupportedInDeviceFlow:

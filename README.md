@@ -4,7 +4,7 @@ A drop-in Swift package (macOS 13+ / iOS 16+) that gives any app a "Report an Is
 
 End-users get a native form, screenshots, diagnostics, and a privacy banner. Submissions land directly as issues in your repo. Phase 2 (also in v1): users browse their past submissions and see your replies as a thread, inside the app.
 
-Bar: Sparkle-easy to integrate. Add the package, point it at your relay, drop `GitTicketsCommands()` into your SwiftUI `Commands` builder.
+Bar: Sparkle-easy to integrate. Add the package, point it at your relay, drop `GitTicketsCommands { … }` into your SwiftUI `Commands` builder.
 
 ## 30-second setup
 
@@ -13,6 +13,8 @@ import GitTickets
 
 @main
 struct MyApp: App {
+    @State private var showingReport = false
+
     init() {
         GitTickets.configure(.init(
             repo: .init(owner: "alanw", name: "MyApp", visibility: .public),
@@ -24,13 +26,18 @@ struct MyApp: App {
     }
 
     var body: some Scene {
-        WindowGroup { ContentView() }
-            .commands { GitTicketsCommands() }
+        WindowGroup {
+            ContentView()
+                .sheet(isPresented: $showingReport) { GitTicketsView() }
+        }
+        .commands {
+            GitTicketsCommands { showingReport = true }
+        }
     }
 }
 ```
 
-The Help menu now contains "Report an Issue…" and "My Reports…".
+The Help menu now contains "Report an Issue…". See [`docs/getting-started.md`](docs/getting-started.md) for the `Window`-scene pattern, the AppKit + UIKit variants, and the per-host sample apps under [`Examples/`](Examples/).
 
 ## Why a relay
 
@@ -49,15 +56,24 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-v1.0 is under active construction. Tracking lives in [`TASKS.md`](TASKS.md). The 20-PR plan is in [`wiki/Build-Sequence.md`](wiki/Build-Sequence.md).
+v1.0.0 is shipped. Feature scope is frozen for the 1.x line; the Phase 2 "My Reports" in-app reply view is on the roadmap as a v1.x point release. See [`CHANGELOG.md`](CHANGELOG.md) for what landed and [`TASKS.md`](TASKS.md) for the active board.
 
 ## Documentation
 
-- [Architecture](wiki/Architecture.md) — client SDK + dual auth, data flow.
-- [Threat Model](wiki/Threat-Model.md) — what the relay protects against.
-- [Relay Deployment](wiki/Relay-Deployment.md) — Vercel + Cloudflare walkthrough.
-- [Device Flow](wiki/Device-Flow.md) — opt-in OAuth path.
-- [Diagnostics & Screenshots](wiki/Diagnostics-and-Screenshots.md) — what we collect, redaction, capture.
+The docs that ship with the SDK live under [`docs/`](docs/):
+
+- [Getting started](docs/getting-started.md) — install, configure, wire the UI.
+- [Architecture](docs/architecture.md) — client SDK + dual auth, data flow.
+- [Threat model](docs/threat-model.md) — what the relay protects against (and doesn't).
+- [Relay deployment](docs/relay-deployment.md) — Vercel + Cloudflare walkthrough.
+- [Device Flow](docs/device-flow.md) — opt-in OAuth path.
+- [Theming](docs/theming.md) — `GitTicketsTheme` fields + examples.
+- [Diagnostics](docs/diagnostics.md) — what's collected, redaction, opt-outs.
+- [Privacy](docs/privacy.md) — privacy manifest + adopter guidance.
+
+## Design
+
+The default visual look ships as a Claude Design handoff under [`design/design_handoff_gittickets_views_generic/`](design/design_handoff_gittickets_views_generic/). Open `reference/GitTickets Redesign (Generic).html` in a browser to see the macOS + iOS frames the SwiftUI is designed to. The design is theme-agnostic — adopters override the accent via `Configuration.theme` without touching the layout.
 
 ## License
 

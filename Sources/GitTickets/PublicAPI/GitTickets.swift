@@ -44,8 +44,8 @@ public enum GitTickets {
     ///    blank, so per-device rate limiting and Phase 2 "My Issues"
     ///    correlation work even when the caller didn't supply one.
     /// 3. Resolves the active ``AuthMode`` to a submitter
-    ///    (``RelaySubmitter`` for `.relay`; the Device Flow submitter is
-    ///    not yet implemented).
+    ///    (``RelaySubmitter`` for `.relay`, ``DeviceFlowSubmitter`` for
+    ///    `.deviceFlow`).
     /// 4. Forwards to the submitter, which uploads attachments, assembles the
     ///    body, POSTs to GitHub (via relay), and writes the result into the
     ///    shared ``SubmissionCache``.
@@ -67,6 +67,86 @@ public enum GitTickets {
         return try await submitter.submit(report)
     }
 
+    // MARK: - Phase 2 — My Issues
+
+    /// All locally-cached submissions, newest first. Reads the
+    /// ``SubmissionCache`` without hitting the network — backs
+    /// ``GitTicketsMyIssuesView`` for instant render on appear.
+    ///
+    /// Returns an empty array if the cache is unavailable (first-launch
+    /// failure to open the SQLite file, sandboxed test runners without a
+    /// support directory, etc.).
+    public static func cachedSubmissions() -> [SubmittedIssue] {
+        guard let configuration,
+              let cache = cacheStorage.shared(logger: configuration.logger),
+              let records = try? cache.allRecords()
+        else { return [] }
+        return records.map(\.asSubmittedIssue)
+    }
+
+    /// Asks the active submitter for fresh state on each cached submission.
+    /// Updates the cache in place and returns the post-refresh projections.
+    /// Powers the manual-refresh action in ``GitTicketsMyIssuesView``.
+    ///
+    /// Failures from the submitter propagate; the cache is left intact.
+    public static func refreshMyIssues() async throws -> [SubmittedIssue] {
+        guard let configuration else { throw GitTicketsError.notConfigured }
+        let submitter = try resolveSubmitter(configuration: configuration)
+        let cache = cacheStorage.shared(logger: configuration.logger)
+        let cachedIDs = (try? cache?.allRecords())?.map(\.submissionID) ?? []
+        guard !cachedIDs.isEmpty else { return [] }
+        let deviceID = currentDeviceID(logger: configuration.logger)
+        return try await submitter.fetchMyIssues(submissionIDs: cachedIDs, deviceID: deviceID)
+    }
+
+    /// Fetches the comment thread for one issue. Reads through to the active
+    /// submitter — relay-backed apps hit `/comments`, Device Flow apps hit
+    /// `/repos/:owner/:name/issues/:n/comments` directly.
+    public static func fetchComments(issueNumber: Int) async throws -> [IssueComment] {
+        guard let configuration else { throw GitTicketsError.notConfigured }
+        let submitter = try resolveSubmitter(configuration: configuration)
+        let deviceID = currentDeviceID(logger: configuration.logger)
+        return try await submitter.fetchComments(issueNumber: issueNumber, deviceID: deviceID)
+    }
+
+    /// Marks all of the issue's replies as read. Persists into the
+    /// ``SubmissionCache`` so the unread badge clears across launches.
+    public static func markRepliesRead(submissionID: UUID, count: Int) {
+        guard let configuration,
+              let cache = cacheStorage.shared(logger: configuration.logger)
+        else { return }
+        try? cache.markRepliesRead(submissionID: submissionID, count: count)
+    }
+
+    /// Returns the cached report for a past submission — kind, the
+    /// user-typed body (diagnostics + marker stripped), submitted timestamp,
+    /// and whether diagnostics were attached. Used by ``IssueDetailView`` to
+    /// render the "Your report" card.
+    ///
+    /// Returns `nil` when there's no cached record (cache failed to open,
+    /// or the submission was filed by a sibling install).
+    public static func cachedReport(for submissionID: UUID) -> CachedReport? {
+        guard let configuration,
+              let cache = cacheStorage.shared(logger: configuration.logger),
+              let record = try? cache.record(submissionID: submissionID)
+        else { return nil }
+        return CachedReport(
+            kind: record.kind,
+            body: IssueBodyBuilder.extractUserBody(from: record.body),
+            submittedAt: record.submittedAt,
+            // The bodybuilder only emits "### Diagnostics" when there's a
+            // non-empty diagnostics blob, so its presence in the cached body
+            // is the source of truth for the "Diagnostics attached" affordance.
+            includedDiagnostics: record.body.contains("### Diagnostics")
+        )
+    }
+
+    /// Convenience alias for hosts that only need the stripped body string.
+    /// Equivalent to `cachedReport(for:)?.body`.
+    public static func cachedBody(submissionID: UUID) -> String? {
+        cachedReport(for: submissionID)?.body
+    }
+
     // MARK: - Internal storage
 
     /// Resets the active configuration. Test-only.
@@ -80,11 +160,10 @@ public enum GitTickets {
 
     // MARK: - Helpers
 
-    /// Resolves the active ``AuthMode`` into a submitter. Production code
-    /// hits the relay path; ``AuthMode/deviceFlow(clientID:scopes:)`` is
-    /// declared but its submitter is not yet implemented;
-    /// ``AuthMode/mock`` exists for tests that want a no-op auth slot but
-    /// has no production dispatch.
+    /// Resolves the active ``AuthMode`` into a submitter. Both production
+    /// modes — ``AuthMode/relay(url:sharedSecret:)`` and
+    /// ``AuthMode/deviceFlow(clientID:scopes:)`` — have dispatch.
+    /// ``AuthMode/mock`` is test-only and has no production submitter.
     private static func resolveSubmitter(
         configuration: Configuration
     ) throws -> any IssueSubmitter {
@@ -98,12 +177,16 @@ public enum GitTickets {
             }
             return submitter
         case .deviceFlow:
-            throw GitTicketsError.payloadInvalid(
-                reason: "Device Flow submitter is not yet implemented. Use AuthMode.relay for now."
-            )
+            guard let submitter = DeviceFlowSubmitter(
+                configuration: configuration,
+                cache: cacheStorage.shared(logger: configuration.logger)
+            ) else {
+                throw GitTicketsError.notConfigured
+            }
+            return submitter
         case .mock:
             throw GitTicketsError.payloadInvalid(
-                reason: "AuthMode.mock has no production submitter. Use AuthMode.relay."
+                reason: "AuthMode.mock has no production submitter. Use AuthMode.relay or AuthMode.deviceFlow."
             )
         }
     }

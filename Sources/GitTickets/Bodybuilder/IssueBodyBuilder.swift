@@ -145,4 +145,46 @@ enum IssueBodyBuilder {
             .replacingOccurrences(of: "[", with: "\\[")
             .replacingOccurrences(of: "]", with: "\\]")
     }
+
+    /// Pulls the user-typed body out of an assembled cached body — strips
+    /// the trailing correlation marker, the diagnostics fenced block, the
+    /// attachments section, and the inline screenshot. Used by
+    /// ``IssueDetailView`` so we can show the user their original report
+    /// rather than the full assembled markdown including the diagnostics
+    /// they already saw at submit time.
+    ///
+    /// Heuristic — relies on the assembly order in ``build(report:diagnostics:screenshotURL:attachments:)``
+    /// (user body first, sections joined by `\n\n`, diagnostics block opens
+    /// with `---`). Falls back to "everything minus the marker" when no
+    /// diagnostics section is present.
+    static func extractUserBody(from cached: String) -> String {
+        // 1. Drop the correlation marker — always present, always last.
+        var working = cached
+        if let markerRange = working.range(
+            of: #"<!--\s*gittickets-id:\s*[0-9A-Fa-f-]{36}\s*-->"#,
+            options: .regularExpression
+        ) {
+            working.removeSubrange(markerRange)
+        }
+        // 2. Cut at the diagnostics block divider if present. The bodybuilder
+        // joins sections with "\n\n" and the diagnostics section starts with
+        // a literal "---" — so the boundary is "\n\n---\n".
+        if let divider = working.range(of: "\n\n---\n") {
+            working = String(working[..<divider.lowerBound])
+        }
+        // 3. Cut at an "### Attachments" header that sits without a diagnostics
+        // block in front of it (rare: no diagnostics + has attachments).
+        if let attachments = working.range(of: "\n\n### Attachments") {
+            working = String(working[..<attachments.lowerBound])
+        }
+        // 4. Drop a trailing inline screenshot line that the bodybuilder
+        // emits as its own section.
+        if let screenshot = working.range(
+            of: #"\n\n!\[screenshot]\([^)]+\)\s*$"#,
+            options: .regularExpression
+        ) {
+            working = String(working[..<screenshot.lowerBound])
+        }
+        return working.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }

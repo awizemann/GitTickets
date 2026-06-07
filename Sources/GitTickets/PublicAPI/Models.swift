@@ -198,3 +198,76 @@ public struct SubmittedIssue: Sendable, Identifiable, Hashable {
         self.missingLabels = missingLabels
     }
 }
+
+/// One comment on a GitHub issue, as surfaced by ``IssueDetailView``.
+///
+/// Markdown content lives in ``body``; the rendering layer is responsible for
+/// turning it into something a SwiftUI ``Text`` view can display.
+///
+/// `Hashable + Identifiable` so SwiftUI lists can diff comment arrays
+/// without an explicit `id:` key path.
+public struct IssueComment: Sendable, Hashable, Identifiable {
+
+    /// GitHub's per-comment identifier.
+    public let id: Int
+
+    /// The author's GitHub login (e.g. `"alanw"`). Empty when the comment was
+    /// posted by a bot or when the relay omits the author for privacy reasons.
+    public let author: String
+
+    /// Raw markdown body, exactly as stored on GitHub. ``MarkdownCommentView``
+    /// renders this through `AttributedString(markdown:)`.
+    public let body: String
+
+    /// When the comment was created on GitHub.
+    public let createdAt: Date
+
+    public init(id: Int, author: String, body: String, createdAt: Date) {
+        self.id = id
+        self.author = author
+        self.body = body
+        self.createdAt = createdAt
+    }
+
+    /// Markdown alias for the redesigned view layer that uses
+    /// ``bodyMarkdown`` rather than ``body``. Backed by the same bytes.
+    public var bodyMarkdown: String { body }
+
+    /// Whether the comment author is recognized as a repo maintainer.
+    /// Always `false` in v1.x — the relay doesn't surface GitHub
+    /// collaborator membership and we don't probe it locally. A future
+    /// relay schema bump can wire this; consumers may treat as a hint.
+    public var isMaintainer: Bool { false }
+}
+
+/// The locally-cached, as-submitted report rendered by ``IssueDetailView``'s
+/// "Your report" card.
+///
+/// Returned by ``GitTickets/cachedReport(for:)``. The ``body`` is the user's
+/// authored text with the diagnostics block, attachments section, inline
+/// screenshot, and correlation marker stripped — exactly what they typed.
+public struct CachedReport: Sendable, Hashable {
+
+    /// Bug / feature request / question.
+    public let kind: ReportKind
+
+    /// User-authored body, stripped of diagnostics + marker.
+    public let body: String
+
+    /// When the SDK submitted the report locally (precedes GitHub's
+    /// `created_at` by however long the round-trip took).
+    public let submittedAt: Date
+
+    /// Whether the body that landed on GitHub carried a diagnostics
+    /// section. Drives the "Diagnostics attached" affordance in the
+    /// report card. Derived from the cached body at lookup time so the
+    /// flag matches what's actually on GitHub.
+    public let includedDiagnostics: Bool
+
+    public init(kind: ReportKind, body: String, submittedAt: Date, includedDiagnostics: Bool) {
+        self.kind = kind
+        self.body = body
+        self.submittedAt = submittedAt
+        self.includedDiagnostics = includedDiagnostics
+    }
+}

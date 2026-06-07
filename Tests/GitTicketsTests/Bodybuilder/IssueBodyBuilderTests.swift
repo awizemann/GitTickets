@@ -195,4 +195,74 @@ final class IssueBodyBuilderTests: XCTestCase {
         XCTAssertTrue(output.contains("%29"), "literal `)` should be percent-encoded in markdown URL")
         XCTAssertFalse(output.contains("?key=a)b"), "raw `)` would terminate the link early")
     }
+
+    // MARK: - extractUserBody round-trips
+
+    func test_extractUserBodyFromMinimalBuild() {
+        let assembled = IssueBodyBuilder.build(
+            report: makeReport(body: "App crashes when I tap save."),
+            diagnostics: nil,
+            screenshotURL: nil,
+            attachments: []
+        )
+        XCTAssertEqual(IssueBodyBuilder.extractUserBody(from: assembled), "App crashes when I tap save.")
+    }
+
+    func test_extractUserBodyDropsDiagnosticsBlock() {
+        let assembled = IssueBodyBuilder.build(
+            report: makeReport(body: "Body before diagnostics."),
+            diagnostics: "OS: macOS 26\nApp: MyApp 1.0",
+            screenshotURL: nil,
+            attachments: []
+        )
+        let extracted = IssueBodyBuilder.extractUserBody(from: assembled)
+        XCTAssertEqual(extracted, "Body before diagnostics.")
+        XCTAssertFalse(extracted.contains("Diagnostics"))
+        XCTAssertFalse(extracted.contains("macOS 26"))
+    }
+
+    func test_extractUserBodyDropsInlineScreenshot() {
+        let assembled = IssueBodyBuilder.build(
+            report: makeReport(body: "Look at this."),
+            diagnostics: nil,
+            screenshotURL: URL(string: "https://relay.test/abc.png"),
+            attachments: []
+        )
+        let extracted = IssueBodyBuilder.extractUserBody(from: assembled)
+        XCTAssertEqual(extracted, "Look at this.")
+        XCTAssertFalse(extracted.contains("relay.test"))
+    }
+
+    func test_extractUserBodyDropsAttachmentsSectionWithoutDiagnostics() {
+        let attachments = [
+            UploadedAttachment(
+                filename: "log.txt",
+                url: URL(string: "https://relay.test/log.txt")!,
+                mimeType: "text/plain"
+            )
+        ]
+        let assembled = IssueBodyBuilder.build(
+            report: makeReport(body: "Body."),
+            diagnostics: nil,
+            screenshotURL: nil,
+            attachments: attachments
+        )
+        let extracted = IssueBodyBuilder.extractUserBody(from: assembled)
+        XCTAssertEqual(extracted, "Body.")
+        XCTAssertFalse(extracted.contains("### Attachments"))
+        XCTAssertFalse(extracted.contains("log.txt"))
+    }
+
+    func test_extractUserBodyStripsMarkerOnly() {
+        let bodyText = "Just body. No --- in it."
+        let assembled = IssueBodyBuilder.build(
+            report: makeReport(body: bodyText),
+            diagnostics: nil,
+            screenshotURL: nil,
+            attachments: []
+        )
+        let extracted = IssueBodyBuilder.extractUserBody(from: assembled)
+        XCTAssertEqual(extracted, bodyText)
+        XCTAssertFalse(extracted.contains("gittickets-id"))
+    }
 }

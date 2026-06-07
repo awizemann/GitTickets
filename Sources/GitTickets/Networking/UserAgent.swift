@@ -10,7 +10,7 @@ import UIKit
 enum UserAgent {
 
     /// SDK version baked at compile time. Updated alongside CHANGELOG entries.
-    static let sdkVersion = "1.0.0-dev"
+    static let sdkVersion = "1.0.0"
 
     /// Composes the final User-Agent string from the host bundle and the
     /// runtime device + OS.
