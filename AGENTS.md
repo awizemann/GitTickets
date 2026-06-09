@@ -140,38 +140,52 @@ hosting, email, dns, monitoring, analytics, anything billed or credentialed.
   agent session unless the user asks — the editor wires up the Keychain credential
   atomically with the file.
 
-**7. Packages (`packages/`) — reusable starter kits.** Folder-per-package at
+**7. Packages (`packages/`) — reusable integration recipes.** Folder-per-package at
 `packages/<slug>/` with a required `manifest.md` (YAML frontmatter + canonical body
 sections: Prerequisites / Steps / Variables / Verification) and an optional
-`templates/` subfolder of files the apply step copies + parameterises into the
-project. Packages capture "how to add Paddle payments" or "wire up SendGrid email"
-so the next project starts from a working scaffold instead of from scratch.
+`reference/` subfolder of verbatim source files from the originating project — kept
+as worked examples for the next agent to study, not as substrate to mechanically
+`cp` + `sed` into a new project. Packages capture "how we wired Paddle into this
+project" so the next project's agent reads the recipe and adapts the patterns to
+its own codebase.
+- **A package is documentation + recipe, NOT a turn-key install.** The manifest's
+  Steps section is narrative prose with 5–10 line inline code snippets for the
+  critical signatures, plus pointers at `reference/<file>` for the full
+  implementation. The Variables section documents which concepts vary between
+  projects (e.g. "BUNDLE_ID — your target project's bundle id; the source project
+  used `com.example`"), NOT a substitution table. The next agent reads both and
+  decides where in ITS codebase the equivalents go, adapting to its conventions.
 - **The `/memophant-package <description>` convention.** When the user types a
   message beginning with `/memophant-package`, treat the remainder as a brief naming
-  the package they want applied. Steps: (1) `list_directory(dirname: "packages",
+  the integration they want applied to THIS project. Steps: (1) `list_directory(dirname: "packages",
   project: "gittickets")` to enumerate available packages; (2) `read_note` the
-  best matching `manifest.md`; (3) confirm the Prerequisites section with the user
-  BEFORE any file write; (4) walk the Steps section top-to-bottom, substituting
-  Variables, copying templates from the package's `templates/` subfolder, reporting
-  progress; (5) run the Verification checks and report status. The plan-first
-  convention applies — write the apply plan to `documents/plans/` before executing.
+  best matching `manifest.md`; (3) read any `reference/` files the Steps point at
+  so you understand the shape; (4) confirm the Prerequisites with the user; (5)
+  ADAPT each step to this project's codebase — file layout, naming conventions,
+  framework choices may differ from the source project; (6) run the Verification
+  checks. Plan-first convention applies — write the apply plan to
+  `documents/plans/` before executing.
 - Search via `search_notes(query: "<text>", project: "gittickets-packages")` —
   the tier registers its own engine index, so hybrid search ("set up Paddle
   payments") returns the right hit even when the slug is something generic like
   `payments-1`.
-- **No raw credentials in manifests or templates.** Templates ship PLACEHOLDER values
-  (`{{ PADDLE_API_TOKEN }}`, `<your-key-here>`, `replace_me`) that the apply step
-  substitutes at install time. Concrete-looking credentials are HARD-blocked by the
-  writer on save. When a package needs a credential, it points at a Vendor record via
-  `vendor_refs:` in the manifest frontmatter — the Vendor owns the Keychain item, the
-  package just references it.
-- **Creating a package** from an existing project is currently a manual flow — Add
-  Package from the Memophant app, then fill in the manifest sections that describe
-  the integration. The Claude-assisted "Extract from this project…" agent flow is
-  deferred to a later phase.
-- **Sharing a package** between projects: copy the `packages/<slug>/` folder from one
-  repo into another. The Memophant app surfaces a "Copy to another project…" action
-  in a later phase; for now, plain filesystem copy works.
+- **No raw credentials in manifests or references.** The manifest can carry
+  PLACEHOLDER guidance (`{{ PADDLE_API_TOKEN }}`, `<your-key-here>`) in its
+  Variables section. Reference files are verbatim source — they SHOULD NOT
+  contain real credentials because the original source didn't either (credentials
+  live in Vendors/Keychain). Concrete-looking credentials are HARD-blocked by the
+  writer in BOTH manifest and reference paths. When a package needs a credential,
+  it points at a Vendor record via `vendor_refs:` in the manifest frontmatter —
+  the Vendor owns the Keychain item; the package just references it.
+- **Creating a package** from an existing project: in the Memophant app, click
+  "Extract package from this project…" in the Packages tier header. Pick the
+  folders/files that make up the integration; describe what it is in one line;
+  Claude reads the source, drafts the four manifest sections (with inline
+  snippets for the critical signatures), and includes every selected file as a
+  verbatim reference. You review, accept/edit/reject per section, and save.
+- **Sharing a package** between projects: copy the `packages/<slug>/` folder from
+  one repo into another. The Memophant app surfaces a "Copy to another project…"
+  action in a later phase; for now, plain filesystem copy works.
 
 **8. Tasks (`TASKS.md`) — the work board.** A repo-resident kanban in plain Markdown: `## Todo`,
 `## Doing`, `## Done` sections, each a checklist (`- [ ]` / `- [x]`). It travels with the repo and
