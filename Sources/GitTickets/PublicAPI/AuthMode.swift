@@ -117,7 +117,10 @@ public struct SharedSecret: Sendable, Hashable {
     /// would silently reject.
     public init?(base64: String) {
         let trimmed = base64.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let data = Data(base64Encoded: trimmed, options: [.ignoreUnknownCharacters]) else { return nil }
+        // No `.ignoreUnknownCharacters`: with that option, "!!!" decodes to
+        // empty Data and slips through as a 0-byte secret. Trimming alone
+        // handles the env-pull trailing-newline case the option was added for.
+        guard let data = Data(base64Encoded: trimmed), !data.isEmpty else { return nil }
         self.bytes = data
     }
 

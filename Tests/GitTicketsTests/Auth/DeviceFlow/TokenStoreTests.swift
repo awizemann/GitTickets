@@ -5,13 +5,26 @@ final class TokenStoreTests: XCTestCase {
 
     private var service: String!
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        #if targetEnvironment(simulator) && os(iOS)
+        // iOS Sim XCTest bundles lack keychain-access-groups entitlement; every
+        // SecItem* call returns errSecMissingEntitlement (-34018). Covered on
+        // the macOS test job and on real devices. See:
+        // .memory/footguns/footgun-ios-sim-xctest-has-no-keychain-entitlement.md
+        throw XCTSkip("Keychain unavailable in iOS Simulator SPM test bundle")
+        #else
         service = "com.gittickets.tests.token-store.\(UUID().uuidString)"
+        #endif
     }
 
     override func tearDown() {
-        try? Keychain.delete(service: service, account: TokenStore.defaultAccount)
+        // `service` is left nil on iOS Sim because setUpWithError throws
+        // XCTSkip before assigning it — guard against the implicit-unwrap
+        // crash that would mask the skip in the test report.
+        if let service {
+            try? Keychain.delete(service: service, account: TokenStore.defaultAccount)
+        }
         super.tearDown()
     }
 

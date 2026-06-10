@@ -12,6 +12,13 @@ final class DeviceFlowSubmitterTests: XCTestCase {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
+        #if targetEnvironment(simulator) && os(iOS)
+        // iOS Sim XCTest bundles lack keychain-access-groups entitlement; the
+        // TokenStore writes below would fail with errSecMissingEntitlement
+        // (-34018). Covered on the macOS test job and on real devices. See:
+        // .memory/footguns/footgun-ios-sim-xctest-has-no-keychain-entitlement.md
+        throw XCTSkip("Keychain unavailable in iOS Simulator SPM test bundle")
+        #endif
         MockURLProtocol.handlers.removeAll()
 
         tokenService = "com.gittickets.tests.df-submitter.\(UUID().uuidString)"
@@ -26,7 +33,11 @@ final class DeviceFlowSubmitterTests: XCTestCase {
 
     override func tearDownWithError() throws {
         MockURLProtocol.handlers.removeAll()
-        try? Keychain.delete(service: tokenService, account: TokenStore.defaultAccount)
+        // `tokenService` is left nil on iOS Sim because setUpWithError throws
+        // XCTSkip before assigning it.
+        if let tokenService {
+            try? Keychain.delete(service: tokenService, account: TokenStore.defaultAccount)
+        }
         cache = nil
         if let dbURL {
             try? FileManager.default.removeItem(at: dbURL.deletingLastPathComponent())

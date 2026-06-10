@@ -6,13 +6,25 @@ final class KeychainTests: XCTestCase {
     private var service: String!
     private let account = "test-account"
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        #if targetEnvironment(simulator) && os(iOS)
+        // iOS Sim XCTest bundles lack keychain-access-groups entitlement; every
+        // SecItem* call returns errSecMissingEntitlement (-34018). Covered on
+        // the macOS test job and on real devices. See:
+        // .memory/footguns/footgun-ios-sim-xctest-has-no-keychain-entitlement.md
+        throw XCTSkip("Keychain unavailable in iOS Simulator SPM test bundle")
+        #else
         service = "com.gittickets.tests.\(UUID().uuidString)"
+        #endif
     }
 
     override func tearDown() {
-        try? Keychain.delete(service: service, account: account)
+        // `service` is left nil on iOS Sim because setUpWithError throws
+        // XCTSkip before assigning it.
+        if let service {
+            try? Keychain.delete(service: service, account: account)
+        }
         super.tearDown()
     }
 

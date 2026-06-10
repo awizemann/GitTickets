@@ -24,7 +24,14 @@ final class DeviceInfoTests: XCTestCase {
     }
 
     func test_unknownIdentifierFallsBackToRaw() {
-        XCTAssertEqual(DeviceInfo.humanReadable(for: "iPhone99,99"), "iPhone99,99")
+        let result = DeviceInfo.humanReadable(for: "iPhone99,99")
+        #if targetEnvironment(simulator)
+        // On Sim, DeviceInfo wraps unknown identifiers as "Simulator (...)"
+        // to distinguish the runner from a real device.
+        XCTAssertEqual(result, "Simulator (iPhone99,99)")
+        #else
+        XCTAssertEqual(result, "iPhone99,99")
+        #endif
     }
 
     func test_humanReadableForCurrentDeviceIsNonEmpty() {
