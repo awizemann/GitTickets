@@ -1,7 +1,12 @@
 name = "gittickets-relay"
 main = "src/worker.ts"
 compatibility_date = "2026-06-01"
-workers_dev = true
+
+# Production custom domain. Cloudflare auto-provisions the DNS record + cert on
+# deploy because memophant.co is a zone on this account. workers.dev stays off so
+# the relay is reachable only at its stable hostname (the app bakes this URL in).
+workers_dev = false
+routes = [{ pattern = "tickets.memophant.co", custom_domain = true }]
 
 # Default knobs — override in production via dashboard or wrangler.
 [vars]
@@ -11,38 +16,39 @@ GITTICKETS_DEVICE_HOURLY_LIMIT = "10"
 GITTICKETS_ATTACHMENT_BYTE_LIMIT = "5242880"
 GITTICKETS_REPLAY_WINDOW_SECONDS = "300"
 
+# Public, non-secret config — these exact values already ship in the app's
+# committed GitTicketsConfig.swift, so they live here as plain vars, not secrets.
+GITHUB_OWNER = "awizemann"
+GITHUB_REPO = "Memophant"
+GITTICKETS_R2_PUBLIC_BASE_URL = "https://attachments.memophant.co"
+
 # ──────────────────────────────────────────────────────────────────────
-# Bindings — uncomment and fill in after running:
-#
+# Bindings — provisioned on the "Alan Wizemann, LLC" account. To recreate:
 #   wrangler r2 bucket create gittickets-attachments
 #   wrangler kv namespace create RATE_LIMIT
 #   wrangler kv namespace create IDEMPOTENCY
-#
-# The CLI prints the IDs; paste them below.
+# then paste the printed IDs below.
 # ──────────────────────────────────────────────────────────────────────
 
-# [[r2_buckets]]
-# binding = "BLOB"
-# bucket_name = "gittickets-attachments"
+[[r2_buckets]]
+binding = "BLOB"
+bucket_name = "gittickets-attachments"
 
-# [[kv_namespaces]]
-# binding = "RATE_LIMIT"
-# id = "<paste id from `wrangler kv namespace create`>"
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "89ec514b477c4e5096bda372bf766580"
 
-# [[kv_namespaces]]
-# binding = "IDEMPOTENCY"
-# id = "<paste id>"
+[[kv_namespaces]]
+binding = "IDEMPOTENCY"
+id = "c1e27162af9a4fc69fe7b7d5430713c2"
 
 # ──────────────────────────────────────────────────────────────────────
-# Secrets — set via:
+# Secrets — set with `wrangler secret put` (never committed):
+#   GITHUB_APP_ID
+#   GITHUB_APP_PRIVATE_KEY_BASE64   (base64-wrapped PKCS#8 PEM)
+#   GITHUB_INSTALLATION_ID
+#   GITTICKETS_SHARED_SECRET        (hex; must match the app's baked secret)
 #
-#   wrangler secret put GITHUB_APP_ID
-#   wrangler secret put GITHUB_APP_PRIVATE_KEY_BASE64
-#   wrangler secret put GITHUB_INSTALLATION_ID
-#   wrangler secret put GITHUB_OWNER
-#   wrangler secret put GITHUB_REPO
-#   wrangler secret put GITTICKETS_SHARED_SECRET
-#
-# Optional R2 public domain (for stable attachment URLs):
-#   GITTICKETS_R2_PUBLIC_BASE_URL = "https://attachments.your-app.com"
+# GITHUB_OWNER / GITHUB_REPO / GITTICKETS_R2_PUBLIC_BASE_URL are public and
+# live in [vars] above, not as secrets.
 # ──────────────────────────────────────────────────────────────────────
