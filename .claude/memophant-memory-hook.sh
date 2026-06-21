@@ -7,9 +7,33 @@
 # GEMINI_PROJECT_DIR are tried in order.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)"
 [ -z "$ROOT" ] && ROOT="${CLAUDE_PROJECT_DIR:-${CODEX_PROJECT_DIR:-${GEMINI_PROJECT_DIR:-.}}}"
+# Git worktrees don't carry the gitignored .memophant/mcp/ binary, so this checkout's tracked
+# .mcp.json (command ./.memophant/mcp/memophant-mcp) points at a missing
+# file and the memophant MCP server can't launch there. Self-heal silently: if the binary is
+# absent and we're in a linked worktree, symlink it from the main worktree (the shared
+# --git-common-dir's parent). Gated on the binary being missing, so the normal checkout pays
+# nothing. The symlink lands in the gitignored .memophant/ so it's never committed.
+MCP_BIN="$ROOT/.memophant/mcp/memophant-mcp"
+if [ ! -x "$MCP_BIN" ]; then
+  common="$(git -C "$ROOT" rev-parse --git-common-dir 2>/dev/null)"
+  if [ -n "$common" ]; then
+    case "$common" in /*) ;; *) common="$ROOT/$common" ;; esac
+    main_root="$(cd "$common/.." 2>/dev/null && pwd)"
+    main_bin="$main_root/.memophant/mcp/memophant-mcp"
+    if [ -n "$main_root" ] && [ -x "$main_bin" ] && [ "$main_bin" != "$MCP_BIN" ]; then
+      mkdir -p "$ROOT/.memophant/mcp" 2>/dev/null && ln -sf "$main_bin" "$MCP_BIN" 2>/dev/null
+    fi
+  fi
+fi
+PROMPT_FILE="$HOME/Library/Application Support/Memophant/session-prompt.txt"
+if [ -s "$PROMPT_FILE" ]; then
+  echo '## Operator instructions (set in Memophant → Settings — applies to every session)'
+  cat "$PROMPT_FILE"
+  echo ''
+fi
 echo '## Repo memory (managed by Memophant) — the single source of truth'
 echo 'Use the repo memory; record durable decisions/learnings here, not in session-private memory.'
-echo 'Search via the `memophant` MCP server tools (search_notes, read_note, build_context). Fallback: grep .memory/ and wiki/.'
+echo 'PREFER the `memophant` MCP server tools for everything they can do — searching, reading, and writing memory/wiki/design/code/vendors/templates (search_memories, read_memory, write_memory, edit_memory, build_context, and more). They are the PRIMARY interface; get to know them before you start and reach for ad-hoc file reads/greps/hand-edits only as a last resort. Found or made a credential? Store it as a project vendor with `set_vendor_credential` instead of leaving it in chat. Fallback when the server is down: grep .memory/ and wiki/.'
 if [ -d "$ROOT/.memory" ]; then
   echo ''
   total=$(find "$ROOT/.memory" -type f -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
@@ -21,7 +45,7 @@ if [ -d "$ROOT/.memory" ]; then
     find "$ROOT/.memory" -type f -name '*.md' 2>/dev/null | sed "s#^$ROOT/.memory/##" | sed 's#/.*##' | sort | uniq -c | while read -r c d; do echo "- $d ($c)"; done
     echo 'Most recently updated:'
     git -C "$ROOT" log -n 80 --diff-filter=ACMRT --name-only --pretty=format: -- "$ROOT/.memory" 2>/dev/null | grep '\.md$' | sed 's#^.*\.memory/##' | awk 'NF && !seen[$0]++' | head -n 10 | while IFS= read -r n; do echo "- $n"; done
-    echo 'Search the rest via the `memophant` MCP server (search_notes "<query>") or: find .memory -name "*.md".'
+    echo 'Search the rest via the `memophant` MCP server (search_memories "<query>") or: find .memory -name "*.md".'
   fi
 fi
 if [ -d "$ROOT/wiki" ]; then
@@ -34,7 +58,7 @@ if [ -d "$ROOT/design" ]; then
 fi
 if [ -f "$ROOT/TASKS.md" ]; then
   echo ''
-  echo 'Task board (TASKS.md): read it, move items to Doing/Done as you work, and add tasks you discover.'
+  echo 'Task board (TASKS.md): read it; set a task status by MOVING its line between ## Todo/Doing/Done (status lives in the board line, not the tasks/<id>.md status: mirror Memophant manages), and add tasks you discover.'
   open_items=$(grep -c '^- \[ \]' "$ROOT/TASKS.md" 2>/dev/null)
   echo "Open checklist items: ${open_items:-0}"
 fi
@@ -49,7 +73,7 @@ if [ -f "$HEALTH_FILE" ]; then
   echo ''
   if grep -q '"status"[[:space:]]*:[[:space:]]*"ready"' "$HEALTH_FILE" 2>/dev/null; then
     tools=$(grep -o '"tool_count"[[:space:]]*:[[:space:]]*[0-9]*' "$HEALTH_FILE" | grep -o '[0-9]*' | head -n 1)
-    echo "MCP server: ✓ memophant (${tools:-?} tools)"
+    echo "MCP server: ✓ memophant (${tools:-?} tools) — review what each does before you start, and prefer them over ad-hoc file ops."
   else
     reason=$(grep -o '"reason"[[:space:]]*:[[:space:]]*"[^"]*"' "$HEALTH_FILE" | sed 's/.*"\([^"]*\)"$/\1/' | head -n 1)
     echo "MCP server: ✗ memophant${reason:+ — $reason}"
