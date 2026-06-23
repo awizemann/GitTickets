@@ -49,8 +49,10 @@ decisions and learnings.
   from the title. The display title comes from frontmatter `title:` (always), with the
   prettified filename as a fallback. So title `"GitHub Status Service"` → file
   `github-status-service.md`, and the UI renders `GitHub Status Service`. Use `write_memory`
-  for new notes — it slug-generates correctly. **Folder names** are lowercase singular:
-  `architecture`, `decisions`, `conventions`, `operations`, `project`, `roadmap`.
+  for new notes — it slug-generates correctly. **Always file each note under exactly one of the
+  six canonical folders** (lowercase) — never omit `folder` (that drops the note at the memory
+  root) and never invent a new folder or pass a description as the folder. The six:
+  `architecture/` — How major systems fit together; long-lived structural truth.; `conventions/` — Coding / naming / workflow conventions the team agreed on.; `decisions/` — Discrete choices with rationale (architecture decision records).; `operations/` — Runbooks, recurring tasks, infrastructure ops, build/deploy notes.; `project/` — Project-level facts (name, owner, scope, contact, repo URL).; `roadmap/` — Forward-looking plans, milestones, follow-up queues.
 - Reindex happens automatically after every write_memory / edit_memory; for direct file edits,
   use the Memophant app's "Reindex" action or restart the MCP server.
 - Optional provenance frontmatter — `source_paths` (repo files a note depends on) + `source_sha`
@@ -229,6 +231,10 @@ its own codebase.
 is yours to edit directly.
 - **Read `TASKS.md` at the start of work.** When you pick up a task, move its line into `## Doing`;
   when you finish, move it into `## Done` (and flip the checkbox to `- [x]`).
+- **Prefer the `memophant` MCP task tools** — `create_task` (title + optional description/plan),
+  `move_task(id, status)`, `update_task`, `list_tasks`. They own the `t-xxxxxx` id + the board line
+  + the `tasks/<id>.md` detail file atomically, so a board-only orphan (or prose dumped onto the
+  board) can't happen. Hand-editing `TASKS.md` (below) still works as a fallback when the server's down.
 - Add tasks you discover to `## Todo` with a SHORT imperative title — the board card shows the
   title verbatim, so don't pack a paragraph into it. When a task needs real detail, annotate the
   line `(id: t-xxxxxx)` (`t-` + 6 random hex) and create `tasks/t-xxxxxx.md` with frontmatter
@@ -243,7 +249,7 @@ is yours to edit directly.
   makes the two disagree, Memophant reconciles by last-edit-wins — but the board line is canonical.)
 
 **Commits for `.memory/`, `wiki/`, `design/`, `code/`, `sessions/`, `documents/`,
-`vendors/`, `templates/`, and `TASKS.md` are owned by Memophant.** When you write_memory, edit a wiki/design/code page, move a
+`vendors/`, `templates/`, `TASKS.md`, and `tasks/` are owned by Memophant.** When you write_memory, edit a wiki/design/code page, move a
 task on the board, drop a file into `documents/`, or import a session, those files become dirty
 in git — **do NOT `git add` or `git commit` them yourself.** The user runs each tier's commit
 through Memophant's commit modal, which routes every change through the two-tier secret scan
@@ -252,7 +258,7 @@ commit).
 - **Yours to commit:** application code, configs, scripts, infrastructure — anything OUTSIDE the
   tier folders above. Use plain `git add` / `git commit` like any other repo.
 - **Memophant's to commit:** anything under `.memory/`, `wiki/`, `design/`, `code/`,
-  `sessions/`, `documents/`, `vendors/`, `templates/`, and `TASKS.md`. After your task, **leave these files
+  `sessions/`, `documents/`, `vendors/`, `templates/`, `TASKS.md`, and `tasks/`. After your task, **leave these files
   dirty** if the work touched them — Memophant's commit bar shows per-tier "uncommitted"
   chips with counts so the user decides when to commit each tier with its own secret-scanned
   message.

@@ -25,6 +25,22 @@ if [ ! -x "$MCP_BIN" ]; then
     fi
   fi
 fi
+HEALTH_FILE="$ROOT/.memophant/mcp/health.json"
+# Memophant "active" indicator — a cheap, worktree-safe liveness PROXY computed at session
+# start. The hook runs BEFORE this session's MCP connection, so it confirms the PIECES are in
+# place (the binary is present + memophant is registered + this repo has a .memory/ tier), not
+# that the model has connected. Emitted FIRST so the agent leads with "tools available"; the
+# operator's custom instructions follow. tool_count is enriched from health.json when present
+# (the app writes it on the main checkout; it's gitignored, so absent in worktrees — the line
+# still shows, just without the count).
+MEMO_REGISTERED=""
+if [ -f "$ROOT/.mcp.json" ] && grep -q '"memophant"' "$ROOT/.mcp.json" 2>/dev/null; then MEMO_REGISTERED="yes"; fi
+if [ -z "$MEMO_REGISTERED" ] && [ -f "$HOME/.claude.json" ] && grep -q '"memophant"' "$HOME/.claude.json" 2>/dev/null; then MEMO_REGISTERED="yes"; fi
+if [ -x "$MCP_BIN" ] && [ -d "$ROOT/.memory" ] && [ -n "$MEMO_REGISTERED" ]; then
+  active_tools=$(grep -o '"tool_count"[[:space:]]*:[[:space:]]*[0-9]*' "$HEALTH_FILE" 2>/dev/null | grep -o '[0-9]*' | head -n 1)
+  echo "## Memophant MCP Tools and Memory Active${active_tools:+ — ${active_tools} tools}"
+  echo ''
+fi
 PROMPT_FILE="$HOME/Library/Application Support/Memophant/session-prompt.txt"
 if [ -s "$PROMPT_FILE" ]; then
   echo '## Operator instructions (set in Memophant → Settings — applies to every session)'
@@ -33,6 +49,7 @@ if [ -s "$PROMPT_FILE" ]; then
 fi
 echo '## Repo memory (managed by Memophant) — the single source of truth'
 echo 'Use the repo memory; record durable decisions/learnings here, not in session-private memory.'
+echo 'File every memory note under ONE of the six folders (architecture/conventions/decisions/operations/project/roadmap) — never at the .memory/ root. The write_memory folder argument lists each folder and its purpose.'
 echo 'PREFER the `memophant` MCP server tools for everything they can do — searching, reading, and writing memory/wiki/design/code/vendors/templates (search_memories, read_memory, write_memory, edit_memory, build_context, and more). They are the PRIMARY interface; get to know them before you start and reach for ad-hoc file reads/greps/hand-edits only as a last resort. Found or made a credential? Store it as a project vendor with `set_vendor_credential` instead of leaving it in chat. Fallback when the server is down: grep .memory/ and wiki/.'
 if [ -d "$ROOT/.memory" ]; then
   echo ''
@@ -58,7 +75,7 @@ if [ -d "$ROOT/design" ]; then
 fi
 if [ -f "$ROOT/TASKS.md" ]; then
   echo ''
-  echo 'Task board (TASKS.md): read it; set a task status by MOVING its line between ## Todo/Doing/Done (status lives in the board line, not the tasks/<id>.md status: mirror Memophant manages), and add tasks you discover.'
+  echo 'Task board (TASKS.md): read it. Prefer the memophant MCP task tools — create_task / move_task(id,status) / update_task / list_tasks — which own the (id:) board line + tasks/<id>.md atomically (no orphans). Fallback (server down): hand-edit TASKS.md, moving a line between ## Todo/Doing/Done (status = its section; Memophant mirrors the tasks/<id>.md status:). Add tasks you discover.'
   open_items=$(grep -c '^- \[ \]' "$ROOT/TASKS.md" 2>/dev/null)
   echo "Open checklist items: ${open_items:-0}"
 fi
@@ -68,7 +85,6 @@ fi
 # the fallback is grep over .memory/ and wiki/ directly — basic-memory has been retired
 # from production as of 2026-06-06; see wiki/Memory-Engine-Test-Suite.md if you need to
 # re-enable it for regression testing.
-HEALTH_FILE="$ROOT/.memophant/mcp/health.json"
 if [ -f "$HEALTH_FILE" ]; then
   echo ''
   if grep -q '"status"[[:space:]]*:[[:space:]]*"ready"' "$HEALTH_FILE" 2>/dev/null; then
