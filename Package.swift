@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
@@ -37,5 +37,8 @@ let package = Package(
                 "UI/SwiftUI/__Snapshots__",
             ]
         ),
-    ]
+    ],
+    // Compile every target under the Swift 6 language mode so this dependency
+    // stays Swift-6-clean for adopters (e.g. Memophant) moving to Swift 6.
+    swiftLanguageModes: [.v6]
 )

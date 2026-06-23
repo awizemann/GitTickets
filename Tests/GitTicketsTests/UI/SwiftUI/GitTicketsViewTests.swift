@@ -3,6 +3,7 @@ import SwiftUI
 @testable import GitTickets
 
 @available(macOS 13.0, iOS 16.0, *)
+@MainActor
 final class GitTicketsViewTests: XCTestCase {
 
     // MARK: - PrivacyBanner copy

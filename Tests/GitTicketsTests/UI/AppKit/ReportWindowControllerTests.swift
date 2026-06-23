@@ -5,6 +5,7 @@ import SwiftUI
 @testable import GitTickets
 
 @available(macOS 13.0, *)
+@MainActor
 final class ReportWindowControllerTests: XCTestCase {
 
     func test_initBuildsWindowWithExpectedConfiguration() {

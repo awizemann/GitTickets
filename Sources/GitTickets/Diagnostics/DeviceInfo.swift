@@ -19,7 +19,7 @@ enum DeviceInfo {
         let machineSize = MemoryLayout.size(ofValue: info.machine)
         return withUnsafePointer(to: &info.machine) { pointer in
             pointer.withMemoryRebound(to: CChar.self, capacity: machineSize) {
-                String(validatingUTF8: $0) ?? "unknown"
+                String(validatingCString: $0) ?? "unknown"
             }
         }
     }

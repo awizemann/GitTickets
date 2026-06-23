@@ -14,6 +14,7 @@ import AppKit
 /// Pass a custom `action` to hook the menu entry into a different presenter
 /// (e.g. an existing modal sheet or a host-owned window controller).
 @available(macOS 13.0, *)
+@MainActor
 public enum GitTicketsMenuItemFactory {
 
     /// Builds an `NSMenuItem` wired to the given action.
@@ -60,6 +61,7 @@ public enum GitTicketsMenuItemFactory {
 /// Swift closure. Lives long enough because the owning `NSMenuItem` retains
 /// it via `representedObject`.
 @available(macOS 13.0, *)
+@MainActor
 final class MenuActionTarget: NSObject {
     let action: () -> Void
 

@@ -317,13 +317,18 @@ struct RelaySubmitter: IssueSubmitter {
         return missing
     }
 
-    private static let iso8601: ISO8601DateFormatter = {
+    // Both formatters are configured once in their initializer closure and
+    // only ever read (`date(from:)`) afterward — never mutated. `ISO8601DateFormatter`
+    // is thread-safe for parse/format once its options are set, so these
+    // immutable-after-init shared instances are legitimately `nonisolated(unsafe)`
+    // (the documented immutable-shared-state case, not a compiler-silencing hack).
+    nonisolated(unsafe) private static let iso8601: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
 
-    private static let iso8601NoFractional: ISO8601DateFormatter = {
+    nonisolated(unsafe) private static let iso8601NoFractional: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter

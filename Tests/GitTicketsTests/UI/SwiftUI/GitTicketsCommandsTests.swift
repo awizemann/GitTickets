@@ -3,6 +3,7 @@ import SwiftUI
 @testable import GitTickets
 
 @available(macOS 13.0, iOS 16.0, *)
+@MainActor
 final class GitTicketsCommandsTests: XCTestCase {
 
     /// Smoke test: the Commands body must build without crashing through both

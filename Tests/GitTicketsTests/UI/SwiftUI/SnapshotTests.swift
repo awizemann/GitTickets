@@ -15,6 +15,7 @@ import SnapshotTesting
 /// Subsequent runs compare. Re-record after intentional layout changes with
 /// `SNAPSHOT_TESTING_RECORD=1 swift test --filter SnapshotTests`.
 @available(macOS 13.0, *)
+@MainActor
 final class SnapshotTests: XCTestCase {
 
     private let publicRepo = RepoCoordinate(owner: "alanw", name: "GitTickets", visibility: .public)

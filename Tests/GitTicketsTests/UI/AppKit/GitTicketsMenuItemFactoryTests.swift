@@ -4,6 +4,7 @@ import AppKit
 @testable import GitTickets
 
 @available(macOS 13.0, *)
+@MainActor
 final class GitTicketsMenuItemFactoryTests: XCTestCase {
 
     func test_defaultTitleAndNoShortcut() {
