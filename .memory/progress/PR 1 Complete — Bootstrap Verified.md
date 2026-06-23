@@ -23,3 +23,8 @@ PR 1 (Bootstrap) shipped 2026-06-04. Repo skeleton is live and verified.
 
 - realizes [[Build Sequence — 20 PR Plan]]
 - precedes PR-2-Public-API-Skeleton
+
+
+
+## Update (v1.1.0, 2026-06-23)
+The "Swift 6 migration is a dedicated future PR" flagged here is now DONE — GitTickets moved to the Swift 6 language mode (swift-tools-version 5.9 → 6.0) in v1.1.0, zero runtime-behavior change. See [[Swift 6 Language Mode Migration (v1.1.0)]].

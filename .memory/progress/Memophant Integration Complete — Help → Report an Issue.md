@@ -30,3 +30,8 @@ Memophant (a shipping macOS SwiftUI/SwiftData app) is now wired against the GitT
 - realizes [[Architecture — Client SDK + Optional Relay]]
 - exercises [[PR 8 Complete — Relay Submitter]]
 - exercises [[PR 9 Complete — Vercel Relay]]
+
+
+
+## Update — dependency is REMOTE now (2026-06-23, v1.1.0 cycle)
+The "local SwiftPM path `../GitTickets`" framing above is HISTORICAL. Memophant now consumes GitTickets as a REMOTE Swift package — `XCRemoteSwiftPackageReference` → github.com/awizemann/GitTickets, requirement `upToNextMajorVersion` from 1.0.0 (currently pinned v1.0.0 @ rev 014b8d4). The predicted "switch to a published Git URL when the package goes public" happened. The local-path override now returns only as a temporary test harness when validating an unreleased GitTickets (e.g. v1.1.0) before tagging. See [[Swift 6 Language Mode Migration (v1.1.0)]].

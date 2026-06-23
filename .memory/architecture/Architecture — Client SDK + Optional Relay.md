@@ -16,7 +16,7 @@ The v1 architecture for GitTickets, decided 2026-06-04.
 - [decision] Relay lives in the same repo under `/relay/` with Vercel + Cloudflare Worker variants. Templates versioned alongside the SDK. #relay #decision
 - [decision] Phase 2 ("My Issues" + reply notifications) fully built in v1, NOT deferred. Correlation via opaque UUID embedded as `<!-- gittickets-id: UUID -->` in issue body. #phase2 #decision
 - [decision] MIT license. #license #decision
-- [decision] Platform floor: macOS 13+ / iOS 16+ (Swift 5.9). Modern SwiftUI ergonomics worth the floor. #platforms #decision
+- [decision] Platform floor: macOS 13+ / iOS 16+ (runtime, unchanged). Build toolchain bumped to swift-tools-version 6.0 / Swift 6 language mode at v1.1.0 (was 5.9 through v1.0.0); minimum Xcode 16+. Modern SwiftUI ergonomics worth the floor. See [[Swift 6 Language Mode Migration (v1.1.0)]]. #platforms #decision
 - [decision] Zero production Swift dependencies — system frameworks only (CryptoKit, Foundation, Security, SwiftUI, AppKit/UIKit, ScreenCaptureKit, OSLog, SQLite3). Octokit.swift skipped — it doesn't support GitHub App auth and the few endpoints we hit are ~30 LOC of URLSession. Test-only dep: pointfreeco/swift-snapshot-testing. #dependencies #decision
 - [fact] GitHub has NO anonymous write surface anywhere — issues, discussions, attachments all require a token. Drives the relay-or-Device-Flow choice. #constraint
 - [fact] Sparkle is NOT actually drop-in — devs hand-wire `SPUStandardUpdaterController` to a menu item. We do better by shipping both `GitTicketsCommands()` (SwiftUI) AND `GitTicketsMenuItemFactory.makeReportIssueItem()` (AppKit). #ergonomics #insight

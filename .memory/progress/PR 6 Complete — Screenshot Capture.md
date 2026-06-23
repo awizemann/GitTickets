@@ -33,3 +33,8 @@ PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-le
 - realizes [[Architecture — Client SDK + Optional Relay]]
 - depends_on [[Footgun — ScreenCaptureKit Permission Cannot Block Submission]]
 - follows [[PR 5 Complete — Diagnostics]]
+
+
+
+## Update (v1.1.0, 2026-06-23)
+"Revisit when migrating to Swift 6" — done. The `@preconcurrency import ScreenCaptureKit` was the correct call and survived the v1.1.0 Swift 6 language-mode migration unchanged (`@preconcurrency` scoped to an Apple module is the legit pattern). See [[Swift 6 Language Mode Migration (v1.1.0)]].

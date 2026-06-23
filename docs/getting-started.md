@@ -3,6 +3,10 @@
 This is the shortest path from "I want a Report-an-Issue button in my app"
 to "user-typed reports are landing as GitHub issues in my repo."
 
+> **Requirements:** Swift 6.0+ / Xcode 16+ to build the package (since v1.1.0,
+> which builds in the Swift 6 language mode); runtime targets macOS 13+ / iOS 16+.
+> On an older toolchain? Pin to `1.0.0` — the last Swift 5.9 release.
+
 ## 1. Pick an auth mode
 
 | Mode             | Best for                                       | Tradeoffs                                                                 |
@@ -21,7 +25,7 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "1.0.0"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "1.1.0"),
 ]
 ```
 

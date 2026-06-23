@@ -33,3 +33,8 @@ Discovered in code review of PR 1–6.
 - prevents_recurrence_of "torn Configuration struct from concurrent configure+read"
 - prevents_recurrence_of "Sendable enum carrying Bundle"
 - prevents_recurrence_of "CheckedContinuation double-resume crash on macOS 13 screenshot"
+
+
+
+## Update (v1.1.0) — Swift 6 mode now catches the enum lie at compile time
+As of v1.1.0 the package builds in the Swift 6 language mode, which performs the nominal Sendable check on enum associated values — so the `GitTicketsImageSource.named(String, bundle: Bundle)` class of lie (#2 above) is now a compile-time error, not a silent runtime hazard. The rule still holds for any code compiled in Swift 5 mode. See [[Swift 6 Language Mode Migration (v1.1.0)]].

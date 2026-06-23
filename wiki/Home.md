@@ -10,10 +10,12 @@ Long-form reference for **GitTickets**, a Swift package (macOS 13+ / iOS 16+) th
 
 ## Status
 
-**v1.0.0** is feature-complete; the SDK source is release-prepped and the
-relay templates are deployed-and-tested. See [`CHANGELOG.md`](../CHANGELOG.md)
-for the full ship list. The remaining v1.0 step is the tag-and-push (held
-back so the user can sequence the SDK + relay-template tags).
+**v1.0.0** shipped (tagged + on GitHub). **v1.1.0** is release-prepped — the
+SDK now builds in the Swift 6 language mode (minimum toolchain Swift 6.0 /
+Xcode 16+; runtime floor unchanged at macOS 13+ / iOS 16+) and the relay
+templates are deployed-and-tested. See [`CHANGELOG.md`](../CHANGELOG.md) for
+the full ship list. The v1.1.0 tag-and-push is held pending validation in
+Memophant (the shipping host app, mid Swift-6 migration).
 
 ## What GitTickets is
 
