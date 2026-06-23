@@ -14,6 +14,7 @@
 
 ## Doing
 
+- [ ] Release GitTickets v1.1.0 (Swift 6) — validate in Memophant, roll out to GitHub (id: t-822c22e2) (added: 2026-06-23) (priority: high)
 
 ## Done
 

@@ -56,7 +56,7 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-v1.0.0 is shipped. Feature scope is frozen for the 1.x line; the Phase 2 "My Reports" in-app reply view is on the roadmap as a v1.x point release. See [`CHANGELOG.md`](CHANGELOG.md) for what landed and [`TASKS.md`](TASKS.md) for the active board.
+v1.1.0 is shipped — the package now builds in the Swift 6 language mode (minimum toolchain Swift 6.0 / Xcode 16+; runtime floor unchanged at macOS 13 / iOS 16). Feature scope is frozen for the 1.x line; the Phase 2 "My Reports" in-app reply view is on the roadmap as a v1.x point release. See [`CHANGELOG.md`](CHANGELOG.md) for what landed and [`TASKS.md`](TASKS.md) for the active board.
 
 ## Documentation
 

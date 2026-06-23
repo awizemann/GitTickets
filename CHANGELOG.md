@@ -4,6 +4,31 @@ All notable changes to GitTickets are documented here. Format: [Keep a Changelog
 
 The SDK and the relay templates version independently.
 
+## [1.1.0] — 2026-06-23
+
+Swift 6 language-mode migration. **No runtime-behavior change** — only
+concurrency annotations, one deprecated-API rename, and build config.
+
+### Changed
+
+- **Swift 6 language mode.** `swift-tools-version` 5.9 → 6.0 and
+  package-level `swiftLanguageModes: [.v6]`; the library and tests now
+  compile under the Swift 6 language mode. **Minimum toolchain is now
+  Swift 6.0 (Xcode 16+).** Runtime deployment floor is unchanged
+  (macOS 13 / iOS 16).
+- **`GitTicketsMenuItemFactory` is now `@MainActor`** (along with its
+  internal `MenuActionTarget` trampoline) — correct for AppKit menu-item
+  construction, which already had to run on the main thread. Source-
+  compatible for the documented usage.
+
+### Internal (no API or behavior change)
+
+- `RelaySubmitter`'s two `ISO8601DateFormatter` statics are marked
+  `nonisolated(unsafe)` (immutable-after-init; parse-only — the outbound
+  wire serialization path is untouched).
+- `DeviceInfo` uses `String(validatingCString:)` in place of the
+  deprecated `String(validatingUTF8:)` (pure rename, identical semantics).
+
 ## [1.0.0] — 2026-06-06
 
 ### Added — SDK
@@ -71,11 +96,10 @@ roadmap as a v1.x point release.
 
 ## [Unreleased]
 
-### Added
-- Initial repo scaffolding: `Package.swift` (Swift 5.9, macOS 13+, iOS 16+), MIT `LICENSE`, README, contributing/security/changelog files, GitHub Actions CI on macOS + iOS sim, Swift Package Index manifest.
-- Stub `GitTickets.configure(_:)` entry point returning `.notConfigured` until implemented.
+_Nothing yet._
 
 ---
 
-[1.0.0]: https://github.com/alanw/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/alanw/GitTickets/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
+[1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v1.1.0...HEAD
