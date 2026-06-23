@@ -6,6 +6,8 @@ tags:
 - footgun
 - device-flow
 - ios
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 After OAuth Device Flow approval on github.com, the user is stranded on a "you're all set" GitHub page with no automatic return to the app. The naive implementation leaves users confused.
@@ -19,4 +21,3 @@ After OAuth Device Flow approval on github.com, the user is stranded on a "you'r
 
 ## Relations
 
-- documented_in [[Wiki — Device Flow]]

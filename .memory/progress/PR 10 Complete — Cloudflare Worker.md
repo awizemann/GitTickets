@@ -8,6 +8,8 @@ tags:
 - relay
 - cloudflare
 - workers
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 10 (Cloudflare Worker) shipped 2026-06-05. The relay tier is feature-complete on both supported runtimes; the same HMAC vector locks the contract across all three implementations (Swift SDK + Vercel + Cloudflare).

@@ -6,6 +6,8 @@ tags:
 - footgun
 - github-api
 - roadmap
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 `.github/ISSUE_TEMPLATE/*.yml` Issue Forms are rendered ONLY by the GitHub web UI. There is no REST endpoint like "create issue from template X with field values." Forms compile to plain markdown that goes into `body`.
@@ -18,4 +20,3 @@ tags:
 
 ## Relations
 
-- defers_to [[Roadmap — v1.1 Native Issue Forms]]

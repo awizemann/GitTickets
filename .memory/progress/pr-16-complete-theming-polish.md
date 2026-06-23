@@ -8,6 +8,8 @@ tags:
 - theme
 - swiftui
 - snapshot-tests
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 16 closes the theme-values audit loop the Pass 2 review flagged: every public field of `GitTicketsTheme` is now actually consumed by `GitTicketsView`, and we have a small snapshot-test safety net for the form layout going forward.

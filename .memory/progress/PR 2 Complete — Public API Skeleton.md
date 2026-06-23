@@ -6,6 +6,8 @@ tags:
 - progress
 - pr-2
 - public-api
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 2 (Public API skeleton) shipped 2026-06-04. Full public surface exists; auth submitters, UI, and storage are still PR 3+.

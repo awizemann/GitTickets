@@ -8,6 +8,8 @@ tags:
 - migration
 - release
 - v1.1.0
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 GitTickets migrated to the Swift 6 language mode, shipping as **v1.1.0** (release-prepped 2026-06-23; tag/push held pending validation in Memophant). Driven by the host app **Memophant** moving to Swift 6. **ZERO runtime-behavior change** — concurrency annotations + one deprecated-API rename + build config only.

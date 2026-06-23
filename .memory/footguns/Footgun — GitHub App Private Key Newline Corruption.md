@@ -6,6 +6,8 @@ tags:
 - footgun
 - relay
 - deployment
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 The PEM private key has literal `\n` line breaks. When pasted into a Vercel / Cloudflare env var, those newlines get mangled — single-line collapse, escaped `\\n`, or stripped entirely. The relay then fails to mint the installation token with cryptic crypto errors.
@@ -19,5 +21,4 @@ The PEM private key has literal `\n` line breaks. When pasted into a Vercel / Cl
 
 ## Relations
 
-- affects [[Wiki — Relay Deployment]]
 - prevents_recurrence_of generic-crypto-error-bug

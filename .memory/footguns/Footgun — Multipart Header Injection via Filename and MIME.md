@@ -7,6 +7,8 @@ tags:
 - security
 - relay
 - multipart
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Interpolating caller-supplied `filename` or `mimeType` into multipart `Content-Disposition` / `Content-Type` headers without sanitization is the same CVE class that hit Rack and Spring multipart parsers. Two vectors:
@@ -30,6 +32,5 @@ Discovered in code review of PR 8. `ReportAttachment.filename` and `.mimeType` a
 ## Relations
 
 - affects [[Architecture — Client SDK + Optional Relay]]
-- affects [[Threat Model]]
 - prevents_recurrence_of "filename injection corrupting multipart envelope"
 - prevents_recurrence_of "MIME type CRLF header injection"

@@ -8,6 +8,8 @@ tags:
 - storage
 - sqlite
 - keychain
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 4 (Storage) shipped 2026-06-04. Local persistence is live — Keychain wrapper, stable device identifier, SQLite cache for Phase 2.

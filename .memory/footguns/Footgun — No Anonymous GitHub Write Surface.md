@@ -6,6 +6,8 @@ tags:
 - footgun
 - github-api
 - auth
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 There is no way for an unauthenticated end-user to post to GitHub. Every option for "anonymous reporting" is really about *where the auth token lives*.
@@ -21,4 +23,3 @@ There is no way for an unauthenticated end-user to post to GitHub. Every option 
 ## Relations
 
 - drives [[Architecture — Client SDK + Optional Relay]]
-- documented_in [[Wiki — Threat Model]]

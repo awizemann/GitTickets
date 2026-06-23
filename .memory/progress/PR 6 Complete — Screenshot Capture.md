@@ -8,6 +8,8 @@ tags:
 - screenshot
 - macos
 - ios
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-level wiring lands in PR 12.

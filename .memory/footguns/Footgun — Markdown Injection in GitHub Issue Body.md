@@ -7,6 +7,8 @@ tags:
 - markdown
 - bodybuilder
 - gfm
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Two injection vectors in the assembled GitHub issue body when we naively interpolate user-supplied (or relay-supplied) strings into markdown:
@@ -26,6 +28,5 @@ Discovered in code review of PR 8. R2 / Vercel Blob presigned URLs can legitimat
 
 ## Relations
 
-- affects [[Wiki — Diagnostics and Screenshots]]
 - prevents_recurrence_of "diagnostics ``` collapsing the outer fence"
 - prevents_recurrence_of "markdown link broken by `)` in URL"

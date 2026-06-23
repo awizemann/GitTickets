@@ -8,6 +8,8 @@ tags:
 - device-flow
 - auth
 - oauth
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 11 ships the second production `IssueSubmitter` — the GitHub Device Flow path that lets end-users author issues with their own account, no developer-hosted relay needed. Closes the auth tier; the form work in PR 12 can now hook a discrete `.deviceFlowNotAuthorized` error into the OAuth sheet.
@@ -30,7 +32,7 @@ PR 11 ships the second production `IssueSubmitter` — the GitHub Device Flow pa
 ## Relations
 
 - follows [[Audit Pass 2 — Post-Submit-Wiring Sweep]]
-- enables [[PR 12 — SwiftUI form]] (future)
+- enables [[PR 12 Complete — SwiftUI Form]] (future)
 - respects [[Footgun — Keychain Synchronizable Default Leaks Across iCloud]]
 - respects [[Footgun — No Public GitHub Attachment API]]
 - respects [[Footgun — iOS Device Flow Return-to-App UX]]

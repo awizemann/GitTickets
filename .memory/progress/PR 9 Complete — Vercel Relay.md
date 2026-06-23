@@ -8,6 +8,8 @@ tags:
 - relay
 - vercel
 - typescript
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 9 (Vercel relay) shipped 2026-06-05. The TypeScript serverless functions match the locked SDK wire contract; HMAC vector is asserted byte-for-byte on both sides.

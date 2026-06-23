@@ -7,6 +7,8 @@ tags:
 - privacy
 - diagnostics
 - redaction
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Naive PII regexes match more than the thing they're named after. Three specific landmines we hit:
@@ -28,7 +30,6 @@ Discovered in code review of PR 5 + PR 7.
 
 ## Relations
 
-- affects [[Wiki — Diagnostics and Screenshots]]
 - prevents_recurrence_of "build number redacted as IP"
 - prevents_recurrence_of "clock timestamp redacted as IPv6"
 - prevents_recurrence_of "bearer token leaking after IP redaction corrupted it"

@@ -6,6 +6,8 @@ tags:
 - footgun
 - networking
 - relay
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 A transport-level retry of a POST (Vercel cold-start returns 504 *after* the relay called the GitHub API; URLSession sees `URLError(.networkConnectionLost)` while the server already processed the request) creates a duplicate GitHub issue.

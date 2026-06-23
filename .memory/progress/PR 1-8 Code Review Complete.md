@@ -7,6 +7,8 @@ tags:
 - code-review
 - security
 - footguns
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Multi-angle code review of PRs 1–8 (bootstrap → relay submitter) ran on 2026-06-04. 24 findings across crypto, networking, redaction, multipart, Keychain, concurrency, markdown, storage, tests, and API surface — all fixed in the same session. Build clean on macOS + iOS; 129 tests pass including 14 new regression tests.
@@ -33,5 +35,4 @@ Multi-angle code review of PRs 1–8 (bootstrap → relay submitter) ran on 2026
 - closes [[Footgun — Markdown Injection in GitHub Issue Body]] in production code
 - closes [[Footgun — SQLite Cache File Default Permissions]] in production code
 - updates [[Footgun — Labels and Assignees Silently Dropped]] with the SubmittedIssue.missingLabels surface
-- adds [[Patterns and Gotchas]]
 - gates [[PR 9 Complete — Vercel Relay]] (must match new wire format)

@@ -6,6 +6,8 @@ tags:
 - footgun
 - github-api
 - attachments
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 GitHub has no public REST or GraphQL endpoint for uploading images to issues or comments. The web UI uploads to a private S3-backed CDN.
@@ -20,4 +22,3 @@ GitHub has no public REST or GraphQL endpoint for uploading images to issues or 
 ## Relations
 
 - affects [[Architecture — Client SDK + Optional Relay]]
-- documented_in [[Wiki — Threat Model]]

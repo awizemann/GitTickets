@@ -6,6 +6,8 @@ tags:
 - footgun
 - macos
 - permissions
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 On macOS, ScreenCaptureKit and `CGWindowListCreateImage` both require Screen Recording permission (System Settings → Privacy & Security). First-time call triggers a permission prompt; if denied, all subsequent calls return empty/black images silently.
@@ -17,4 +19,3 @@ On macOS, ScreenCaptureKit and `CGWindowListCreateImage` both require Screen Rec
 
 ## Relations
 
-- documented_in [[Wiki — Diagnostics & Screenshots]]

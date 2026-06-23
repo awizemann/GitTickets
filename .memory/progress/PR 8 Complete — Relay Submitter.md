@@ -8,6 +8,8 @@ tags:
 - relay
 - wire-format
 - hmac
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 8 (Relay submitter) shipped 2026-06-04. The full Swift-side submission pipeline is live. PR 9 (Vercel relay) implements the server side to match this contract.

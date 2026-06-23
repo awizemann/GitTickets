@@ -7,6 +7,8 @@ tags:
 - security
 - storage
 - macos
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 `sqlite3_open_v2(...CREATE...)` creates the database file with the process's current umask (typically 0644 on macOS), leaving it world-readable. On a non-sandboxed macOS host (CLI tools, developer apps, anything not in the App Sandbox), any second OS user with shell access can:
@@ -32,5 +34,4 @@ Discovered in code review of PR 4.
 ## Relations
 
 - affects [[Architecture — Client SDK + Optional Relay]]
-- affects [[Threat Model]]
 - prevents_recurrence_of "submission cache world-readable on multi-user macOS"

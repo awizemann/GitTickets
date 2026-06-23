@@ -8,6 +8,8 @@ tags:
 - phase-2
 - my-issues
 - swiftui
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Phase 2's full UI + fetch surface landed in one PR. Both submitters now implement all three fetch methods; both relay templates have a `/comments` endpoint at parity; the SwiftUI tier ships a list view, a detail view, and a markdown comment renderer. Manual refresh in v1 as the task spec called for.

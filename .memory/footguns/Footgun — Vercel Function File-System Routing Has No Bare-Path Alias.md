@@ -7,6 +7,8 @@ tags:
 - vercel
 - relay
 - routing
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Vercel routes API Functions by file-system layout: `api/report.ts` is reachable ONLY at `/api/report` unless the project adds explicit rewrites. The Swift SDK and the wire spec post to the bare path `<base>/report` (matching the Cloudflare Worker, which accepts both forms). Without rewrites, every real client submission to a Vercel relay 404s while curl smoke tests against `/api/report` still pass — the gap stays hidden until a real adopter integrates.
@@ -22,5 +24,4 @@ Vercel routes API Functions by file-system layout: `api/report.ts` is reachable 
 
 ## Relations
 
-- affects [[Wiki — Relay Deployment]]
 - documented_in [[Audit Pass 2 — Post-Submit-Wiring Sweep]]

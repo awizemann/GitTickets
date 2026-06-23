@@ -6,6 +6,8 @@ tags:
 - progress
 - pr-7
 - networking
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 7 (Networking core) shipped 2026-06-04. HTTPClient is the transport substrate PR 8 (relay submitter) and PR 11 (Device Flow) build on.

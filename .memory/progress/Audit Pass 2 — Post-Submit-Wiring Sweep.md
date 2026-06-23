@@ -7,6 +7,8 @@ tags:
 - code-review
 - audit
 - phase-2
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Multi-angle audit triggered by the discovery that `GitTickets.submit(_:)` had been a PR-2 stub the whole time. Three parallel Explore agents (stub/TODO hunter, public-API reachability, Vercel/Cloudflare parity). Total findings: 27; actionable now: 5; deferred: rest.
@@ -19,10 +21,10 @@ Multi-angle audit triggered by the discovery that `GitTickets.submit(_:)` had be
 - [fix-shipped] Stale doc strings scrubbed: removed "lands in PR 11" / "ships in PR 12+" / "in this skeleton" / "currently throws" language from `GitTickets.swift`, `IssueSubmitter.swift`, `AuthMode.swift`, `DiagnosticsCollector.swift`, `ScreenshotCapture.swift`. Replaced with "not yet implemented" / functional descriptions of current state. Internal PR numbers should never leak into adopter-facing API docs. #fix
 - [fix-shipped] `AuthMode.deviceFlow` + `.mock` cases now carry "Not yet implemented" / "Not dispatched in production" notes in their docstrings, plus the resolver error messages point to `.relay` as the working alternative. #fix
 - [new-tests] 4 regression tests in `RelaySubmitterTests`: `fetchMyIssues` cache-merge happy path; empty input short-circuits; `fetchReplies` delegates and surfaces; unknown submission returns (0, nil). The new tests will catch any future regression where the protocol method falls back to the throwing default. #testing
-- [deferred] Phase 2 UI surface (GitTicketsView, GitTicketsCommands, GitTicketsMenuItemFactory, GitTicketsMyIssuesView, GitTicketsViewController) — declared in API docs but no implementations exist. NOT a bug: the integration pattern Memophant uses (host owns the UI, calls submit() programmatically) is the documented v1 path. PR 12+ would ship built-in views; the audit recommends adding deprecation-style notices to the declaration docstrings if they remain referenced. For now they stay as documented future direction. #scope
-- [deferred] `GitTicketsTheme.*` fields (accentColor, titleFont, etc.) — populated in Configuration but never read internally. Will be consumed by the built-in views in PR 12+. Cosmetic dead weight today; safe to keep for API stability when PR 12 lands. #scope
-- [deferred] `SubmissionCache.markRepliesRead` — public method, zero call sites. Will be called by the My Issues view when the user opens a thread. Documented intent. #scope
-- [deferred] `UserAgent.sdkVersion = "1.0.0-dev"` — bump to "1.0.0" at release tag. Tracked separately as part of PR 20. #release
+- [done] Phase 2 UI surface (GitTicketsView, GitTicketsCommands, GitTicketsMenuItemFactory, GitTicketsMyIssuesView, GitTicketsViewController) — all shipped: PR 12 (GitTicketsView + DeviceFlowSheet), PR 13 (GitTicketsCommands + GitTicketsMenuItemFactory + ReportWindowController), PR 14 (GitTicketsViewController), PR 15 (GitTicketsMyIssuesView + IssueDetailView + MarkdownCommentView). #scope
+- [done] `GitTicketsTheme.*` fields (accentColor, titleFont, bodyFont, monospacedFont, cornerRadius, headerImage, submitButtonStyle) — all consumed in PR 12 (the first five) and PR 16 (HeaderImage + submitButton @ViewBuilder closed headerImage + submitButtonStyle). Audit-loop closed. #scope
+- [done] `SubmissionCache.markRepliesRead` — wired in PR 15 via `IssueDetailView.task` + the public static `GitTickets.markRepliesRead(submissionID:count:)` so adopters with custom UIs can call it too. #scope
+- [done] `UserAgent.sdkVersion` — bumped from `1.0.0-dev` to `1.0.0` for the v1.0.0 release (commit 014b8d4, tag v1.0.0) and then to `1.1.0` for the v1.1.0 Swift 6 release-prep (commit a52e505, push pending Memophant validation). #release
 - [pattern] Audit method that paid off: three parallel agents covering different angles (stub/TODO, reachability, cross-relay parity). Each found genuinely different findings. Parallelism > one-deep-pass for this kind of "sweep before shipping" check. #review-pattern
 - [shape-match] All three actionable bugs share a shape: "infrastructure exists but the public-API dispatch never reached it." submit() (fixed earlier), fetchMyIssues/fetchReplies (this pass), Cloudflare envelope byteLimit (silent contract drift). Look for this shape in every future review. #pattern
 

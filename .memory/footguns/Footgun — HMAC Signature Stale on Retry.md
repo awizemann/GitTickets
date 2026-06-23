@@ -7,6 +7,8 @@ tags:
 - crypto
 - networking
 - relay
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 If you compute the HMAC `<timestamp>.<body>` signature ONCE before handing the request to a retry loop, every retry replays the same timestamp + signature pair. Two things can break:

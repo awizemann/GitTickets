@@ -5,6 +5,8 @@ permalink: gittickets/footguns/footgun-labels-and-assignees-silently-dropped
 tags:
 - footgun
 - github-api
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 `POST /repos/{owner}/{repo}/issues` silently drops `labels`, `assignees`, and `milestone` fields unless the token has push access to the repo. No error — they just don't apply.
@@ -20,4 +22,3 @@ tags:
 ## Relations
 
 - affects [[Architecture — Client SDK + Optional Relay]]
-- relates_to [[Patterns and Gotchas]]

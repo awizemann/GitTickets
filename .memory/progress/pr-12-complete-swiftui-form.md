@@ -8,6 +8,8 @@ tags:
 - swiftui
 - ui
 - device-flow
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 12 ships the package's own SwiftUI form. The integration pattern in Memophant (host owns the inline form, calls `GitTickets.submit(_:)` programmatically) is now superseded by `GitTicketsView()` — Memophant can switch in PR 13's window-controller wiring or via a single sheet presentation.

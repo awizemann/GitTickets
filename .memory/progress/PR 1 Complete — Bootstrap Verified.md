@@ -6,6 +6,8 @@ tags:
 - progress
 - pr-1
 - bootstrap
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 1 (Bootstrap) shipped 2026-06-04. Repo skeleton is live and verified.

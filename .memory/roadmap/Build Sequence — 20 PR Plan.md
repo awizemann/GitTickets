@@ -5,6 +5,9 @@ permalink: gittickets/roadmap/build-sequence-20-pr-plan
 tags:
 - roadmap
 - build-plan
+status: resolved
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 The v1 build is decomposed into 20 ordered PRs. Each is one merge; later PRs depend on earlier ones. Source of truth for what ships in v1.

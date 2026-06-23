@@ -6,6 +6,8 @@ tags:
 - relay
 - security
 - deps
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 ## Outcome

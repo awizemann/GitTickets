@@ -7,6 +7,8 @@ tags:
 - swift
 - concurrency
 - sendable
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 Three distinct Sendable / concurrency mistakes we shipped in PR 1–6 and fixed in code review:

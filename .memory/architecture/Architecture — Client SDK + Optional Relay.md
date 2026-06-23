@@ -6,6 +6,8 @@ tags:
 - architecture
 - decision
 - auth
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 The v1 architecture for GitTickets, decided 2026-06-04.
@@ -24,7 +26,6 @@ The v1 architecture for GitTickets, decided 2026-06-04.
 
 ## Relations
 
-- documented_in [[Wiki — Architecture]]
 - depends_on [[Footgun — No Anonymous GitHub Write Surface]]
 - depends_on [[Footgun — No Public GitHub Attachment API]]
 - realized_by [[Build Sequence — 20 PR Plan]]

@@ -8,6 +8,8 @@ tags:
 - swiftui
 - appkit
 - menu
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 13 ships the menu-integration tier. SwiftUI hosts add a single line to `.commands`; AppKit hosts get a fully-wired `NSMenuItem` from a factory call. Both routes converge on `GitTicketsView` — the form from PR 12 is the destination of either trigger.

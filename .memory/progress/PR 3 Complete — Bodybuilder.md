@@ -6,6 +6,8 @@ tags:
 - progress
 - pr-3
 - bodybuilder
+source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
+reviewed: 2026-06-23
 ---
 
 PR 3 (Bodybuilder) shipped 2026-06-04. The markdown assembly + UUID correlation layer is live; submitters in PR 8+ wire to it.
