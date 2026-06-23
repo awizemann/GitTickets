@@ -28,4 +28,3 @@ The v1 architecture for GitTickets, decided 2026-06-04.
 
 - depends_on [[Footgun — No Anonymous GitHub Write Surface]]
 - depends_on [[Footgun — No Public GitHub Attachment API]]
-- realized_by [[Build Sequence — 20 PR Plan]]
