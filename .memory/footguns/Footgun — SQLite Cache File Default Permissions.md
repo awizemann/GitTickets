@@ -7,8 +7,9 @@ tags:
 - security
 - storage
 - macos
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 `sqlite3_open_v2(...CREATE...)` creates the database file with the process's current umask (typically 0644 on macOS), leaving it world-readable. On a non-sandboxed macOS host (CLI tools, developer apps, anything not in the App Sandbox), any second OS user with shell access can:

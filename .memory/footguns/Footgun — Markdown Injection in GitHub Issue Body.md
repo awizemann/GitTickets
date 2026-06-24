@@ -7,8 +7,9 @@ tags:
 - markdown
 - bodybuilder
 - gfm
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 Two injection vectors in the assembled GitHub issue body when we naively interpolate user-supplied (or relay-supplied) strings into markdown:

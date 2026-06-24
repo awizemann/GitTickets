@@ -7,8 +7,9 @@ tags:
 - pr-14
 - uikit
 - ios
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 PR 14 ships the iOS-side mirror of PR 13's macOS-only AppKit factory: a single thin `UIHostingController<GitTicketsView>` subclass that lets UIKit hosts present the form via the standard `present(_:animated:)` / `pushViewController(_:animated:)` patterns.

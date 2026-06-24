@@ -7,8 +7,9 @@ tags:
 - appkit
 - menu
 - memory-management
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 `NSMenuItem.target` is a weak reference. If the action target is only retained by the local scope that created the menu item, it deallocates as soon as that scope returns and the menu click silently does nothing.

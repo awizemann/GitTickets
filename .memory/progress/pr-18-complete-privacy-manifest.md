@@ -7,8 +7,9 @@ tags:
 - pr-18
 - privacy
 - app-store
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 PR 18 ships the App Store / Apple-required privacy manifest for the SDK. Adopter-side guidance (how to merge with the host app's own manifest) lands in PR 17's docs.

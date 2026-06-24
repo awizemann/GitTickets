@@ -7,8 +7,9 @@ tags:
 - integration
 - memophant
 - real-world-test
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 Memophant (a shipping macOS SwiftUI/SwiftData app) is now wired against the GitTickets SDK as a local SwiftPM dependency at `../GitTickets`. Single Memophant build passes; menu item disabled until placeholders replaced. This is the first real-world host of the SDK and exercises the programmatic `submit(_:)` path PR 8 was designed for.

@@ -11,8 +11,9 @@ tags:
 - phase-1
 - release
 - v1.0.0
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 Phase 1 is feature-complete and release-prepped. Four PRs landed in one pass: docs (PR 17), privacy manifest (PR 18), example apps (PR 19), and release prep (PR 20). User runs the actual `git tag` + `git push --tags` when ready.

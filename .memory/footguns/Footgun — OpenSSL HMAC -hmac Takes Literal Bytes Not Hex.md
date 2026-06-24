@@ -7,8 +7,9 @@ tags:
 - docs
 - deployment
 - hmac
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 `openssl dgst -hmac "$SECRET"` treats `$SECRET` as the literal HMAC key bytes — it does NOT hex-decode. If your shared secret is hex (the recommended `openssl rand -hex 32` shape), the Swift SDK (`SharedSecret(hex:)`) and the relay (`decodeSharedSecret`) BOTH hex-decode to 32 raw bytes, but a naive curl recipe using `-hmac "$SECRET"` HMACs with the 64-char ASCII hex string. Result: `signature_mismatch` 401 even though the secrets "match" character-for-character.

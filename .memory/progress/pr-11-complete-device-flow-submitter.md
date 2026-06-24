@@ -8,8 +8,9 @@ tags:
 - device-flow
 - auth
 - oauth
-source_sha: 2abeb1abd59498c69229fdb6193ae7b51357f361
-reviewed: 2026-06-23
+source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 PR 11 ships the second production `IssueSubmitter` — the GitHub Device Flow path that lets end-users author issues with their own account, no developer-hosted relay needed. Closes the auth tier; the form work in PR 12 can now hook a discrete `.deviceFlowNotAuthorized` error into the OAuth sheet.
