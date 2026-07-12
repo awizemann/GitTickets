@@ -8,9 +8,11 @@ tags:
 - screenshot
 - macos
 - ios
-source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 reviewed: 2026-06-24
 reviewed_by: human
+source_paths: Sources/GitTickets/Screenshot/ScreenshotCapture.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+macOS.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+iOS.swift
+source_paths_inferred: true
 ---
 
 PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-level wiring lands in PR 12.

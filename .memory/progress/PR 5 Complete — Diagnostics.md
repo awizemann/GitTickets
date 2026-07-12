@@ -7,9 +7,11 @@ tags:
 - pr-5
 - diagnostics
 - redaction
-source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 reviewed: 2026-06-24
 reviewed_by: human
+source_paths: Sources/GitTickets/Diagnostics/RedactionPipeline.swift, Sources/GitTickets/Diagnostics/DeviceInfo.swift, Sources/GitTickets/Diagnostics/OSLogTailer.swift, Sources/GitTickets/Diagnostics/DiagnosticsBlob.swift, Sources/GitTickets/Diagnostics/DiagnosticsCollector.swift
+source_paths_inferred: true
 ---
 
 PR 5 (Diagnostics) shipped 2026-06-04. The collect-and-redact pipeline is live; collector wired in PR 8/12.

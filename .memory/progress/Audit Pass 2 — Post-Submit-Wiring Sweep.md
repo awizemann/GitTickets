@@ -7,9 +7,11 @@ tags:
 - code-review
 - audit
 - phase-2
-source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 reviewed: 2026-06-24
 reviewed_by: human
+source_paths: Sources/GitTickets/PublicAPI/GitTickets.swift, Sources/GitTickets/Auth/IssueSubmitter.swift, Sources/GitTickets/PublicAPI/AuthMode.swift, Sources/GitTickets/Diagnostics/DiagnosticsCollector.swift, Sources/GitTickets/Screenshot/ScreenshotCapture.swift
+source_paths_inferred: true
 ---
 
 Multi-angle audit triggered by the discovery that `GitTickets.submit(_:)` had been a PR-2 stub the whole time. Three parallel Explore agents (stub/TODO hunter, public-API reachability, Vercel/Cloudflare parity). Total findings: 27; actionable now: 5; deferred: rest.

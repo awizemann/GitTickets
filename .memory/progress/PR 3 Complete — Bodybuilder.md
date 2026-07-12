@@ -6,9 +6,11 @@ tags:
 - progress
 - pr-3
 - bodybuilder
-source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 reviewed: 2026-06-24
 reviewed_by: human
+source_paths: Sources/GitTickets/Bodybuilder/CorrelationMarker.swift, Sources/GitTickets/Bodybuilder/BodyTemplates.swift, Sources/GitTickets/Bodybuilder/IssueBodyBuilder.swift
+source_paths_inferred: true
 ---
 
 PR 3 (Bodybuilder) shipped 2026-06-04. The markdown assembly + UUID correlation layer is live; submitters in PR 8+ wire to it.

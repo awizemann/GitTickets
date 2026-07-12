@@ -6,9 +6,11 @@ tags:
 - progress
 - pr-1
 - bootstrap
-source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 reviewed: 2026-06-24
 reviewed_by: human
+source_paths: Package.swift, LICENSE, README.md, CONTRIBUTING.md, SECURITY.md, CHANGELOG.md, .github/workflows/swift.yml, .spi.yml, .gitignore, Sources/GitTickets/PublicAPI/GitTickets.swift, Tests/GitTicketsTests/GitTicketsTests.swift
+source_paths_inferred: true
 ---
 
 PR 1 (Bootstrap) shipped 2026-06-04. Repo skeleton is live and verified.
