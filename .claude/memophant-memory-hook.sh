@@ -33,9 +33,12 @@ HEALTH_FILE="$ROOT/.memophant/mcp/health.json"
 # operator's custom instructions follow. tool_count is enriched from health.json when present
 # (the app writes it on the main checkout; it's gitignored, so absent in worktrees — the line
 # still shows, just without the count).
+# Match the SERVER-REGISTRATION key `"memophant":` (object key → trailing colon, optional space
+# before it as Foundation's pretty-printer emits) — NOT the bare `"memophant"` that also appears
+# as the `--default-project` arg VALUE in the args array (no colon), which would false-positive.
 MEMO_REGISTERED=""
-if [ -f "$ROOT/.mcp.json" ] && grep -q '"memophant"' "$ROOT/.mcp.json" 2>/dev/null; then MEMO_REGISTERED="yes"; fi
-if [ -z "$MEMO_REGISTERED" ] && [ -f "$HOME/.claude.json" ] && grep -q '"memophant"' "$HOME/.claude.json" 2>/dev/null; then MEMO_REGISTERED="yes"; fi
+if [ -f "$ROOT/.mcp.json" ] && grep -Eq '"memophant"[[:space:]]*:' "$ROOT/.mcp.json" 2>/dev/null; then MEMO_REGISTERED="yes"; fi
+if [ -z "$MEMO_REGISTERED" ] && [ -f "$HOME/.claude.json" ] && grep -Eq '"memophant"[[:space:]]*:' "$HOME/.claude.json" 2>/dev/null; then MEMO_REGISTERED="yes"; fi
 if [ -x "$MCP_BIN" ] && [ -d "$ROOT/.memory" ] && [ -n "$MEMO_REGISTERED" ]; then
   active_tools=$(grep -o '"tool_count"[[:space:]]*:[[:space:]]*[0-9]*' "$HEALTH_FILE" 2>/dev/null | grep -o '[0-9]*' | head -n 1)
   echo "## Memophant MCP Tools and Memory Active${active_tools:+ — ${active_tools} tools}"
