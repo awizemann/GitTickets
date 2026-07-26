@@ -26,9 +26,10 @@ public struct GitTicketsMyIssuesView: View {
         GitTickets.configuration?.theme ?? envTheme
     }
 
-    /// Loads the user's submissions (typically `GitTickets.cachedSubmissions()`,
-    /// optionally refreshed against the relay first).
-    private let loadIssues: () async throws -> [SubmittedIssue]
+    /// Loads the user's submissions and reports how many were looked up, so an
+    /// empty result can be told apart from a backend that matched nothing it
+    /// should have. See ``MyIssuesRefresh``.
+    private let loadIssues: () async throws -> MyIssuesRefresh
     /// Kind for a row's icon/tint. Defaults to the proposed cache lookup.
     private let kindFor: (UUID) -> ReportKind?
     /// Whether each issue is closed on GitHub (drives the status dot). The
@@ -46,12 +47,16 @@ public struct GitTicketsMyIssuesView: View {
     /// `failed` card for someone who already has local rows to look at).
     public init(onNew: (() -> Void)? = nil) {
         self.init(
-            loadIssues: {
+            loadDetailed: {
                 do {
-                    return try await GitTickets.refreshMyIssues()
+                    return try await GitTickets.refreshMyIssuesDetailed()
                 } catch {
                     let cached = GitTickets.cachedSubmissions()
-                    if !cached.isEmpty { return cached }
+                    if !cached.isEmpty {
+                        // Offline with local rows to show. Report requested ==
+                        // returned so this never reads as a label fault.
+                        return MyIssuesRefresh(issues: cached, requestedCount: cached.count)
+                    }
                     throw error
                 }
             },
@@ -64,6 +69,11 @@ public struct GitTicketsMyIssuesView: View {
 
     /// Full-control init for hosts that want to supply their own loaders /
     /// status / detail builder.
+    ///
+    /// - Note: A loader of this shape cannot report a shortfall, so the screen
+    ///   shows the ordinary "No reports yet" state when it returns nothing. Use
+    ///   the `loadDetailed:` initializer if your loader knows how many
+    ///   submissions it looked up.
     public init(
         loadIssues: @escaping () async throws -> [SubmittedIssue],
         kindFor: @escaping (UUID) -> ReportKind? = { _ in nil },
@@ -71,7 +81,29 @@ public struct GitTicketsMyIssuesView: View {
         onNew: (() -> Void)? = nil,
         detail: @escaping (SubmittedIssue) -> IssueDetailView
     ) {
-        self.loadIssues = loadIssues
+        self.init(
+            loadDetailed: {
+                let issues = try await loadIssues()
+                return MyIssuesRefresh(issues: issues, requestedCount: issues.count)
+            },
+            kindFor: kindFor,
+            isClosed: isClosed,
+            onNew: onNew,
+            detail: detail
+        )
+    }
+
+    /// Full-control init whose loader also reports how many submissions were
+    /// looked up, letting the screen distinguish "no reports" from "we could
+    /// not find your reports".
+    public init(
+        loadDetailed: @escaping () async throws -> MyIssuesRefresh,
+        kindFor: @escaping (UUID) -> ReportKind? = { _ in nil },
+        isClosed: @escaping (SubmittedIssue) -> Bool = { _ in false },
+        onNew: (() -> Void)? = nil,
+        detail: @escaping (SubmittedIssue) -> IssueDetailView
+    ) {
+        self.loadIssues = loadDetailed
         self.kindFor = kindFor
         self.isClosed = isClosed
         self.onNew = onNew
@@ -80,7 +112,7 @@ public struct GitTicketsMyIssuesView: View {
 
     private enum Phase: Equatable {
         case loading
-        case loaded([SubmittedIssue])
+        case loaded(MyIssuesRefresh)
         case failed(String)
     }
     @State private var phase: Phase = .loading
@@ -92,11 +124,15 @@ public struct GitTicketsMyIssuesView: View {
                 case .loading:
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                case .loaded(let issues):
-                    if issues.isEmpty {
-                        emptyState
+                case .loaded(let refresh):
+                    if !refresh.issues.isEmpty {
+                        list(refresh.issues)
+                    } else if refresh.allMissing {
+                        // Cached submissions exist but the backend matched
+                        // none. Saying "No reports yet" here would be a lie.
+                        unmatchedState(requestedCount: refresh.requestedCount)
                     } else {
-                        list(issues)
+                        emptyState
                     }
 
                 case .failed(let message):
@@ -157,6 +193,30 @@ public struct GitTicketsMyIssuesView: View {
 
     // MARK: States
 
+    /// Shown when this device has filed reports but the backend returned none
+    /// of them — a configuration fault, not an empty history.
+    ///
+    /// The wording deliberately does not blame the user or claim the reports
+    /// are gone: they exist on GitHub, they just cannot be found by label. It
+    /// also avoids naming labels or permissions, which mean nothing to the
+    /// person reading it; the actionable detail goes to the logger instead.
+    private func unmatchedState(requestedCount: Int) -> some View {
+        VStack(spacing: 12) {
+            stateIcon("questionmark.folder", tint: .orange)
+            Text("Can't find your reports").font(.headline)
+            Text(
+                requestedCount == 1
+                    ? "You've filed 1 report, but we couldn't load it just now. It hasn't been lost — please try again, or contact support if this continues."
+                    : "You've filed \(requestedCount) reports, but we couldn't load them just now. They haven't been lost — please try again, or contact support if this continues."
+            )
+            .font(.footnote).foregroundStyle(.secondary)
+            .multilineTextAlignment(.center).frame(maxWidth: 300)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
     private var emptyState: some View {
         VStack(spacing: 12) {
             stateIcon("tray", tint: .secondary)
@@ -208,7 +268,12 @@ public struct GitTicketsMyIssuesView: View {
     }
 
     private func reload() async {
-        phase = .loading
+        // Only blank the screen for the FIRST load. 2.2.0 added three more
+        // refresh triggers (toolbar, scene reactivation, polling) that all land
+        // here — unconditionally dropping to `.loading` would replace a
+        // perfectly good list with a spinner on every one of them, and with
+        // polling enabled it would flicker on an interval.
+        if case .loaded = phase {} else { phase = .loading }
         do { phase = .loaded(try await loadIssues()) }
         catch { phase = .failed((error as? GitTicketsError)?.description ?? error.localizedDescription) }
     }

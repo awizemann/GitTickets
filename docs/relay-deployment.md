@@ -72,6 +72,19 @@ submission should land as an issue in your repo within a few seconds.
   the dropped labels. Treat `nil` as *unknown* (an older relay didn't
   report), not as "all applied". The fix is granting the App `Issues: Write`
   **and** push access, then re-submitting.
+
+  **`missingLabels` alone is not enough**, because it only fires at *submit*
+  time. It cannot see a label removed from existing issues in bulk, a change
+  to the relay's configured `label`, or the relay being pointed at a different
+  repo — in all three nobody files anything new, so nothing fires, yet every
+  past report vanishes from "My Reports". Since **2.3.0** the SDK also checks
+  at *fetch* time: it compares the cached submissions it asked about against
+  what came back. Call `GitTickets.refreshMyIssuesDetailed()` and read
+  `MyIssuesRefresh.allMissing`, or just set `Configuration.logger` — a total
+  miss logs at `.warning` naming the label and the likely causes, and a
+  partial miss at `.info` (a deleted issue produces one legitimately). The
+  built-in view shows a distinct "Can't find your reports" state rather than
+  claiming the user has none.
 - **`PEM read error`** — the private key env var has unescaped newlines.
   See the Vercel README's "PKCS#1 → PKCS#8" note. The standard fix is to
   base64-encode the PEM file as the env value, then decode at boot.
