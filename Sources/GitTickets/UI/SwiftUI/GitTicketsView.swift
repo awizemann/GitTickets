@@ -62,6 +62,9 @@ public struct GitTicketsView: View {
     @State private var submitError: String?
     @State private var showingFileImporter = false
     @State private var attachmentError: String?
+    /// The pending attachment currently open at full size, if any. Holds a copy
+    /// of the bytes, not an index — see ``PendingAttachment``.
+    @State private var previewingAttachment: PendingAttachment?
 
     public var body: some View {
         NavigationStack {
@@ -118,6 +121,12 @@ public struct GitTicketsView: View {
                 allowsMultipleSelection: false,
                 onCompletion: handleFileImport
             )
+            // Submission is irreversible and (for a public repo) world-readable,
+            // so a pending attachment can be opened at full size and checked
+            // before Submit.
+            .sheet(item: $previewingAttachment) { pending in
+                AttachmentPreviewSheet(attachment: pending, theme: theme)
+            }
         }
         .task { collectDiagnosticsIfNeeded() }
         .alert("Couldn't submit", isPresented: errorBinding) {
@@ -188,24 +197,41 @@ public struct GitTicketsView: View {
 
     /// Renders the host's ``ScreenshotThumbnail`` for the screenshot and any
     /// image attachments. Tap-to-remove is wired through each thumbnail's
-    /// `onRemove` closure.
+    /// `onRemove` closure; `onExpand` opens the full-size preview.
+    ///
+    /// Stacked vertically and uncapped, not side by side: each cell is a wide row
+    /// (tile + filename + Remove), so several across the 640pt reading column
+    /// squeezed the filename to an ellipsis and could truncate the *destructive*
+    /// Remove label outright at large Dynamic Type sizes.
     private var attachmentThumbnails: some View {
-        HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             if let shot = screenshot {
                 ScreenshotThumbnail(
-                    filename: "screenshot.png",
+                    filename: Self.screenshotFilename,
                     data: shot,
-                    onRemove: { screenshot = nil }
+                    onRemove: { screenshot = nil },
+                    onExpand: {
+                        previewingAttachment = PendingAttachment(
+                            filename: Self.screenshotFilename,
+                            mimeType: "image/png",
+                            data: shot
+                        )
+                    }
                 )
-                .frame(maxWidth: 200)
             }
             ForEach(Array(attachments.enumerated()), id: \.offset) { offset, attachment in
                 ScreenshotThumbnail(
                     filename: attachment.filename,
                     data: attachment.data,
-                    onRemove: { attachments.remove(at: offset) }
+                    onRemove: { attachments.remove(at: offset) },
+                    onExpand: {
+                        previewingAttachment = PendingAttachment(
+                            filename: attachment.filename,
+                            mimeType: attachment.mimeType,
+                            data: attachment.data
+                        )
+                    }
                 )
-                .frame(maxWidth: 200)
             }
         }
     }
@@ -310,6 +336,11 @@ public struct GitTicketsView: View {
     }
 
     // MARK: - Static helpers
+
+    /// Display name for the auto-captured screenshot. Matches the name
+    /// `RelaySubmitter` uploads it under, so the preview names the same file the
+    /// issue will.
+    static let screenshotFilename = "screenshot.png"
 
     static let attachmentByteLimit = 5 * 1_048_576
     static let allowedImageTypes: [UTType] = [.png, .jpeg, .heic, .gif, .webP]

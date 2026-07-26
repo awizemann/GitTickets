@@ -63,6 +63,32 @@ struct MyApp: App {
 }
 ```
 
+### Keeping the shared secret out of your repo
+
+The literal above lands in git. If your app's repository is public, source
+the secret from your `Info.plist` instead and feed that key from a
+gitignored `xcconfig`:
+
+```swift
+guard let secret = SharedSecret(infoPlistKey: "GitTicketsSharedSecret",
+                                encoding: .hex) else {
+    // Fail loudly at launch. A missing or malformed secret means every
+    // submission will 401, and you want to know now, not from a user.
+    fatalError("GitTicketsSharedSecret missing or not valid hex")
+}
+```
+
+`encoding` is required rather than guessed: a string like `abcdef` is valid
+as both hex and base64, and picking wrong would silently derive a different
+key and surface as unexplainable `401 signatureMismatch` errors.
+
+**This keeps the secret out of git — it does not keep it out of an
+attacker's hands.** `Info.plist` ships as plaintext inside the app bundle
+and anyone can read it with `plutil -p MyApp.app/Contents/Info.plist`. The
+shared secret gates casual abuse of your relay; it is not protecting
+anything, and no client-side storage would change that. See
+[`threat-model.md`](threat-model.md).
+
 ## 4. Wire the UI
 
 ### SwiftUI

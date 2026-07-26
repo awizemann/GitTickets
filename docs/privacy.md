@@ -51,6 +51,33 @@ If you opt out across the board, you can argue the SDK collects nothing
 and drop all four declarations — but you've also lost most of what makes
 the diagnostics blob useful for actual support.
 
+## Attachment filenames
+
+By default an attachment renders in the issue body as a markdown link whose
+text is the user's actual filename. On a public repository that publishes
+the document's name — "Tax Return 2024.png" tells a reader plenty, even
+though the bytes themselves sit behind an unguessable upload URL.
+
+If your app handles documents whose *names* are sensitive, render generic
+labels instead:
+
+```swift
+GitTickets.configure(.init(
+    repo: /* … */,
+    auth: /* … */,
+    privacy: PrivacyPolicy(attachmentNames: .generic)
+))
+```
+
+Links then read "image 1", "attachment 2", numbered by a single index across
+the whole list so the Nth link is the Nth attachment. The uploaded object
+still keeps its real filename — only the link text changes — and the upload
+URL never contains the filename in either mode.
+
+This governs metadata the SDK injects. Text the user types into their own
+description is theirs and is submitted as written; if they name a file in
+their own prose, that is their choice and the SDK does not rewrite it.
+
 ## Submission review
 
 Apple's privacy nutrition labels (the App Store Connect form) and the

@@ -97,7 +97,7 @@ final class GitTicketsSurfaceTests: XCTestCase {
     func test_diagnosticsPolicyDefaultsIncludeStandardRedactors() {
         let policy = DiagnosticsPolicy.default
         let names = policy.redactors.map(\.name)
-        XCTAssertEqual(Set(names), Set(["email", "ipv4", "ipv6", "bearerToken"]))
+        XCTAssertEqual(Set(names), Set(["email", "ipv4", "ipv6", "bearerToken", "absolutePath"]))
     }
 
     func test_myIssuesPolicyDefaultsToManualRefresh() {

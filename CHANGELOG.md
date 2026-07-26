@@ -4,6 +4,106 @@ All notable changes to GitTickets are documented here. Format: [Keep a Changelog
 
 The SDK and the relay templates version independently.
 
+## [2.1.0] — 2026-07-26
+
+Additive minor, driven by the ShabuBox integration — a privacy-first macOS
+document vault whose in-app reports file to a **public** repository. Every
+item here exists because a private document vault reporting into a
+world-readable issue tracker has a much lower tolerance for incidental
+metadata than a typical app.
+
+No public API was removed or changed in signature. The platform floor is
+**unchanged** at macOS 14 / iOS 18.
+
+### Security
+
+- **`SharedSecret(hex:)` and `SharedSecret(base64:)` now reject degenerate
+  input that previously produced a usable-but-wrong HMAC key.** Present in
+  1.x and 2.0.0. Three cases, all confirmed against the shipped 2.0.0 tag:
+  - `SharedSecret(hex: "")`, `"   "` and `"0x"` returned a **non-nil,
+    zero-byte key** — zero digits satisfied the even-length check.
+  - `SharedSecret(hex: "+1+1")` returned the bytes `01 01`, because
+    `UInt8(_:radix:)` honours a leading `+` sign.
+  - `SharedSecret(base64: "====")` returned a **one-byte `0x00` key**,
+    because `Data(base64Encoded:)` decodes padding-only input to a single
+    zero byte, which is non-empty and passed the existing guard.
+
+  These do not leak a secret. They let a misconfiguration produce a
+  degenerate, publicly-guessable signing key that **fails silently rather
+  than loudly**. If only the app side is degenerate, submissions simply
+  break. The dangerous case is both sides degenerate: the relay appears to
+  work while providing no authentication at all, so the shared secret stops
+  gating relay abuse. All such inputs now return `nil`. No legitimate secret
+  is newly rejected — verified that `0b11`, `0xdeadbeef` and `3q2+7w==` still
+  decode unchanged.
+
+- **Attachment link text can no longer break out of its markdown link via
+  newlines.** `escapeMarkdownLinkText` escaped `\`, `[` and `]` but nothing
+  for CR/LF, and APFS permits newlines in filenames — so a crafted filename
+  containing a blank line ended the link early and let injected markdown
+  render as real formatting. CR/LF now fold to spaces.
+
+### Changed — behavior
+
+- **Absolute paths are now redacted from diagnostics by default.** The new
+  `DiagnosticsRedactor.absolutePath` is included in the default redactor
+  array, so adopters relying on defaults will see `/Users/...`, `~/...`,
+  `/Volumes`, `/private`, `/var`, `/tmp`, `/Applications` and `/Library`
+  paths — **including the trailing filename** — replaced with
+  `[path redacted]`. This removes the account name and the document name
+  from diagnostics, which on a public tracker is the whole point.
+
+  Source-compatible, and nothing was removed. To opt out, pass an explicit
+  array: `DiagnosticsPolicy(redactors: [.bearerToken, .email, .ipv4, .ipv6])`.
+
+### Added
+
+- **`PrivacyPolicy.attachmentNames`** (`AttachmentNameDisplay`). Set it to
+  `.generic` and attachment links render as "image 1" / "attachment 2"
+  instead of the user's filename, so "Tax Return 2024.png" stops becoming
+  public link text. Numbering is a single 1-based index across the whole
+  list, so the Nth link matches the Nth attachment. Defaults to `.filename`
+  (existing behavior). The uploaded object keeps its real name; only the
+  markdown link text changes. The dedicated screenshot line was already
+  filename-free and is unchanged.
+- **`SharedSecret(infoPlistKey:encoding:bundle:)`** — read the relay shared
+  secret from the app bundle's `Info.plist`, so it can be fed from a
+  gitignored `xcconfig` instead of a literal committed to source. `encoding`
+  is deliberately required rather than sniffed: a string like `abcdef` is
+  valid as *both* hex and base64, and guessing would silently derive the
+  wrong key. **This keeps the secret out of git, not out of an attacker's
+  hands** — `Info.plist` ships as plaintext and `plutil -p` reads it. It
+  gates casual relay abuse; it does not guard anything.
+- **`DiagnosticsRedactor.recommended`** — the ordered built-in set, so custom
+  redactor lists can start from a correct base.
+- **Full-size preview of a pending attachment** in the compose form. When
+  submission is irreversible and public, the user should be able to confirm
+  at full size what they are about to publish rather than judging it from a
+  48pt tile.
+
+### Notes for adopters
+
+- **Redactor order is load-bearing, and the array you pass is used verbatim.**
+  Redactors apply in sequence over already-redacted text, so a replacement
+  that inserts spaces (`[ip redacted]`, `[email redacted]`) can truncate a
+  later pattern mid-match. `.absolutePath` is therefore placed *before*
+  `.email`, `.ipv4` and `.ipv6` in the defaults. If your own redactor must
+  win against a built-in, place it before that built-in explicitly — do not
+  write `DiagnosticsRedactor.recommended + [mine]`, since appending puts
+  yours last, after the built-in has already matched.
+- **`.absolutePath` is a floor, not a guarantee.** A space terminates the
+  match, so `/Users/ana/Documents/Tax Return.pdf` redacts to
+  `[path redacted] Return.pdf` — the account name always goes, but a
+  filename containing spaces partially survives. Allowing spaces would let
+  the match run off into surrounding log text and eat the triage
+  information, which is worse. Backslash-escaped separators
+  (`\/Users\/...`) are not matched either. Both limitations are pinned by
+  tests so they stay visible.
+- **Labels silently dropped by GitHub are already detectable and always
+  were** — see `SubmittedIssue.missingLabels` and the `.warning` the SDK
+  logs when a requested label doesn't come back. No release was needed for
+  this; it is now cross-referenced from the relay docs, where it was missing.
+
 ## [2.0.0] — 2026-07-26
 
 **Breaking release.** The supported-platform floor moves up: **macOS 13 → 14
@@ -219,7 +319,8 @@ _Nothing yet._
 
 ---
 
+[2.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.1.0
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.1.0...HEAD

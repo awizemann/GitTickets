@@ -109,29 +109,59 @@ public struct SharedSecret: Sendable, Hashable {
     }
 
     /// Initialize from a base64-encoded string. Returns `nil` if the string
-    /// is not valid base64.
+    /// is empty, padding-only, or not valid base64.
     ///
-    /// Trims surrounding whitespace and accepts embedded whitespace —
-    /// matters because `vercel env pull`, 1Password copy, and most env-file
-    /// readers leave a trailing newline that the default `Data(base64Encoded:)`
-    /// would silently reject.
+    /// Trims surrounding whitespace — matters because `vercel env pull`,
+    /// 1Password copy, and most env-file readers leave a trailing newline
+    /// that the default `Data(base64Encoded:)` would silently reject.
+    /// Whitespace *inside* the payload is still rejected (see the note below
+    /// on `.ignoreUnknownCharacters`): a mangled secret must fail loudly
+    /// rather than decode to some other key.
     public init?(base64: String) {
         let trimmed = base64.trimmingCharacters(in: .whitespacesAndNewlines)
         // No `.ignoreUnknownCharacters`: with that option, "!!!" decodes to
         // empty Data and slips through as a 0-byte secret. Trimming alone
         // handles the env-pull trailing-newline case the option was added for.
+
+        // Reject a payload that starts with padding. `Data(base64Encoded:)`
+        // decodes "====" (and "========", …) to a single 0x00 byte, which is
+        // non-empty and therefore sails past the `!data.isEmpty` guard below
+        // as a 1-byte all-zero HMAC key. Every all-padding string starts with
+        // "=", so this one check closes the whole family.
+        guard trimmed.first != "=" else { return nil }
         guard let data = Data(base64Encoded: trimmed), !data.isEmpty else { return nil }
         self.bytes = data
     }
 
     /// Initialize from a hex-encoded string. Returns `nil` if the string is
-    /// not valid hex or has an odd length. Accepts an optional `0x` prefix
-    /// and tolerates surrounding whitespace.
+    /// empty, has an odd number of digits, or contains anything outside
+    /// `0-9a-fA-F`. Accepts an optional `0x`/`0X` prefix and tolerates
+    /// surrounding whitespace; whitespace or a sign character *inside* the
+    /// payload is rejected rather than skipped.
     public init?(hex: String) {
         var trimmed = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.hasPrefix("0x") || trimmed.hasPrefix("0X") {
             trimmed = String(trimmed.dropFirst(2))
         }
+        // Reject empty up front, matching `init?(base64:)`. Without this,
+        // "", "   ", and "0x" all satisfy `isMultiple(of: 2)` with zero
+        // digits and produce a live 0-byte HMAC key — a secret that signs
+        // every request identically and is silently wrong rather than
+        // cleanly nil.
+        guard !trimmed.isEmpty else { return nil }
+
+        // Validate the alphabet before pair-parsing. `UInt8(_:radix:)` accepts
+        // a leading "+" sign, so "+1+1" would otherwise parse as the two bytes
+        // 0x01 0x01 — a well-formed key derived from a string that is not hex
+        // at all. Restricting to ASCII 0-9/a-f/A-F also excludes Unicode
+        // look-alike digits, which the parser rejects anyway; belt and braces.
+        let isASCIIHexDigit: (UInt8) -> Bool = { byte in
+            (0x30...0x39).contains(byte)      // 0-9
+                || (0x41...0x46).contains(byte)  // A-F
+                || (0x61...0x66).contains(byte)  // a-f
+        }
+        guard trimmed.utf8.allSatisfy(isASCIIHexDigit) else { return nil }
+
         guard trimmed.count.isMultiple(of: 2) else { return nil }
         var data = Data(capacity: trimmed.count / 2)
         var index = trimmed.startIndex
@@ -142,6 +172,169 @@ public struct SharedSecret: Sendable, Hashable {
             index = next
         }
         self.bytes = data
+    }
+}
+
+// MARK: - Reading the shared secret out of Info.plist
+
+extension SharedSecret {
+
+    /// How the string stored in Info.plist is encoded.
+    ///
+    /// There is deliberately no `.autoDetect`. See
+    /// ``SharedSecret/init(infoPlistKey:encoding:bundle:)`` for why.
+    public enum Encoding: Sendable, Hashable {
+        /// Hex digits, optionally `0x`-prefixed. Even number of digits.
+        case hex
+
+        /// Standard base64 with padding.
+        case base64
+    }
+
+    /// Read the shared secret from a key in the app bundle's `Info.plist`.
+    ///
+    /// This exists so the secret does not have to be a literal in your source.
+    /// The intended setup is an `.xcconfig` that is **gitignored**, referenced
+    /// from an `Info.plist` build setting:
+    ///
+    /// ```
+    /// // Secrets.xcconfig — listed in .gitignore
+    /// GITTICKETS_SHARED_SECRET = 8f14e45fceea167a5a36dedd4bea2543
+    /// ```
+    ///
+    /// ```xml
+    /// <!-- Info.plist -->
+    /// <key>GitTicketsSharedSecret</key>
+    /// <string>$(GITTICKETS_SHARED_SECRET)</string>
+    /// ```
+    ///
+    /// ```swift
+    /// guard let secret = SharedSecret(
+    ///     infoPlistKey: "GitTicketsSharedSecret",
+    ///     encoding: .hex
+    /// ) else {
+    ///     // Misconfigured build. Fail loudly here — see "Handling nil" below.
+    ///     fatalError("GitTicketsSharedSecret missing or not valid hex")
+    /// }
+    /// let auth = AuthMode.relay(url: relayURL, sharedSecret: secret)
+    /// ```
+    ///
+    /// ## This does NOT make the secret secret
+    ///
+    /// `Info.plist` ships as **plaintext inside the `.app` bundle**. Anyone
+    /// who can download your app can read it in one command:
+    ///
+    /// ```sh
+    /// plutil -p MyApp.app/Contents/Info.plist
+    /// ```
+    ///
+    /// No obfuscation, no entitlement, no code signing check stands between an
+    /// attacker and this value. What this initializer buys you is that the
+    /// secret is not in **git** — which is the difference between "leaked to
+    /// anyone who clones a public repo, forever, across every historical
+    /// commit" and "extractable by someone who bothers to crack open the
+    /// bundle."
+    ///
+    /// The relay shared secret exists to gate *casual* abuse: it stops
+    /// arbitrary internet POSTs from filing issues in your repo. It is not a
+    /// credential guarding anything of value, and it must not be treated as
+    /// one. The GitHub token stays on the relay precisely because the client
+    /// side cannot keep a secret. Treat this value as "moderately
+    /// confidential, rotatable" — the same posture
+    /// `docs/threat-model.md` describes under "Compromise of the shared
+    /// secret in your build pipeline" — and assume you will rotate it at some
+    /// point. Do not put anything else in `Info.plist` on the strength of
+    /// this API existing.
+    ///
+    /// ## Why `encoding` has no default and is never sniffed
+    ///
+    /// ``SharedSecret`` accepts both hex and base64, and plenty of strings are
+    /// valid in *both* with different byte results. `"deadbeef"` is 4 bytes as
+    /// hex (`de ad be ef`) and 6 completely different bytes as base64
+    /// (`75 e6 9d 6d e7 9f`). Auto-detection would pick one, derive a
+    /// perfectly well-formed key that happens to be the wrong one, and the
+    /// only symptom would be `401 signatureMismatch` from the relay with no
+    /// hint as to why. Stating the encoding is one word of typing and removes
+    /// that failure mode entirely.
+    ///
+    /// ## Info.plist only — no environment variables
+    ///
+    /// There is deliberately no environment-variable equivalent. A shipped
+    /// `.app` launched from Finder, Dock, or Spotlight inherits no useful
+    /// environment: `getenv` only sees what you set when launching from Xcode
+    /// or a terminal. An env-var path would therefore work perfectly for you
+    /// during development and return `nil` for every one of your actual
+    /// users. That is not an omission to be filled in later; shipping it would
+    /// be a trap.
+    ///
+    /// ## Handling nil
+    ///
+    /// `nil` means one of exactly two things, and they are both build
+    /// misconfigurations rather than runtime conditions:
+    ///
+    /// 1. **The key is absent** — no `infoPlistKey` entry in the bundle's
+    ///    `Info.plist`, or the entry is not a string (a number, array, or
+    ///    dictionary value is treated as absent). Typically a missing
+    ///    `Info.plist` key or an `.xcconfig` that was not wired to the
+    ///    target.
+    /// 2. **The key is present but not decodable in `encoding`** — for
+    ///    `.hex`, a non-hex character or an odd digit count; for `.base64`,
+    ///    an invalid, unpadded, or padding-only payload. An empty or
+    ///    whitespace-only value also lands here — this initializer never
+    ///    yields a zero-length key. The classic cause is an unresolved build setting:
+    ///    the literal text `$(GITTICKETS_SHARED_SECRET)` decodes as neither.
+    ///
+    /// Both are conditions you want to discover on the first launch of a debug
+    /// build, not from a support ticket. The recommended pattern is to fail
+    /// hard at configuration time (`fatalError`, `preconditionFailure`, or a
+    /// thrown error from your own setup function) rather than fall back to a
+    /// literal or silently skip calling ``GitTickets/configure(_:)``. A crash
+    /// on launch is loud and immediate; a relay that rejects every submission
+    /// in production is neither.
+    ///
+    /// If you would rather degrade than crash, hide the report entry point
+    /// when this returns `nil` — do not configure ``AuthMode/relay(url:sharedSecret:)``
+    /// with a placeholder.
+    ///
+    /// - Parameters:
+    ///   - infoPlistKey: The `Info.plist` key holding the encoded secret.
+    ///   - encoding: How that string is encoded. Required — see above.
+    ///   - bundle: The bundle to read from. Defaults to `.main`, which is the
+    ///     host app. Pass an explicit bundle in tests, or if the value lives
+    ///     in a framework's `Info.plist` rather than the app's.
+    /// - Returns: `nil` if the key is absent/non-string, or present but not
+    ///   decodable as `encoding`.
+    public init?(infoPlistKey: String, encoding: Encoding, bundle: Bundle = .main) {
+        // `infoDictionary` rather than `object(forInfoDictionaryKey:)`: the
+        // latter consults `InfoPlist.strings` and can return a *localized*
+        // override of the key. For a signing key we want the raw plist value
+        // with no indirection that could hand back a different string.
+        guard let raw = bundle.infoDictionary?[infoPlistKey] as? String else {
+            // Covers both "key absent" and "key present but not a string".
+            // A number, array, or dictionary is a misconfiguration, and there
+            // is no defensible coercion — `42` is not a secret, and
+            // stringifying it would invent a key.
+            return nil
+        }
+
+        // Delegate to the existing decoders instead of reimplementing them:
+        // they already handle the trailing newline that `vercel env pull` and
+        // password-manager copy leave behind, the `0x` prefix, and rejecting
+        // whitespace embedded in the payload.
+        let decoded: SharedSecret?
+        switch encoding {
+        case .hex:
+            decoded = SharedSecret(hex: raw)
+        case .base64:
+            decoded = SharedSecret(base64: raw)
+        }
+
+        // Belt-and-braces: a 0-byte key is a valid `Data` but a broken secret,
+        // and it would sign every request identically. Both decoders reject
+        // empty input already; this guard means a future change to either one
+        // cannot leak an empty key through this path.
+        guard let decoded, !decoded.bytes.isEmpty else { return nil }
+        self = decoded
     }
 }
 

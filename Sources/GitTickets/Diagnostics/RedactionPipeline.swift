@@ -9,6 +9,22 @@ import Foundation
 /// The output the user sees in the form is byte-identical to what gets
 /// POSTed — the pipeline is run once before display and that string is
 /// what's submitted. This is the critical invariant.
+///
+/// ## The caller's order is honoured verbatim
+///
+/// Order affects correctness, not just efficiency: because every replacement
+/// inserts brackets and spaces, a redactor running too early can split a
+/// region that a later redactor needed to match whole, and the later redactor
+/// then matches only the head. See the ordering hazard documented on
+/// ``DiagnosticsRedactor``; ``DiagnosticsRedactor/recommended`` is the order
+/// that survives it.
+///
+/// This type nevertheless applies the array exactly as supplied and does
+/// **not** sort or reorder it. That is a deliberate decision, not an
+/// oversight: the array is the caller's contract, adopters legitimately
+/// depend on specific positions (a custom redactor that must see raw text, or
+/// must see post-redaction text), and silently rearranging it would trade a
+/// documented hazard for an invisible one. Fix bad ordering at the call site.
 enum RedactionPipeline {
 
     /// Returns `text` with each redactor applied in order. Throws nothing

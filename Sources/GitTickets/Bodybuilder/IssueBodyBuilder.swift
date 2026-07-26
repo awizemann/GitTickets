@@ -46,6 +46,13 @@ struct UploadedAttachment: Sendable, Hashable {
 /// Sections are omitted when empty. The correlation marker is always last
 /// so the regex extractor doesn't trip on stray HTML comments earlier in
 /// the body.
+///
+/// The `### Attachments` link text above shows the default
+/// ``AttachmentNameDisplay/filename`` mode. Under
+/// ``AttachmentNameDisplay/generic`` the same two lines render as
+/// `![image 1](url1)` / `[attachment 2](url2)` — no caller-supplied filename
+/// anywhere in the body. The dedicated `![screenshot](…)` line never carried a
+/// filename in either mode.
 enum IssueBodyBuilder {
 
     /// Builds the markdown body for the given report and supporting data.
@@ -57,12 +64,16 @@ enum IssueBodyBuilder {
     ///   - screenshotURL: URL returned by the relay's attachment endpoint
     ///     for the optional screenshot. `nil` suppresses the inline image.
     ///   - attachments: URLs returned by the relay for additional attachments.
+    ///   - attachmentNames: Whether attachment links show the real filename or
+    ///     a generic positional label. Defaults to `.filename` (historical
+    ///     behavior) so internal call sites that don't care keep compiling.
     /// - Returns: The full markdown body ready to POST.
     static func build(
         report: Report,
         diagnostics: String?,
         screenshotURL: URL?,
-        attachments: [UploadedAttachment]
+        attachments: [UploadedAttachment],
+        attachmentNames: AttachmentNameDisplay = .filename
     ) -> String {
         var sections: [String] = []
 
@@ -95,9 +106,27 @@ enum IssueBodyBuilder {
 
         if !attachments.isEmpty {
             var rendered = "### Attachments\n"
-            for attachment in attachments {
+            // ONE 1-based index across the whole list, noun chosen per item.
+            // Deliberately not restarted per kind: a stable index means the
+            // Nth link in the body is the Nth attachment, which is what a
+            // maintainer means when they ask "what's in attachment 2?".
+            for (offset, attachment) in attachments.enumerated() {
                 let safeURL = escapeURLForMarkdown(attachment.url)
-                let safeName = escapeMarkdownLinkText(attachment.filename)
+                let linkText: String
+                switch attachmentNames {
+                case .filename:
+                    linkText = attachment.filename
+                case .generic:
+                    let noun = attachment.isImage ? "image" : "attachment"
+                    linkText = "\(noun) \(offset + 1)"
+                }
+                // Single escape point for both modes. In `.generic` the text is
+                // SDK-generated and has no metacharacters to begin with, so
+                // breaking out of the link text is structurally impossible;
+                // escaping anyway keeps that true if the label format ever
+                // changes. In `.filename` this is the existing protection
+                // against a filename like `weird]name.png`.
+                let safeName = escapeMarkdownLinkText(linkText)
                 let line = attachment.isImage
                     ? "![\(safeName)](\(safeURL))"
                     : "[\(safeName)](\(safeURL))"
@@ -138,12 +167,26 @@ enum IssueBodyBuilder {
     }
 
     /// Escapes `[`, `]`, and `\` inside a markdown link's display text so
-    /// a filename like `weird]name.png` doesn't break the link grammar.
+    /// a filename like `weird]name.png` doesn't break the link grammar, and
+    /// folds CR/LF to spaces.
+    ///
+    /// The newline folding matters because escaping alone can't save a link
+    /// whose display text contains a blank line: `[a\n\nb](url)` ends the
+    /// paragraph, so GFM stops parsing the link and the `](url)` tail renders
+    /// as literal prose. Backslash-escaping does nothing there — the only fix
+    /// is to not emit the break. Filenames reaching this function are raw
+    /// caller data (``RelayClient/sanitizeFilename(_:)`` strips control
+    /// characters for the *multipart header*, but the unsanitized name is what
+    /// gets carried into ``UploadedAttachment`` for the body), so CR/LF is
+    /// reachable in practice.
     static func escapeMarkdownLinkText(_ text: String) -> String {
         text
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "[", with: "\\[")
             .replacingOccurrences(of: "]", with: "\\]")
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
     }
 
     /// Pulls the user-typed body out of an assembled cached body — strips
