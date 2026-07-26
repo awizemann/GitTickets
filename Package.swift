@@ -5,8 +5,8 @@ let package = Package(
     name: "GitTickets",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16),
+        .macOS(.v14),
+        .iOS(.v18),
     ],
     products: [
         .library(name: "GitTickets", targets: ["GitTickets"]),
