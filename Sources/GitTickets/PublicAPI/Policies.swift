@@ -303,6 +303,55 @@ public struct DiagnosticsRedactor: Sendable {
     ]
 }
 
+// MARK: - AttachmentNameDisplay
+
+/// How the SDK labels uploaded attachments in the rendered issue body.
+///
+/// The attachment's own filename is caller data, and for some apps it is the
+/// most sensitive thing in the whole report. A document vault whose users
+/// attach `Tax Return 2024.png` or `Mercy Hospital discharge.pdf` publishes
+/// that document's *name* into the issue tracker even though the bytes stay
+/// behind an unguessable upload URL. When the destination repo is public,
+/// the filename is the leak.
+///
+/// ```swift
+/// // Public repo + sensitive documents: don't echo what the file is called.
+/// Configuration(
+///     …,
+///     privacy: PrivacyPolicy(attachmentNames: .generic)
+/// )
+/// ```
+///
+/// ## Scope
+///
+/// This governs **SDK-injected attachment metadata only**. Text the user
+/// typed into their own report description is theirs and still appears
+/// verbatim — if they write "the crash happens opening Tax Return 2024.pdf",
+/// that sentence is published, because they chose to write it. Scrubbing a
+/// user's own prose is not attempted: it cannot be done safely, and the
+/// user's words are not ours to rewrite.
+public enum AttachmentNameDisplay: Sendable, Hashable {
+
+    /// Render the attachment's real filename as the markdown link text —
+    /// `![Tax Return 2024.png](…)`. The historical behavior, and the default
+    /// so existing adopters see no change.
+    ///
+    /// The filename is still escaped for markdown link grammar before it is
+    /// embedded; see ``IssueBodyBuilder/escapeMarkdownLinkText(_:)``.
+    case filename
+
+    /// Replace the filename with a positional label — `![image 1](…)`,
+    /// `[attachment 2](…)`. No caller-supplied text reaches the link text at
+    /// all, so there is nothing to leak and nothing to escape.
+    ///
+    /// Numbering is a single 1-based index across the whole attachment list,
+    /// with the noun chosen per item. `[png, pdf, jpg]` renders "image 1",
+    /// "attachment 2", "image 3" — the Nth link in the body is always the Nth
+    /// attachment, so a maintainer can ask "what's in attachment 2?" and mean
+    /// something unambiguous.
+    case generic
+}
+
 // MARK: - PrivacyPolicy
 
 /// Privacy banner copy and consent requirements shown in the report form.
@@ -317,9 +366,23 @@ public struct PrivacyPolicy: Sendable {
     /// Default: `true`.
     public var requireExplicitConsent: Bool
 
-    public init(bannerText: String? = nil, requireExplicitConsent: Bool = true) {
+    /// Whether attachment links in the issue body carry the real filename or a
+    /// generic positional label. Default: ``AttachmentNameDisplay/filename``
+    /// (existing behavior). Set ``AttachmentNameDisplay/generic`` when the
+    /// destination repo is public and filenames are sensitive.
+    public var attachmentNames: AttachmentNameDisplay
+
+    /// - Note: `attachmentNames` is defaulted and trailing so the older
+    ///   `PrivacyPolicy(bannerText:requireExplicitConsent:)` call keeps
+    ///   compiling unchanged.
+    public init(
+        bannerText: String? = nil,
+        requireExplicitConsent: Bool = true,
+        attachmentNames: AttachmentNameDisplay = .filename
+    ) {
         self.bannerText = bannerText
         self.requireExplicitConsent = requireExplicitConsent
+        self.attachmentNames = attachmentNames
     }
 
     public static let `default` = PrivacyPolicy()

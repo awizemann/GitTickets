@@ -81,7 +81,8 @@ struct RelaySubmitter: IssueSubmitter {
             report: report,
             diagnostics: report.includeDiagnostics ? report.diagnosticsBlob : nil,
             screenshotURL: screenshotURL,
-            attachments: uploaded
+            attachments: uploaded,
+            attachmentNames: configuration.privacy.attachmentNames
         )
 
         // 4. POST /report.
