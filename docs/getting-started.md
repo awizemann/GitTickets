@@ -10,7 +10,7 @@ to "user-typed reports are landing as GitHub issues in my repo."
 >   version — and on iOS it skips a release, so **iOS 17 is excluded too**.
 >   Still shipping below macOS 14 or below iOS 18? Pin `1.0.0`.
 > - **Toolchain (what builds the package):** 2.0.0 is built and tested on
->   Xcode 26.6 / Swift 6.3.3, and CI targets Xcode 26.3. Older Xcode versions
+>   Xcode 26.6 / Swift 6.3.3, and passes CI green on Xcode 26.3. Older Xcode versions
 >   are untested, so this doc does not state a minimum one. The manifest is
 >   `swift-tools-version:6.0` and declares `.iOS(.v18)`, so a toolchain that
 >   cannot parse those cannot resolve the package at all — but that is a

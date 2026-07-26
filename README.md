@@ -60,7 +60,7 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 **Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Up from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS this drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.0.0; bump the requirement to `from: "2.0.0"` deliberately.
 
-**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 210/210 tests, clean generic iOS Simulator build. CI targets Xcode 26.3 on `macos-15` but has not run yet. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
+**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 210/210 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
 
 Feature scope is frozen; the Phase 2 "My Reports" in-app reply view is on the roadmap as a 2.x point release. See [`CHANGELOG.md`](CHANGELOG.md) for what landed and [`TASKS.md`](TASKS.md) for the active board.
 

@@ -51,9 +51,13 @@ run:
   a generic iOS Simulator destination. On a pristine clone,
   `TEST_RUNNER_CI=true xcodebuild test` reports TEST SUCCEEDED with 204 passed
   and 6 skipped (the 6 are the snapshot tests, which skip under CI).
-- **CI targets Xcode 26.3 on `macos-15`** — configured in this release but
-  **not yet executed**; GitHub Actions has not run the retargeted workflow at
-  the time of writing.
+- **Verified on CI with Xcode 26.3 on `macos-15`.** The retargeted workflow
+  ran green on the 2.0.0 merge commit — its first green run, and the first in
+  this repository's history. The macOS job executed 210 tests (6 snapshot
+  tests skipped) and the iOS job executed 198 (30 skipped: keychain-entitlement
+  and compile-time platform exclusions). The iOS job resolved its destination
+  to a real **iOS 18.6** simulator, so the iOS 18 floor is tested *at* the
+  floor rather than only above it.
 - **Xcode 16.x is untested, in both directions.** The Swift 6.0 concurrency
   error that broke 1.1.0 lived in code this release deletes, so 2.0.0 may well
   compile on Xcode 16.x — but nobody has tried it, so nothing here claims it
