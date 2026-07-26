@@ -34,9 +34,15 @@ struct ScreenshotThumbnail: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            // One VoiceOver stop for "name, size" instead of two, and it no
+            // longer repeats the filename the expand button just announced.
+            .accessibilityElement(children: .combine)
             Spacer()
             Button("Remove", role: .destructive, action: onRemove)
                 .buttonStyle(.borderless)
+                // Several attachments would otherwise expose several identically
+                // labelled destructive buttons.
+                .accessibilityLabel("Remove \(filename)")
         }
     }
 
@@ -52,13 +58,20 @@ struct ScreenshotThumbnail: View {
             Button(action: onExpand) { tile }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
-                // Worded to hold for a non-image / undecodable attachment too:
-                // the sheet always opens and always says something true about
-                // the file, so this is never a control that does nothing.
-                .accessibilityLabel("Preview attachment \(filename) at full size")
-                .accessibilityHint("Opens the attachment at full size so you can check it before submitting.")
+                // Short label, detail in the hint — VoiceOver reads label + trait
+                // first, and this is also what a Voice Control user has to say
+                // out loud. Worded to hold for a non-image / undecodable
+                // attachment too: the sheet always opens and always says
+                // something true about the file, so this is never a control that
+                // does nothing.
+                .accessibilityLabel("Preview \(filename)")
+                // `help(_:)` sets the accessibility hint as well as the macOS
+                // tooltip, so the two can't both be applied — one would silently
+                // overwrite the other.
                 #if os(macOS)
-                .help("Preview \(filename) at full size")
+                .help("Preview at full size")
+                #else
+                .accessibilityHint("Opens the attachment at full size so you can check it before submitting.")
                 #endif
         } else {
             tile

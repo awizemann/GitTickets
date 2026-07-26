@@ -199,10 +199,10 @@ public struct GitTicketsView: View {
     /// image attachments. Tap-to-remove is wired through each thumbnail's
     /// `onRemove` closure; `onExpand` opens the full-size preview.
     ///
-    /// Stacked vertically, not side by side: each cell is a wide row (tile +
-    /// filename + Remove), so three of them across would squeeze the filename
-    /// and the Remove button out of the 640pt reading column — worse still at
-    /// large Dynamic Type sizes.
+    /// Stacked vertically and uncapped, not side by side: each cell is a wide row
+    /// (tile + filename + Remove), so several across the 640pt reading column
+    /// squeezed the filename to an ellipsis and could truncate the *destructive*
+    /// Remove label outright at large Dynamic Type sizes.
     private var attachmentThumbnails: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let shot = screenshot {
@@ -218,7 +218,6 @@ public struct GitTicketsView: View {
                         )
                     }
                 )
-                .frame(maxWidth: 200)
             }
             ForEach(Array(attachments.enumerated()), id: \.offset) { offset, attachment in
                 ScreenshotThumbnail(
@@ -233,7 +232,6 @@ public struct GitTicketsView: View {
                         )
                     }
                 )
-                .frame(maxWidth: 200)
             }
         }
     }

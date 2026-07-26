@@ -55,7 +55,24 @@ struct PendingAttachment: Identifiable {
 
 // MARK: - Bounded, platform-neutral decoding
 
-/// Decodes attachment bytes into a `CGImage` with a hard ceiling on pixel size.
+/// One decoded preview: the (possibly downsampled) bitmap we render, plus the
+/// **source** pixel dimensions to report to the user.
+///
+/// Keeping both matters. The bitmap is capped at ``AttachmentImageDecoder/defaultMaxPixelSize``,
+/// so quoting its size would tell the user their 4000 × 3000 screenshot is
+/// 2048 × 1536 — a false statement about the bytes they are about to publish, on
+/// the one screen whose entire job is letting them verify exactly that.
+///
+/// `@unchecked Sendable` so the decode can happen off the main actor: `CGImage`
+/// is an immutable, thread-safe CF type, and this box does nothing but carry one
+/// back.
+struct AttachmentPreviewImage: @unchecked Sendable {
+    let image: CGImage
+    let sourcePixelWidth: Int
+    let sourcePixelHeight: Int
+}
+
+/// Decodes attachment bytes with a hard ceiling on pixel size.
 ///
 /// Pure and synchronous so it can be unit-tested on both platforms without a
 /// view hierarchy.
@@ -65,12 +82,13 @@ enum AttachmentImageDecoder {
     /// any display we render into, far below what a 5 MB source image can be.
     static let defaultMaxPixelSize = 2048
 
-    /// Returns a downsampled image for `data`, or `nil` when the platform's
-    /// decoders don't recognise the bytes (a PDF, a corrupt PNG, garbage).
+    /// Returns a downsampled preview for `data`, or `nil` when the platform's
+    /// decoders don't recognise the bytes (malformed or truncated image data,
+    /// or a format ImageIO has no decoder for).
     static func decode(
         _ data: Data,
         maxPixelSize: Int = AttachmentImageDecoder.defaultMaxPixelSize
-    ) -> CGImage? {
+    ) -> AttachmentPreviewImage? {
         guard !data.isEmpty,
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               CGImageSourceGetCount(source) > 0
@@ -82,7 +100,19 @@ enum AttachmentImageDecoder {
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
         ]
-        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+        else { return nil }
+
+        // Header-only read; no second full decode.
+        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        let sourceWidth = (properties?[kCGImagePropertyPixelWidth] as? Int) ?? image.width
+        let sourceHeight = (properties?[kCGImagePropertyPixelHeight] as? Int) ?? image.height
+
+        return AttachmentPreviewImage(
+            image: image,
+            sourcePixelWidth: sourceWidth,
+            sourcePixelHeight: sourceHeight
+        )
     }
 }
 
@@ -101,7 +131,7 @@ struct AttachmentPreviewSheet: View {
     /// prematurely.
     private enum Phase {
         case decoding
-        case image(CGImage)
+        case image(AttachmentPreviewImage)
         case noPreview
     }
 
@@ -124,7 +154,16 @@ struct AttachmentPreviewSheet: View {
             #endif
         }
         .task(id: attachment.id) {
-            phase = AttachmentImageDecoder.decode(attachment.data).map(Phase.image) ?? .noPreview
+            // Off the main actor: ImageIO can spend hundreds of milliseconds on a
+            // multi-megapixel source, and blocking here would stall the sheet's
+            // presentation animation and VoiceOver itself — which would also make
+            // the `.decoding` state unreachable, since nothing could redraw.
+            let bytes = attachment.data
+            let result = await Task.detached(priority: .userInitiated) {
+                AttachmentImageDecoder.decode(bytes)
+            }.value
+            guard !Task.isCancelled else { return }
+            phase = result.map(Phase.image) ?? .noPreview
         }
         #if os(macOS)
         // macOS sheets take their size from their content; without this the
@@ -141,8 +180,12 @@ struct AttachmentPreviewSheet: View {
             ProgressView()
                 .controlSize(.large)
                 .accessibilityLabel("Preparing preview")
-        case .image(let image):
-            Image(image, scale: 1, label: Text(imageLabel(for: image)))
+        case .image(let preview):
+            // Scaled to fit the sheet rather than pinned to 1:1: the point is to
+            // make the *content* legible, so a small crop is still worth
+            // enlarging. The footer reports the true source dimensions, so
+            // nothing here misrepresents the file's real size.
+            Image(preview.image, scale: 1, label: Text(imageLabel(for: preview)))
                 .resizable()
                 .scaledToFit()
                 .padding(16)
@@ -199,8 +242,14 @@ struct AttachmentPreviewSheet: View {
                 Text(metaLine)
                     .font(.system(.caption2, design: .monospaced))
                     .foregroundStyle(.secondary)
+                    // Bounded so the footer can't wrap into several tall lines at
+                    // accessibility text sizes and starve the image area.
+                    .lineLimit(2)
             }
             .accessibilityElement(children: .combine)
+            // VoiceOver would otherwise read "×" and "·" as "multiplication sign"
+            // and "middle dot".
+            .accessibilityLabel("\(attachment.filename), \(Self.spokenMetaLine(metaLine))")
 
             Spacer(minLength: 0)
 
@@ -210,7 +259,13 @@ struct AttachmentPreviewSheet: View {
             // same choice `IssueStateCard` makes for its always-available action.
             Button("Done") { dismiss() }
                 .buttonStyle(.bordered)
+                // `.regular` is ~34pt on iOS — under the 44pt minimum, which is
+                // not acceptable for the only way out of a modal.
+                #if os(iOS)
+                .controlSize(.large)
+                #else
                 .controlSize(.regular)
+                #endif
                 .tint(.primary)
                 .keyboardShortcut(.cancelAction)   // Escape on macOS
                 .accessibilityHint("Closes the preview and returns to the report form.")
@@ -223,7 +278,11 @@ struct AttachmentPreviewSheet: View {
 
     private var metaLine: String {
         var pixelSize: (Int, Int)?
-        if case .image(let image) = phase { pixelSize = (image.width, image.height) }
+        // The SOURCE dimensions, not the downsampled bitmap's — see
+        // ``AttachmentPreviewImage``.
+        if case .image(let preview) = phase {
+            pixelSize = (preview.sourcePixelWidth, preview.sourcePixelHeight)
+        }
         return Self.metaLine(
             byteCount: attachment.data.count,
             mimeType: attachment.mimeType,
@@ -231,8 +290,8 @@ struct AttachmentPreviewSheet: View {
         )
     }
 
-    private func imageLabel(for image: CGImage) -> String {
-        "Attachment \(attachment.filename), \(image.width) by \(image.height) pixels"
+    private func imageLabel(for preview: AttachmentPreviewImage) -> String {
+        "Attachment \(attachment.filename), \(preview.sourcePixelWidth) by \(preview.sourcePixelHeight) pixels"
     }
 
     // MARK: Pure formatting (unit-tested)
@@ -249,6 +308,13 @@ struct AttachmentPreviewSheet: View {
         parts.append(formattedByteCount(byteCount))
         if !mimeType.isEmpty { parts.append(mimeType) }
         return parts.joined(separator: " · ")
+    }
+
+    /// The same line rewritten for speech: `"1024 by 768, 812 KB, image/png"`.
+    static func spokenMetaLine(_ line: String) -> String {
+        line
+            .replacingOccurrences(of: " × ", with: " by ")
+            .replacingOccurrences(of: " · ", with: ", ")
     }
 
     static func formattedByteCount(_ count: Int) -> String {

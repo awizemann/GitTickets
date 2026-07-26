@@ -30,36 +30,52 @@ final class AttachmentPreviewSheetTests: XCTestCase {
         XCTAssertNil(AttachmentImageDecoder.decode(Data([0x00, 0x01, 0x02, 0x03, 0x04])))
     }
 
-    func test_decodeReturnsNilForNonImageBytes() {
-        // A PDF header is a realistic non-image attachment: recognisable as a
-        // file, not decodable as a bitmap by CGImageSource.
-        let pdf = Data("%PDF-1.7\n%%EOF\n".utf8)
-        XCTAssertNil(AttachmentImageDecoder.decode(pdf))
+    func test_decodeReturnsNilForTruncatedNonImageFile() {
+        // A file header with no decodable image payload. Note the importer only
+        // admits image UTTypes, so in practice this path is reached by *corrupt*
+        // or truncated bytes rather than by a genuinely different file type.
+        let truncated = Data("%PDF-1.7\n%%EOF\n".utf8)
+        XCTAssertNil(AttachmentImageDecoder.decode(truncated))
     }
 
     func test_decodeDecodesSmallPNGAtItsNativeSize() throws {
         let data = try XCTUnwrap(Data(base64Encoded: onePixelPNGBase64))
-        let image = try XCTUnwrap(AttachmentImageDecoder.decode(data))
+        let preview = try XCTUnwrap(AttachmentImageDecoder.decode(data))
         // Never upscaled to the ceiling.
-        XCTAssertEqual(image.width, 1)
-        XCTAssertEqual(image.height, 1)
+        XCTAssertEqual(preview.image.width, 1)
+        XCTAssertEqual(preview.image.height, 1)
+        XCTAssertEqual(preview.sourcePixelWidth, 1)
+        XCTAssertEqual(preview.sourcePixelHeight, 1)
     }
 
     func test_decodeDownsamplesOversizedImageToTheCeiling() throws {
         // Guards the "very large image" case: an attachment must not be decoded
         // at full resolution just to be looked at.
         let data = try makePNG(width: 900, height: 300)
-        let image = try XCTUnwrap(AttachmentImageDecoder.decode(data, maxPixelSize: 128))
-        XCTAssertEqual(max(image.width, image.height), 128)
+        let preview = try XCTUnwrap(AttachmentImageDecoder.decode(data, maxPixelSize: 128))
+        XCTAssertEqual(max(preview.image.width, preview.image.height), 128)
         // Aspect ratio preserved (900:300 == 3:1), allowing for rounding.
-        XCTAssertTrue((41...44).contains(image.height), "height was \(image.height)")
+        XCTAssertTrue((41...44).contains(preview.image.height), "height was \(preview.image.height)")
+    }
+
+    func test_decodeReportsSourceDimensionsNotDownsampledOnes() throws {
+        // The footer and the VoiceOver label quote these numbers. Reporting the
+        // capped bitmap's size would tell the user a falsehood about the file
+        // they are about to publish.
+        let data = try makePNG(width: 900, height: 300)
+        let preview = try XCTUnwrap(AttachmentImageDecoder.decode(data, maxPixelSize: 128))
+        XCTAssertEqual(preview.sourcePixelWidth, 900)
+        XCTAssertEqual(preview.sourcePixelHeight, 300)
+        XCTAssertNotEqual(preview.sourcePixelWidth, preview.image.width)
     }
 
     func test_decodeLeavesUndersizedImageUntouchedByTheCeiling() throws {
         let data = try makePNG(width: 64, height: 48)
-        let image = try XCTUnwrap(AttachmentImageDecoder.decode(data, maxPixelSize: 2048))
-        XCTAssertEqual(image.width, 64)
-        XCTAssertEqual(image.height, 48)
+        let preview = try XCTUnwrap(AttachmentImageDecoder.decode(data, maxPixelSize: 2048))
+        XCTAssertEqual(preview.image.width, 64)
+        XCTAssertEqual(preview.image.height, 48)
+        XCTAssertEqual(preview.sourcePixelWidth, 64)
+        XCTAssertEqual(preview.sourcePixelHeight, 48)
     }
 
     func test_defaultCeilingIsBounded() {
@@ -96,6 +112,24 @@ final class AttachmentPreviewSheetTests: XCTestCase {
         let line = AttachmentPreviewSheet.metaLine(byteCount: 10, mimeType: "", pixelSize: nil)
         XCTAssertFalse(line.hasSuffix("·"), line)
         XCTAssertEqual(line, AttachmentPreviewSheet.formattedByteCount(10))
+    }
+
+    func test_spokenMetaLineReplacesSymbolsVoiceOverWouldReadLiterally() {
+        let line = AttachmentPreviewSheet.metaLine(
+            byteCount: 4096,
+            mimeType: "image/png",
+            pixelSize: (1024, 768)
+        )
+        let spoken = AttachmentPreviewSheet.spokenMetaLine(line)
+        XCTAssertFalse(spoken.contains("×"), spoken)   // "multiplication sign"
+        XCTAssertFalse(spoken.contains("·"), spoken)   // "middle dot"
+        XCTAssertTrue(spoken.hasPrefix("1024 by 768, "), spoken)
+        XCTAssertTrue(spoken.hasSuffix(", image/png"), spoken)
+    }
+
+    func test_spokenMetaLineLeavesAPlainLineAlone() {
+        let line = AttachmentPreviewSheet.metaLine(byteCount: 10, mimeType: "", pixelSize: nil)
+        XCTAssertEqual(AttachmentPreviewSheet.spokenMetaLine(line), line)
     }
 
     // MARK: - PendingAttachment identity
