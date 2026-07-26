@@ -41,7 +41,7 @@ The Help menu now contains "Report an Issue…". See [`docs/getting-started.md`]
 
 ## Why a relay
 
-GitHub has no anonymous write surface — every issue, comment, or attachment needs an authenticated request. We refuse to ship a token in the app binary (extractable, breaks every shipped build on rotation). The relay is ~100 lines of TypeScript that holds a GitHub App installation token scoped to `Issues: write` on exactly one repo. Deploy it once, point GitTickets at it, anyone can submit without a GitHub account.
+GitHub has no anonymous write surface — every issue, comment, or attachment needs an authenticated request. We refuse to ship a token in the app binary (extractable, breaks every shipped build on rotation). The relay is a small self-contained TypeScript service that holds a GitHub App installation token scoped to `Issues: write` on exactly one repo. You deploy a template and set environment variables — there is no relay code for you to write. Deploy it once, point GitTickets at it, anyone can submit without a GitHub account.
 
 If your users *do* have GitHub accounts (developer tool, internal app), use `.deviceFlow(clientID:)` instead — no relay needed.
 
@@ -74,7 +74,7 @@ re-fetch when the scene becomes active, and a working
 
 **Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 306/306 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
 
-Feature scope is frozen; the Phase 2 "My Reports" in-app reply view is on the roadmap as a 2.x point release. See [`CHANGELOG.md`](CHANGELOG.md) for what landed and [`TASKS.md`](TASKS.md) for the active board.
+The Phase 2 "My Reports" in-app reply view **has shipped** — browse past submissions, read developer replies, and refresh without reopening the window. See [`CHANGELOG.md`](CHANGELOG.md) for what landed in each release and [`TASKS.md`](TASKS.md) for the active board.
 
 ## Documentation
 

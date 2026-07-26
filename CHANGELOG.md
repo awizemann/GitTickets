@@ -4,6 +4,10 @@ All notable changes to GitTickets are documented here. Format: [Keep a Changelog
 
 The SDK and the relay templates version independently.
 
+## [Unreleased]
+
+_Nothing yet._
+
 ## [2.3.0] — 2026-07-26
 
 Additive minor. Closes a silent-failure path in "My Reports" reported by the
@@ -418,10 +422,6 @@ concurrency annotations, one deprecated-API rename, and build config.
 This is the first tagged release. The SDK is feature-complete for
 Phase 1; Phase 2 (the "My Issues" in-app reply thread view) is on the
 roadmap as a v1.x point release.
-
-## [Unreleased]
-
-_Nothing yet._
 
 ---
 
