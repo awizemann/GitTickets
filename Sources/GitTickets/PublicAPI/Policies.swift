@@ -397,8 +397,17 @@ public struct MyIssuesPolicy: Sendable {
     /// Whether the "My Issues" view and menu items are surfaced. Default: `true`.
     public var enabled: Bool
 
-    /// How often the SDK polls for new replies in the background. `0` (default)
-    /// means manual refresh only (pull-to-refresh on iOS, ⌘R on macOS).
+    /// How often, in seconds, the "My Issues" and Issue Detail screens re-fetch
+    /// while open. `0` (the default) disables polling, leaving the manual paths:
+    /// the toolbar Refresh control (⌘R), pull-to-refresh on iOS, and an
+    /// automatic re-fetch whenever the scene becomes active again.
+    ///
+    /// - Note: Polling costs a request per screen per interval against your
+    ///   relay and GitHub's rate limits, so prefer scene reactivation and leave
+    ///   this at `0` unless you specifically need live updates.
+    ///
+    /// - Important: Read only while a screen is on-screen; the timer cancels
+    ///   when the view goes away.
     public var pollInterval: TimeInterval
 
     /// The label applied to submitted issues. Used to filter the issue list

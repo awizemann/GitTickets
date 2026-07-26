@@ -4,6 +4,54 @@ All notable changes to GitTickets are documented here. Format: [Keep a Changelog
 
 The SDK and the relay templates version independently.
 
+## [2.2.0] — 2026-07-26
+
+### Fixed
+
+- **macOS had no way to refresh an open "My Reports" or Issue Detail window.**
+  Both screens used `ScrollView { … }.refreshable { … }`, and on macOS that
+  combination installs **nothing** — the AppKit hierarchy is byte-identical to
+  applying no modifier, and the `refresh` environment action is not even
+  propagated. Only `List` gets an affordance there. So a report filed elsewhere
+  could not appear in an open list, and a new reply could not appear in an open
+  thread; closing and reopening the window (which re-runs `.task`) was the only
+  mechanism.
+
+  This was measured against the shipped views, not inferred — see
+  `Harnesses/RefreshAffordance`. On **iOS** the same construction works
+  correctly and always did: `.refreshable` installs a `UIRefreshControl` on a
+  plain `ScrollView`, so pull-to-refresh was never broken there and is unchanged.
+
+### Added
+
+- **A toolbar Refresh control on both screens**, with a ⌘R keyboard shortcut and
+  an accessibility label. This is the only refresh affordance a macOS user can
+  reach directly, and it works on both platforms.
+- **Automatic re-fetch when the scene becomes active again.** Returning to the
+  window picks up new issues and replies without any user action. The first
+  activation is deliberately ignored, since the screen's own `.task` has already
+  loaded by then.
+
+### Changed — behavior
+
+- **`MyIssuesPolicy.pollInterval` now does something.** It has been public since
+  Phase 2 but nothing read it, so no auto-refresh existed under any
+  configuration. It now drives a re-fetch loop on both screens, cancelled when
+  the screen goes away.
+
+  **The default is unchanged at `0`, which means off**, so adopters on defaults
+  see no new network traffic. A negative value is treated as `0` rather than
+  spinning. Polling costs a request per screen per interval against your relay
+  and GitHub's rate limits — prefer scene reactivation and leave this at `0`
+  unless you specifically need live updates.
+
+### Notes for adopters
+
+- Two doc comments were wrong and are corrected. `GitTicketsMyIssuesView`'s
+  header claimed "the iOS `.refreshable` gesture on macOS too" (false), and
+  `MyIssuesPolicy.pollInterval` claimed manual refresh via "⌘R on macOS" when no
+  such shortcut existed. Both are now true statements rather than intentions.
+
 ## [2.1.0] — 2026-07-26
 
 Additive minor, driven by the ShabuBox integration — a privacy-first macOS
@@ -319,8 +367,9 @@ _Nothing yet._
 
 ---
 
+[2.2.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.2.0
 [2.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.1.0
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.2.0...HEAD

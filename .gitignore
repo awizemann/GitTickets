@@ -11,6 +11,9 @@ sessions/.index.json
 .swiftpm/
 Package.resolved
 
+# Harness build output (the iOS harness compiles outside SwiftPM)
+.build-ios/
+
 # Xcode
 *.xcodeproj/
 !Examples/**/*.xcodeproj

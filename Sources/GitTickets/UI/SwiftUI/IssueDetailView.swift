@@ -90,6 +90,12 @@ public struct IssueDetailView: View {
         #endif
         .task { await reload() }
         .refreshable { await reload() }
+        .refreshTriggers(
+            pollInterval: configuredPollInterval,
+            accessibilityLabel: "Refresh replies"
+        ) {
+            await reload()
+        }
     }
 
     @ViewBuilder private var threadOrState: some View {
