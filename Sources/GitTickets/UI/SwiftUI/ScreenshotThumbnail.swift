@@ -17,15 +17,14 @@ struct ScreenshotThumbnail: View {
     let data: Data
     let onRemove: () -> Void
 
+    /// When non-`nil` the thumbnail tile becomes a real `Button` that opens the
+    /// attachment at full size. Left `nil` the cell renders exactly as it did
+    /// before v2.1.0 — inert, no badge, no extra accessibility element.
+    var onExpand: (() -> Void)?
+
     var body: some View {
         HStack(spacing: 10) {
-            preview
-                .frame(width: 48, height: 48)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .strokeBorder(Color.secondary.opacity(0.3))
-                )
+            thumbnail
             VStack(alignment: .leading, spacing: 2) {
                 Text(filename)
                     .font(.callout)
@@ -39,6 +38,59 @@ struct ScreenshotThumbnail: View {
             Button("Remove", role: .destructive, action: onRemove)
                 .buttonStyle(.borderless)
         }
+    }
+
+    /// The 48pt tile, wrapped in a `Button` when an expand action is supplied.
+    ///
+    /// A real `Button` (not an `onTapGesture`) on purpose: that is what makes
+    /// the affordance an `AXButton` for VoiceOver on both platforms and puts it
+    /// in the macOS key view loop under Full Keyboard Access. The Remove button
+    /// stays a sibling rather than being nested inside this one, so hit-testing
+    /// and the accessibility tree both stay unambiguous.
+    @ViewBuilder private var thumbnail: some View {
+        if let onExpand {
+            Button(action: onExpand) { tile }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                // Worded to hold for a non-image / undecodable attachment too:
+                // the sheet always opens and always says something true about
+                // the file, so this is never a control that does nothing.
+                .accessibilityLabel("Preview attachment \(filename) at full size")
+                .accessibilityHint("Opens the attachment at full size so you can check it before submitting.")
+                #if os(macOS)
+                .help("Preview \(filename) at full size")
+                #endif
+        } else {
+            tile
+        }
+    }
+
+    private var tile: some View {
+        preview
+            .frame(width: 48, height: 48)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .strokeBorder(Color.secondary.opacity(0.3))
+            )
+            .overlay(alignment: .bottomTrailing) {
+                if onExpand != nil { expandBadge }
+            }
+    }
+
+    /// Makes the tap target discoverable. Uses a material rather than a fixed
+    /// color so it stays legible over any image content, in light or dark, under
+    /// any adopter theme — the badge sits on top of arbitrary user pixels, so it
+    /// can't inherit a surface color.
+    private var expandBadge: some View {
+        Image(systemName: "arrow.up.left.and.arrow.down.right")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundStyle(.primary)
+            .padding(3)
+            .background(Circle().fill(.regularMaterial))
+            .padding(2)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder private var preview: some View {
