@@ -42,8 +42,8 @@ public enum ScreenshotCapture {
 
     /// Captures the current screen / key window.
     ///
-    /// macOS: uses ScreenCaptureKit to capture the main display. Falls back
-    /// to `CGWindowListCreateImage` if SCK is unavailable.
+    /// macOS: uses ScreenCaptureKit's `SCScreenshotManager` to capture the
+    /// main display.
     ///
     /// iOS: renders the active window into a `UIGraphicsImageRenderer`.
     public static func capture() async -> Result<Data, ScreenshotCaptureError> {
