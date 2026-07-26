@@ -194,24 +194,35 @@ public struct GitTicketsMyIssuesView: View {
     // MARK: States
 
     /// Shown when this device has filed reports but the backend returned none
-    /// of them — a configuration fault, not an empty history.
+    /// of them.
     ///
-    /// The wording deliberately does not blame the user or claim the reports
-    /// are gone: they exist on GitHub, they just cannot be found by label. It
-    /// also avoids naming labels or permissions, which mean nothing to the
-    /// person reading it; the actionable detail goes to the logger instead.
+    /// The wording must not name a cause, because the SDK cannot know one. The
+    /// backend finds issues by label, so an issue is absent from the result
+    /// whether it was **deleted** or merely **lost its label** — those are
+    /// indistinguishable from here, and they call for opposite reassurances.
+    /// An earlier version of this screen promised "they haven't been lost",
+    /// which is plainly false for someone whose reports really were deleted.
+    ///
+    /// So: state what is known (you filed N, none came back), offer both
+    /// plausible explanations, and do not imply the situation is temporary.
+    /// Labels and permissions are never mentioned — they mean nothing to the
+    /// person reading this; that detail goes to the logger instead.
     private func unmatchedState(requestedCount: Int) -> some View {
         VStack(spacing: 12) {
             stateIcon("questionmark.folder", tint: .orange)
-            Text("Can't find your reports").font(.headline)
+            Text("Your reports aren't showing up").font(.headline)
             Text(
                 requestedCount == 1
-                    ? "You've filed 1 report, but we couldn't load it just now. It hasn't been lost — please try again, or contact support if this continues."
-                    : "You've filed \(requestedCount) reports, but we couldn't load them just now. They haven't been lost — please try again, or contact support if this continues."
+                    ? "You've filed 1 report, but it didn't come back. It may have been removed, or there may be a problem reaching the issue tracker."
+                    : "You've filed \(requestedCount) reports, but none of them came back. They may have been removed, or there may be a problem reaching the issue tracker."
             )
             .font(.footnote).foregroundStyle(.secondary)
             .multilineTextAlignment(.center).frame(maxWidth: 300)
             .fixedSize(horizontal: false, vertical: true)
+            Text("If you were expecting to see them, contact support.")
+                .font(.caption).foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center).frame(maxWidth: 300)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)

@@ -50,10 +50,20 @@ public struct MyIssuesRefresh: Sendable, Equatable {
     /// `true` when this device has cached submissions but the backend matched
     /// **none** of them.
     ///
-    /// Almost always a configuration fault rather than a user with no history:
-    /// the label was never applied (the GitHub App lacks push permission), the
-    /// label was removed from the issues, the relay's configured label changed,
-    /// or the relay points at a different repository.
+    /// - Important: this does **not** tell you why, and you must not present it
+    ///   as though it did. The backend finds issues by label, so an issue is
+    ///   absent from the result whether it was **deleted** or merely **lost its
+    ///   label**. Both produce `allMissing == true` and they are
+    ///   indistinguishable from here — distinguishing them would need a
+    ///   per-issue existence probe the backend does not expose.
+    ///
+    ///   Causes, roughly in the order worth checking:
+    ///   - every issue was deleted (ordinary, permanent, and nobody's fault)
+    ///   - the label was never applied — the GitHub App lacks push permission
+    ///   - the label was removed from the issues after the fact
+    ///   - the backend's configured label or repository changed
+    ///
+    ///   Closed issues are **not** a cause: the backend lists with `state=all`.
     ///
     /// - Important: `requestedCount == 0` is NOT this case. A device that has
     ///   filed nothing legitimately has nothing to show.

@@ -6,7 +6,25 @@ The SDK and the relay templates version independently.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **The "reports not showing up" state claimed a cause the SDK cannot know.**
+  2.3.0 added a distinct state for "you filed reports but none came back", and
+  told the user *"They haven't been lost — please try again."* That is false for
+  the most ordinary cause of all: **the issues were deleted.** The backend finds
+  issues by label, so an issue is absent from the result whether it was deleted
+  or merely lost its label, and those are indistinguishable without a per-issue
+  existence probe the backend does not expose.
+
+  The screen now states only what is known — you filed N, none came back —
+  offers both explanations, and no longer implies the situation is temporary.
+  The `.warning` log now names deletion **first**, so an adopter rules that out
+  before chasing label permissions. `MyIssuesRefresh.allMissing` is unchanged in
+  behavior; its documentation no longer calls it "almost always a configuration
+  fault", which was wrong.
+
+  Closed issues were never a cause and still are not — the backend lists with
+  `state=all`.
 
 ## [2.3.0] — 2026-07-26
 

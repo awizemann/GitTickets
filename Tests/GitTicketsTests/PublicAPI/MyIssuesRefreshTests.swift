@@ -44,6 +44,26 @@ final class MyIssuesRefreshTests: XCTestCase {
         XCTAssertEqual(refresh.unmatchedCount, 1)
     }
 
+    /// `allMissing` reports *that* nothing came back, never *why*.
+    ///
+    /// A user whose issues were all deleted and a user whose issues merely lost
+    /// the label the backend finds them by produce **identical** results —
+    /// telling them apart would need a per-issue existence probe the backend
+    /// does not expose. This is pinned because the two cases call for opposite
+    /// reassurances: an earlier build told the deleted-issues user "they
+    /// haven't been lost", which was simply false.
+    ///
+    /// If you are here because you want `allMissing` to imply a cause: it
+    /// cannot, and this test is why.
+    func test_deletedIssuesAndDroppedLabelsAreIndistinguishable() {
+        let allIssuesDeleted = MyIssuesRefresh(issues: [], requestedCount: 3)
+        let labelDroppedFromAll = MyIssuesRefresh(issues: [], requestedCount: 3)
+
+        XCTAssertEqual(allIssuesDeleted, labelDroppedFromAll)
+        XCTAssertTrue(allIssuesDeleted.allMissing)
+        XCTAssertTrue(labelDroppedFromAll.allMissing)
+    }
+
     func test_fullMatchHasNoShortfall() {
         let refresh = MyIssuesRefresh(issues: [issue(1), issue(2)], requestedCount: 2)
         XCTAssertFalse(refresh.allMissing)

@@ -81,10 +81,17 @@ submission should land as an issue in your repo within a few seconds.
   at *fetch* time: it compares the cached submissions it asked about against
   what came back. Call `GitTickets.refreshMyIssuesDetailed()` and read
   `MyIssuesRefresh.allMissing`, or just set `Configuration.logger` — a total
-  miss logs at `.warning` naming the label and the likely causes, and a
-  partial miss at `.info` (a deleted issue produces one legitimately). The
-  built-in view shows a distinct "Can't find your reports" state rather than
-  claiming the user has none.
+  miss logs at `.warning`, a partial miss at `.info`. The built-in view shows a
+  distinct state rather than claiming the user has none.
+
+  **`allMissing` says *that*, not *why*.** The relay lists by label, so an
+  issue is absent whether it was **deleted** or merely **lost its label** —
+  indistinguishable without a per-issue existence probe the relay does not
+  expose. **Rule out deletion before chasing label configuration**, especially
+  for a user with only one or two reports, where deleting them looks identical
+  to a permissions fault. Closed issues are not a cause: the relay lists with
+  `state=all`. Don't tell a user their reports are safe on the strength of this
+  signal — for a deleted issue that is simply untrue.
 - **`PEM read error`** — the private key env var has unescaped newlines.
   See the Vercel README's "PKCS#1 → PKCS#8" note. The standard fix is to
   base64-encode the PEM file as the env value, then decode at boot.

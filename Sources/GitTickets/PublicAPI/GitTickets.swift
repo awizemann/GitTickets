@@ -144,10 +144,14 @@ public enum GitTickets {
                 message: """
                     My Reports matched none of \(result.requestedCount) cached \
                     submission(s). Issues are found by the "\(label)" label, so \
-                    this usually means the label was never applied (the GitHub \
-                    App may lack push permission), was removed from the issues, \
-                    or the backend's configured label or repository changed. \
-                    Check SubmittedIssue.missingLabels on new submissions.
+                    an issue is absent from the result whether it was DELETED \
+                    or merely lost its label — those are indistinguishable from \
+                    the SDK, so rule out deletion before chasing configuration. \
+                    If they were not deleted: the label may never have been \
+                    applied (the GitHub App may lack push permission), may have \
+                    been removed from the issues, or the backend's configured \
+                    label or repository may have changed. Check \
+                    SubmittedIssue.missingLabels on new submissions.
                     """,
                 error: nil
             )

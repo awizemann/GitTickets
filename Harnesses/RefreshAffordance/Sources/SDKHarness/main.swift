@@ -41,14 +41,34 @@ private func sampleIssues() -> [SubmittedIssue] {
     }
 }
 
+/// `swift run SDKHarness unmatched` reproduces the state a user sees when they
+/// have filed reports but none come back — the dropped-label case AND the
+/// all-deleted case, which are indistinguishable. Stays open so the copy can be
+/// read; the wording here has been wrong before, and it is only checkable by
+/// eye (there is no snapshot coverage of this view).
+private let unmatchedMode = CommandLine.arguments.contains("unmatched")
+
 struct Root: View {
     var body: some View {
-        GitTicketsMyIssuesView(
-            loadIssues: { sampleIssues() },
-            detail: { IssueDetailView(issue: $0) }
-        )
+        Group {
+            if unmatchedMode {
+                GitTicketsMyIssuesView(
+                    loadDetailed: { MyIssuesRefresh(issues: [], requestedCount: 3) },
+                    detail: { IssueDetailView(issue: $0) }
+                )
+            } else {
+                GitTicketsMyIssuesView(
+                    loadIssues: { sampleIssues() },
+                    detail: { IssueDetailView(issue: $0) }
+                )
+            }
+        }
         .frame(width: 560, height: 460)
         .task {
+            guard !unmatchedMode else {
+                print("unmatched mode: window stays open — read the copy, then quit.")
+                return
+            }
             try? await Task.sleep(for: .seconds(3))
             report()
             exit(0)

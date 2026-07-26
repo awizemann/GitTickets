@@ -24,6 +24,7 @@ Answers: **can a user refresh an open GitTickets window, and how?**
 cd Harnesses/RefreshAffordance
 swift run ReproHarness     # macOS: three-way container control
 swift run SDKHarness       # macOS: the real shipped GitTicketsMyIssuesView
+swift run SDKHarness unmatched   # that view in the "nothing came back" state
 ./ios/run-ios-harness.sh   # iOS: needs a booted simulator
 ```
 

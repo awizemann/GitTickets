@@ -161,8 +161,11 @@ and matched none. To handle it yourself:
 ```swift
 let refresh = try await GitTickets.refreshMyIssuesDetailed()
 if refresh.allMissing {
-    // Cached submissions exist but none came back — a configuration fault,
-    // not an empty history. `requestedCount` has the detail.
+    // Cached submissions exist but none came back. This is NOT the same as an
+    // empty history — but it also does not tell you why. The issues may have
+    // been deleted, or they may have lost the label the backend finds them by;
+    // those are indistinguishable here. Don't tell the user their reports are
+    // safe. `requestedCount` has the detail.
 }
 ```
 
