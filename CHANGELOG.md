@@ -4,7 +4,122 @@ All notable changes to GitTickets are documented here. Format: [Keep a Changelog
 
 The SDK and the relay templates version independently.
 
+## [2.0.0] — 2026-07-26
+
+**Breaking release.** The supported-platform floor moves up: **macOS 13 → 14
+(Sonoma)** and **iOS 16 → 18**. Dropping OS versions that previously worked is
+why this is a major version — no public API was removed, renamed, or changed
+in signature. Everything else here is subtraction: dead code, no-op
+annotations, and a CI configuration that was testing the wrong thing.
+
+### Removed — platform support (BREAKING)
+
+- **`Package.swift` platforms: `.macOS(.v14)` and `.iOS(.v18)`** (were `.v13`
+  and `.v16`). Any app whose deployment target is **below macOS 14 or below
+  iOS 18 cannot use 2.0.0** — SwiftPM rejects a package whose minimum platform
+  version exceeds the consuming target's. Note that on iOS this drops **two**
+  releases: **iOS 17 is excluded as well as iOS 16.**
+- **If you must stay below macOS 14 / iOS 18, pin `1.0.0`.** Its manifest
+  declares `.macOS(.v13)` / `.iOS(.v16)` under `swift-tools-version:5.9`, so it
+  is the last release that targets those OSes without being written in the
+  Swift 6 language mode. 1.1.0 declares the same runtime floor, but does not
+  build on the toolchain its own documentation claims — see the correction on
+  the [1.1.0] entry below.
+- **A `upToNextMajorVersion` requirement from 1.x will NOT pick this up.**
+  `from: "1.0.0"` / `from: "1.1.0"` resolves the range `[1.0.0, 2.0.0)`, which
+  excludes 2.0.0 by design. Upgrading is a deliberate act: change the
+  requirement to `from: "2.0.0"` (or
+  `.upToNextMajor(from: "2.0.0")`) in `Package.swift`, or edit the version rule
+  on the package reference in Xcode. Nothing auto-resolves you into the new
+  platform floor.
+
+### Two floors, stated separately
+
+These are different things and this release keeps them apart on purpose,
+because collapsing them into one sentence is exactly how 1.1.0 shipped a false
+compatibility claim.
+
+**Runtime floor — what can run the package:** macOS 14 (Sonoma) and iOS 18.
+Declared in `Package.swift` and enforced by SwiftPM.
+
+**Toolchain — what builds the package:** this release deliberately does **not**
+assert a minimum Swift or Xcode version. Here is what was actually built and
+run:
+
+- **Verified locally on Xcode 26.6 / Swift 6.3.3:** `swift build` with 0
+  warnings, `swift test` 210/210 passing, and `xcodebuild` BUILD SUCCEEDED for
+  a generic iOS Simulator destination. On a pristine clone,
+  `TEST_RUNNER_CI=true xcodebuild test` reports TEST SUCCEEDED with 204 passed
+  and 6 skipped (the 6 are the snapshot tests, which skip under CI).
+- **CI targets Xcode 26.3 on `macos-15`** — configured in this release but
+  **not yet executed**; GitHub Actions has not run the retargeted workflow at
+  the time of writing.
+- **Xcode 16.x is untested, in both directions.** The Swift 6.0 concurrency
+  error that broke 1.1.0 lived in code this release deletes, so 2.0.0 may well
+  compile on Xcode 16.x — but nobody has tried it, so nothing here claims it
+  does or doesn't.
+- Two constraints are structural rather than measured: the manifest is
+  `swift-tools-version:6.0`, and `.iOS(.v18)` is
+  `@available(_PackageDescription 6.0)` — so a toolchain whose manifest API
+  predates 6.0 cannot resolve the package at all. That is a manifest-level
+  fact, not a statement that we built the package on the oldest toolchain
+  satisfying it.
+
+### Removed — code
+
+- **The `OneShotStream` macOS 13 screenshot fallback is gone**
+  (net −90 lines). This was **dead-code deletion, not a rewrite.** The
+  capture path already had `if #available(macOS 14.0, *)` calling
+  `SCScreenshotManager.captureImage` with the identical content filter and
+  configuration; the hand-rolled `SCStream` adapter was only the macOS 13
+  `else` branch. **Every macOS 14+ user was already on the
+  `SCScreenshotManager` path in production**, so behavior on every supported
+  OS is unchanged and the error surface is byte-identical. Deleting it also
+  removed the Swift 6.0 concurrency compile error that had been keeping CI
+  red.
+- **62 `@available` annotations** that became no-ops at the new platform floor
+  (`macOS 13.0` / `iOS 16.0` bounds at or below `.v14` / `.v18`), plus 4
+  refreshed header comments. **Zero executable lines changed**, and the public
+  API surface was proven unchanged with `swift-api-digester`.
+
+### Changed
+
+- **CI now tests the platforms the package actually supports.**
+  `runs-on: macos-15`; Xcode pinned to `26.3` instead of `latest-stable` so a
+  toolchain bump cannot silently change what "green" means; the job matrix is
+  split into generic build destinations and concrete test destinations
+  (`iPhone 16, OS=18.6` for iOS). Snapshot tests skip on CI via the
+  `TEST_RUNNER_CI` environment variable. A `.gitkeep` removes a spurious
+  `Invalid Exclude` warning, and a stale `Package.swift` comment was
+  corrected.
+
+### Not in this release
+
+- **No SwiftUI modernization.** This was investigated and deliberately
+  declined. `ContentUnavailableView` would have replaced empty-state cards
+  that are deliberately designed (tinted icon tile, card surface, hairline
+  border, 420pt max width) — that is a visual redesign, not a code reduction.
+  `onChange` has zero call sites in the repo. Nothing was changed, so nothing
+  is claimed.
+- **No public API changes.** No additions, no removals, no signature changes.
+  Source compatibility is intact for any adopter already on macOS 14 / iOS 18;
+  the breaking part of this release is exclusively the platform floor.
+
 ## [1.1.0] — 2026-06-23
+
+> **⚠️ Correction — added 2026-07-26 as part of 2.0.0.**
+> The claim below that "**Minimum toolchain is now Swift 6.0 (Xcode 16+)**" is
+> **false**, and was never verified against a Swift 6.0 toolchain before being
+> published. **v1.1.0 does not build on Xcode 16.2 / Swift 6.0**: the macOS 13
+> `SCStream` screenshot fallback in `ScreenshotCapture+macOS.swift` trips an
+> actor-isolation error on a `Task { }` capture that Swift 6.0's
+> region-based isolation rejects. Later Swift versions accept the same code, so
+> in practice v1.1.0 was only ever built on Xcode 26.x. The exact working
+> boundary between Swift 6.0 and 6.3.3 was never bisected. The same unverified
+> claim also appeared in the v1.1.0 README, `docs/getting-started.md`, and the
+> v1.1.0 annotated git tag. The offending code is deleted in 2.0.0, and 2.0.0
+> states what was tested instead of asserting a minimum — see [2.0.0] above.
+> The original entry is left unedited below, for the record.
 
 Swift 6 language-mode migration. **No runtime-behavior change** — only
 concurrency annotations, one deprecated-API rename, and build config.
@@ -100,6 +215,7 @@ _Nothing yet._
 
 ---
 
+[2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.0.0...HEAD

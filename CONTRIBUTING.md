@@ -18,7 +18,11 @@ open Package.swift
 # Cmd-U to run the test suite.
 ```
 
-The package builds on macOS 13+ and iOS 16+ (Swift 5.9 toolchain).
+The package runs on macOS 14+ and iOS 18+ (declared in `Package.swift` and
+enforced by SwiftPM). The manifest is `swift-tools-version:6.0` and every
+target compiles in the Swift 6 language mode; development and CI both use
+Xcode 26.x. We deliberately don't publish a minimum Xcode version we haven't
+built against — see the toolchain note in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Project structure
 
