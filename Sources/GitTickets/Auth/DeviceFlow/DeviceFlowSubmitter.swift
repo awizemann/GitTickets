@@ -68,7 +68,8 @@ struct DeviceFlowSubmitter: IssueSubmitter {
             report: report,
             diagnostics: report.includeDiagnostics ? report.diagnosticsBlob : nil,
             screenshotURL: nil,
-            attachments: []
+            attachments: [],
+            attachmentNames: configuration.privacy.attachmentNames
         )
         let requestedLabels = BodyTemplates.defaultLabels(for: report.kind) + [configuration.myIssues.label]
         let payload = CreateIssueRequest(title: report.title, body: body, labels: requestedLabels)
