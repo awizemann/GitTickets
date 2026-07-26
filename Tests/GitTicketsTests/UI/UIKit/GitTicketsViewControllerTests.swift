@@ -10,7 +10,6 @@ import SwiftUI
 /// future refactor that, say, swaps `UIHostingController` subclassing for
 /// `addChild` embedding doesn't silently regress the title / programmatic-init
 /// constraints.
-@available(iOS 16.0, *)
 final class GitTicketsViewControllerTests: XCTestCase {
 
     @MainActor

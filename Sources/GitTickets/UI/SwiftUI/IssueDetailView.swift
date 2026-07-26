@@ -10,7 +10,7 @@
 //    3. Hierarchy reads: kind + status → title → meta → your report → replies.
 //
 //  Lives inside a NavigationStack on both platforms (large title on iOS,
-//  inline on macOS). macOS 13+ / iOS 16+.
+//  inline on macOS). macOS 14+ / iOS 18+.
 //
 //  `CachedReport` + `IssueComment` are public model types defined in
 //  `PublicAPI/Models.swift`.
@@ -18,7 +18,6 @@
 
 import SwiftUI
 
-@available(macOS 13.0, iOS 16.0, *)
 public struct IssueDetailView: View {
 
     /// Where the original report sits. Locked to `.card` (Option 1) — a
@@ -146,7 +145,6 @@ public struct IssueDetailView: View {
 
 // MARK: - Issue header
 
-@available(macOS 13.0, iOS 16.0, *)
 struct IssueHeader: View {
     let issue: SubmittedIssue
     let kind: ReportKind?
@@ -193,7 +191,6 @@ struct IssueHeader: View {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, *)
 struct KindBadge: View {
     let kind: ReportKind
     var body: some View {
@@ -206,7 +203,6 @@ struct KindBadge: View {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, *)
 struct StatusBadge: View {
     var body: some View {
         Label("Open", systemImage: "circle")

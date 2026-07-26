@@ -18,7 +18,6 @@ import UIKit
 /// - `.data(bytes)` → `NSImage(data:)` / `UIImage(data:)` wrapped in
 ///   `Image(nsImage:)` / `Image(uiImage:)`. Returns the system-symbol
 ///   fallback when the bytes don't decode.
-@available(macOS 13.0, iOS 16.0, *)
 struct HeaderImage: View {
 
     let source: GitTicketsImageSource

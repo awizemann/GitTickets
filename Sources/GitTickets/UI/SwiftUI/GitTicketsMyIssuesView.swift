@@ -7,12 +7,11 @@
 //  Pull-to-refresh on iOS, the iOS `.refreshable` gesture on macOS too. Large
 //  title on iOS, inline on macOS.
 //
-//  macOS 13+ / iOS 16+. SwiftUI only.
+//  macOS 14+ / iOS 18+. SwiftUI only.
 //
 
 import SwiftUI
 
-@available(macOS 13.0, iOS 16.0, *)
 public struct GitTicketsMyIssuesView: View {
 
     @Environment(\.gitTicketsTheme) private var envTheme
@@ -206,7 +205,6 @@ public struct GitTicketsMyIssuesView: View {
 
 // MARK: - Row
 
-@available(macOS 13.0, iOS 16.0, *)
 struct MyReportRow: View {
     let issue: SubmittedIssue
     let kind: ReportKind?
@@ -277,7 +275,6 @@ struct MyReportRow: View {
 /// the unqualified ``Configuration`` associated-type alias, because the
 /// package has its own public ``Configuration`` type and Swift's namespace
 /// lookup resolves the bare name to that one first.
-@available(macOS 13.0, iOS 16.0, *)
 struct StatusDotLabelStyle: LabelStyle {
     let color: Color
     func makeBody(configuration: LabelStyleConfiguration) -> some View {
@@ -290,7 +287,6 @@ struct StatusDotLabelStyle: LabelStyle {
 
 // MARK: - on-accent helper
 
-@available(macOS 13.0, iOS 16.0, *)
 extension GitTicketsTheme {
     /// White reads correctly on every reasonable accent; exposed so the row's
     /// "N NEW" pill doesn't hard-code a literal.

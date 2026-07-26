@@ -85,12 +85,10 @@ public enum GitTicketsButtonStyle: Sendable {
 // MARK: - Environment integration
 
 /// SwiftUI `EnvironmentKey` for the active ``GitTicketsTheme``.
-@available(macOS 13.0, iOS 16.0, *)
 public struct GitTicketsThemeKey: EnvironmentKey {
     public static let defaultValue: GitTicketsTheme = .default
 }
 
-@available(macOS 13.0, iOS 16.0, *)
 extension EnvironmentValues {
     /// The active GitTickets theme.
     ///

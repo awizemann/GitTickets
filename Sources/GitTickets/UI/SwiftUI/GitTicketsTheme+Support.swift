@@ -8,14 +8,13 @@
 //  resolving to native system surface colors (so the package keeps the
 //  "borrowed appearance" promise instead of imposing a palette).
 //
-//  No third-party dependencies. macOS 13+ / iOS 16+.
+//  No third-party dependencies. macOS 14+ / iOS 18+.
 //
 
 import SwiftUI
 
 // MARK: - Resolved theme convenience
 
-@available(macOS 13.0, iOS 16.0, *)
 extension GitTicketsTheme {
 
     /// The accent the UI should actually paint with: the theme override when
@@ -46,7 +45,6 @@ extension GitTicketsTheme {
 
 /// Renders raw image bytes cross-platform without leaking AppKit/UIKit types
 /// to call sites.
-@available(macOS 13.0, iOS 16.0, *)
 struct GitTicketsPlatformImage: View {
     let data: Data
     var body: some View {
@@ -64,7 +62,6 @@ struct GitTicketsPlatformImage: View {
 
 // MARK: - Native surface colors (calm, adaptive, no invented palette)
 
-@available(macOS 13.0, iOS 16.0, *)
 enum GTSurface {
     /// The sheet ground behind cards.
     static var ground: Color {
@@ -91,7 +88,6 @@ enum GTSurface {
 
 // MARK: - Diagnostics redaction highlighting
 
-@available(macOS 13.0, iOS 16.0, *)
 enum DiagnosticsRendering {
 
     /// Builds an `AttributedString` from the (already-redacted) diagnostics
@@ -123,7 +119,6 @@ enum DiagnosticsRendering {
 
 // MARK: - Semantic accents for badges / state
 
-@available(macOS 13.0, iOS 16.0, *)
 enum GTSemantic {
     static let warning = Color(red: 0.85, green: 0.60, blue: 0.29)   // amber
     static let success = Color(red: 0.18, green: 0.58, blue: 0.42)   // green
@@ -133,7 +128,6 @@ enum GTSemantic {
 
 // MARK: - Submit button style bridge
 
-@available(macOS 13.0, iOS 16.0, *)
 extension View {
     /// Applies the host-selected submit button style from the theme.
     @ViewBuilder
@@ -148,7 +142,6 @@ extension View {
 
 // MARK: - Small reusable section label (the quiet eyebrow)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct GTSectionLabel: View {
     let text: String
     var body: some View {

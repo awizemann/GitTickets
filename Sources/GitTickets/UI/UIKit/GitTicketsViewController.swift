@@ -23,7 +23,6 @@ import SwiftUI
 /// Cancel, and a pushed presentation gets popped from the navigation stack.
 /// Hosts that want their own bar buttons can add them via
 /// `navigationItem.leftBarButtonItem` / `rightBarButtonItem` after init.
-@available(iOS 16.0, *)
 public final class GitTicketsViewController: UIHostingController<GitTicketsView> {
 
     public init() {

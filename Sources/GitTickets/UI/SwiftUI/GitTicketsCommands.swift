@@ -24,7 +24,6 @@ import SwiftUI
 /// Placed via `CommandGroup(after: .help)` so it sits at the bottom of the
 /// Help menu. Hosts that want it on a different menu can wrap the same
 /// trigger in their own ``Commands`` group.
-@available(macOS 13.0, iOS 16.0, *)
 public struct GitTicketsCommands: Commands {
 
     let title: String

@@ -3,7 +3,6 @@ import SwiftUI
 /// Kind picker + title field + description editor. The three fields that
 /// drive the body of the report. Extracted from ``GitTicketsView`` so adopters
 /// can compose their own form chrome while keeping the canonical input shape.
-@available(macOS 13.0, iOS 16.0, *)
 struct ReportFormFields: View {
 
     @Environment(\.gitTicketsTheme) private var theme

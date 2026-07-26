@@ -7,7 +7,6 @@ import SwiftUI
 /// private repos soften to "visible to repo maintainers." Adopters that compose
 /// their own form should still include this banner — the form must surface what
 /// happens to the user's data before the Submit button.
-@available(macOS 13.0, iOS 16.0, *)
 public struct PrivacyBanner: View {
 
     @Environment(\.gitTicketsTheme) private var theme

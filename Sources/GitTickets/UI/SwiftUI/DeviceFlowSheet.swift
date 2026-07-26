@@ -25,7 +25,6 @@ import UIKit
 /// Concurrency: marked `@MainActor` because it touches AppKit/UIKit window
 /// state and the auth session's completion handler must run on the main
 /// thread.
-@available(macOS 13.0, iOS 16.0, *)
 @MainActor
 public struct DeviceFlowSheet: View {
 
@@ -214,7 +213,6 @@ public struct DeviceFlowSheet: View {
 /// on the main thread — the field is only touched from `@MainActor` view code
 /// and from auth-session completion handlers, which Apple posts on the main
 /// queue.
-@available(macOS 13.0, iOS 16.0, *)
 final class WebAuthSessionBox: @unchecked Sendable {
     var session: ASWebAuthenticationSession?
 
@@ -228,7 +226,6 @@ final class WebAuthSessionBox: @unchecked Sendable {
 /// the auth modal has something to present from. Cross-platform window
 /// lookup: `NSApplication.shared.keyWindow` on macOS, the first key window of
 /// the foreground scene on iOS.
-@available(macOS 13.0, iOS 16.0, *)
 final class PresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         #if canImport(AppKit)

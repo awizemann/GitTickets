@@ -16,7 +16,6 @@ public enum GitTicketsFieldStyle: Sendable {
     case flat           // B — separate bordered fields with focus rings
 }
 
-@available(macOS 13.0, iOS 16.0, *)
 struct DetailsSection: View {
     @Binding var title: String
     @Binding var bodyText: String
@@ -143,7 +142,6 @@ struct DetailsSection: View {
 
 // MARK: - Flat field chrome
 
-@available(macOS 13.0, iOS 16.0, *)
 private struct FieldChrome: ViewModifier {
     let theme: GitTicketsTheme
     let isFocused: Bool
@@ -167,7 +165,6 @@ private struct FieldChrome: ViewModifier {
             .animation(.easeInOut(duration: 0.12), value: isFocused)
     }
 }
-@available(macOS 13.0, iOS 16.0, *)
 private extension View {
     func field(theme: GitTicketsTheme, isFocused: Bool) -> some View {
         modifier(FieldChrome(theme: theme, isFocused: isFocused))
@@ -176,7 +173,6 @@ private extension View {
 
 // MARK: - Pinned action bar (Cancel + Submit, outside the ScrollView)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct ActionBar: View {
     let canSubmit: Bool
     let isSubmitting: Bool
