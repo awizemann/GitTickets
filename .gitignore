@@ -30,5 +30,23 @@ node_modules/
 *.log
 
 # Test artifacts
-__Snapshots__/
+# Snapshot baselines stay untracked on purpose: rendered PNG bytes depend on the
+# host OS version and font rasterizer, so a CI runner could never match a
+# developer's recording. SnapshotTests therefore skips itself when CI is set and
+# runs as a local pre-release visual check.
+#
+# The *directory* is tracked (via .gitkeep) even though its contents are not:
+# Package.swift's testTarget `exclude:` names this path, and SPM emits
+# "Invalid Exclude ... File not found" on every clean checkout when it is
+# missing — permanent noise on CI, since CI always starts from a clean checkout.
+# The placeholder keeps the exclude valid while leaving baselines untracked.
+# If you ever decide to track baselines, drop these two rules AND remove the CI
+# guard in SnapshotTests.swift.
+#
+# NB: the `**/` prefixes are load-bearing. A pattern containing a slash is
+# anchored to this file's directory, so a bare `__Snapshots__/*` would only match
+# a top-level directory and would silently stop ignoring the real baselines
+# nested under Tests/.
+**/__Snapshots__/*
+!**/__Snapshots__/.gitkeep
 *.xccovreport

@@ -1,0 +1,10 @@
+# Keeps this directory present in a clean checkout.
+#
+# Package.swift's testTarget `exclude:` names "UI/SwiftUI/__Snapshots__". SPM
+# warns "Invalid Exclude ... File not found" when an excluded path is absent, and
+# because the recorded baseline PNGs are gitignored the directory would otherwise
+# not exist until someone had run the snapshot tests locally — meaning the
+# warning appeared on every CI run and every fresh clone.
+#
+# The baseline images themselves stay untracked on purpose; see .gitignore and
+# Tests/GitTicketsTests/UI/SwiftUI/SnapshotTests.swift.
