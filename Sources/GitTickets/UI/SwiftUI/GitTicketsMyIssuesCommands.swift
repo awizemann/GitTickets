@@ -15,7 +15,6 @@ import SwiftUI
 /// Both groups land in the same Cocoa placement when called with the same
 /// `placement:` argument, so macOS renders them adjacent in the same menu
 /// section.
-@available(macOS 13.0, iOS 16.0, *)
 public struct GitTicketsMyIssuesCommands: Commands {
 
     let title: String

@@ -19,7 +19,6 @@ import SwiftUI
 /// controller with a fresh ``GitTicketsView``, so the form starts blank each
 /// time. Window position + size persist via `NSWindow.frameAutosaveName` so
 /// returning users see the window where they left it.
-@available(macOS 13.0, *)
 public final class ReportWindowController: NSWindowController {
 
     /// Process-wide instance. Use this from menu actions so re-opening the
@@ -63,7 +62,6 @@ public final class ReportWindowController: NSWindowController {
     }
 }
 
-@available(macOS 13.0, *)
 private extension NSWindow {
     /// Returns true if any screen contains at least a small portion of the
     /// window's saved frame. Used to decide whether to recenter on show — if

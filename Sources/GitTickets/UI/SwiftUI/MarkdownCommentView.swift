@@ -6,7 +6,6 @@ import SwiftUI
 /// Falls back to plain `Text(comment.body)` when the body fails to parse as
 /// markdown — better to show the raw text than to silently drop a comment
 /// whose body contains an unexpected token.
-@available(macOS 13.0, iOS 16.0, *)
 public struct MarkdownCommentView: View {
 
     @Environment(\.gitTicketsTheme) private var theme

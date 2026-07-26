@@ -3,9 +3,18 @@
 This is the shortest path from "I want a Report-an-Issue button in my app"
 to "user-typed reports are landing as GitHub issues in my repo."
 
-> **Requirements:** Swift 6.0+ / Xcode 16+ to build the package (since v1.1.0,
-> which builds in the Swift 6 language mode); runtime targets macOS 13+ / iOS 16+.
-> On an older toolchain? Pin to `1.0.0` — the last Swift 5.9 release.
+> **Requirements — two separate floors, as of v2.0.0.**
+>
+> - **Runtime floor (what your app can deploy to): macOS 14+ / iOS 18+.** This
+>   went up from macOS 13 / iOS 16 in 2.0.0, which is why 2.0.0 is a major
+>   version — and on iOS it skips a release, so **iOS 17 is excluded too**.
+>   Still shipping below macOS 14 or below iOS 18? Pin `1.0.0`.
+> - **Toolchain (what builds the package):** 2.0.0 is built and tested on
+>   Xcode 26.6 / Swift 6.3.3, and CI targets Xcode 26.3. Older Xcode versions
+>   are untested, so this doc does not state a minimum one. The manifest is
+>   `swift-tools-version:6.0` and declares `.iOS(.v18)`, so a toolchain that
+>   cannot parse those cannot resolve the package at all — but that is a
+>   manifest constraint, not a tested build.
 
 ## 1. Pick an auth mode
 
@@ -25,9 +34,14 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "1.1.0"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "2.0.0"),
 ]
 ```
+
+Already on 1.x? `from: "1.x"` means `upToNextMajorVersion`, which resolves
+`[1.0.0, 2.0.0)` and therefore will **not** pick up 2.0.0. Change the version
+requirement by hand (here, or on the package reference in Xcode) — and check
+your app's deployment target against the macOS 14 / iOS 18 floor first.
 
 ## 3. Configure at launch
 

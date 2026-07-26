@@ -16,7 +16,6 @@ import SwiftUI
 // `Text(.init:)` fallback below keeps this file compiling standalone and
 // already handles inline markdown (bold, code, links).
 
-@available(macOS 13.0, iOS 16.0, *)
 struct MarkdownBody: View {
     let markdown: String
     var body: some View {
@@ -38,7 +37,6 @@ struct MarkdownBody: View {
 
 // MARK: - "Your report" card (placement: .card)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct ReportCard: View {
     let report: CachedReport
     let theme: GitTicketsTheme
@@ -72,7 +70,6 @@ struct ReportCard: View {
 }
 
 /// The quiet "Diagnostics attached · Show" line inside the report card.
-@available(macOS 13.0, iOS 16.0, *)
 struct DiagnosticsAffordance: View {
     let theme: GitTicketsTheme
     var body: some View {
@@ -89,7 +86,6 @@ struct DiagnosticsAffordance: View {
 
 // MARK: - Reporter post (placement: .firstInThread)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct ReporterPost: View {
     let report: CachedReport
     let theme: GitTicketsTheme
@@ -121,7 +117,6 @@ struct ReporterPost: View {
 
 // MARK: - Comment row
 
-@available(macOS 13.0, iOS 16.0, *)
 struct CommentRow: View {
     let comment: IssueComment
     let theme: GitTicketsTheme
@@ -155,7 +150,6 @@ struct CommentRow: View {
 
 // MARK: - Small atoms
 
-@available(macOS 13.0, iOS 16.0, *)
 struct AvatarBadge: View {
     let text: String
     let color: Color
@@ -169,7 +163,6 @@ struct AvatarBadge: View {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, *)
 struct RolePill: View {
     let text: String
     let color: Color
@@ -185,7 +178,6 @@ struct RolePill: View {
 
 // MARK: - Focused empty / error state card
 
-@available(macOS 13.0, iOS 16.0, *)
 struct IssueStateCard: View {
 
     enum Kind {

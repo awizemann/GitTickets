@@ -5,8 +5,8 @@ let package = Package(
     name: "GitTickets",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16),
+        .macOS(.v14),
+        .iOS(.v18),
     ],
     products: [
         .library(name: "GitTickets", targets: ["GitTickets"]),
@@ -32,8 +32,14 @@ let package = Package(
                 .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
             ],
             exclude: [
-                // Snapshot test baselines — checked in next to their tests
-                // but not Swift sources, so SPM warns unless we exclude them.
+                // Snapshot test baseline directory. The PNGs are NOT checked in
+                // (their contents are gitignored) and SnapshotTests skips itself
+                // when `CI` is set — see that file for why. This exclude keeps
+                // SPM from treating the images a *local* run records as unhandled
+                // resources. The directory is kept alive in git by a committed
+                // `.gitkeep`, because SPM warns "Invalid Exclude … File not
+                // found" whenever an excluded path is missing — which on a clean
+                // checkout (i.e. every CI run) it otherwise would be.
                 "UI/SwiftUI/__Snapshots__",
             ]
         ),

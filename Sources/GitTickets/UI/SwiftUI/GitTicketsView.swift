@@ -12,13 +12,12 @@
 //  The privacy banner (top) and consent row (docked above Submit) share one
 //  accent-tinted surface so they read as a single trust flow.
 //
-//  macOS 13+ / iOS 16+. SwiftUI only.
+//  macOS 14+ / iOS 18+. SwiftUI only.
 //
 
 import SwiftUI
 import UniformTypeIdentifiers
 
-@available(macOS 13.0, iOS 16.0, *)
 public struct GitTicketsView: View {
 
     /// Which field treatment to use. Locked to `.flat` (Option B) — flat

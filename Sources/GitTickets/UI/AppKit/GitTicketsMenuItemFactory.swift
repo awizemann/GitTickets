@@ -13,7 +13,6 @@ import AppKit
 /// The default action calls `ReportWindowController.shared.showWindow(nil)`.
 /// Pass a custom `action` to hook the menu entry into a different presenter
 /// (e.g. an existing modal sheet or a host-owned window controller).
-@available(macOS 13.0, *)
 @MainActor
 public enum GitTicketsMenuItemFactory {
 
@@ -60,7 +59,6 @@ public enum GitTicketsMenuItemFactory {
 /// Thin trampoline that bridges the menu item's `@objc` selector call to a
 /// Swift closure. Lives long enough because the owning `NSMenuItem` retains
 /// it via `representedObject`.
-@available(macOS 13.0, *)
 @MainActor
 final class MenuActionTarget: NSObject {
     let action: () -> Void

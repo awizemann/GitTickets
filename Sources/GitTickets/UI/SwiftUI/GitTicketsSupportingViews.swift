@@ -12,7 +12,6 @@ import SwiftUI
 
 // MARK: - ReportKind presentation
 
-@available(macOS 13.0, iOS 16.0, *)
 extension ReportKind {
     var displayTitle: String {
         switch self {
@@ -47,7 +46,6 @@ extension ReportKind {
 
 // MARK: - Kind picker (three selectable cards with icon + one-line hint)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct KindPicker: View {
     @Binding var selection: ReportKind
     let theme: GitTicketsTheme
@@ -70,7 +68,6 @@ struct KindPicker: View {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, *)
 struct KindCard: View {
     let kind: ReportKind
     let isSelected: Bool
@@ -141,7 +138,6 @@ struct KindCard: View {
 
 // MARK: - Trust banner (top of the trust flow) — supersedes the raw PrivacyBanner look
 
-@available(macOS 13.0, iOS 16.0, *)
 struct TrustBanner: View {
     let message: String          // resolved PrivacyPolicy banner copy
     let isPublic: Bool
@@ -172,7 +168,6 @@ struct TrustBanner: View {
 
 // MARK: - Consent row (docked above Submit; shares the banner's visual language)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct ConsentRow: View {
     @Binding var consented: Bool
     let message: String
@@ -216,7 +211,6 @@ struct ConsentRow: View {
 }
 
 /// The shared accent-tinted surface that visually links the banner & consent.
-@available(macOS 13.0, iOS 16.0, *)
 private struct TrustSurface: ViewModifier {
     let theme: GitTicketsTheme
     func body(content: Content) -> some View {
@@ -233,14 +227,12 @@ private struct TrustSurface: ViewModifier {
             )
     }
 }
-@available(macOS 13.0, iOS 16.0, *)
 private extension View {
     func trustSurface(theme: GitTicketsTheme) -> some View { modifier(TrustSurface(theme: theme)) }
 }
 
 // MARK: - Diagnostics card (expanded by default; redactions highlighted)
 
-@available(macOS 13.0, iOS 16.0, *)
 struct DiagnosticsCard: View {
     let blobText: String
     @Binding var isExpanded: Bool
@@ -308,7 +300,6 @@ struct DiagnosticsCard: View {
 
 // MARK: - Generic card surface
 
-@available(macOS 13.0, iOS 16.0, *)
 struct CardSurface: ViewModifier {
     let theme: GitTicketsTheme
     func body(content: Content) -> some View {
@@ -323,7 +314,6 @@ struct CardSurface: ViewModifier {
             )
     }
 }
-@available(macOS 13.0, iOS 16.0, *)
 extension View {
     func cardSurface(theme: GitTicketsTheme) -> some View { modifier(CardSurface(theme: theme)) }
 }

@@ -11,7 +11,6 @@ import UIKit
 /// Falls back to a filename-only chip if the raw bytes can't decode into a
 /// platform image — the form still surfaces the attachment, just without a
 /// preview. Cross-platform: `NSImage` on macOS, `UIImage` on iOS.
-@available(macOS 13.0, iOS 16.0, *)
 struct ScreenshotThumbnail: View {
 
     let filename: String

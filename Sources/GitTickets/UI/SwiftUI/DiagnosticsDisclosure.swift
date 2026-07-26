@@ -10,7 +10,6 @@ import SwiftUI
 ///
 /// Expanded by default per ``DiagnosticsPolicy/showByDefault`` (always `true`
 /// in v1 — transparency is non-negotiable).
-@available(macOS 13.0, iOS 16.0, *)
 public struct DiagnosticsDisclosure: View {
 
     @Environment(\.gitTicketsTheme) private var theme
