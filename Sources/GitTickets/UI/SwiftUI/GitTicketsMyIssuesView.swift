@@ -4,8 +4,11 @@
 //
 //  Lists past submissions from the local cache sorted by latest activity,
 //  surfaces unread-reply badges, and pushes `IssueDetailView` on tap.
-//  Pull-to-refresh on iOS, the iOS `.refreshable` gesture on macOS too. Large
-//  title on iOS, inline on macOS.
+//  Refresh paths: pull-to-refresh on iOS (`.refreshable` genuinely works there),
+//  plus a toolbar Refresh control, a re-fetch when the scene becomes active, and
+//  optional polling — see `RefreshTriggers.swift`. The toolbar control is the
+//  ONLY affordance on macOS, where `.refreshable` on a ScrollView does nothing.
+//  Large title on iOS, inline on macOS.
 //
 //  macOS 14+ / iOS 18+. SwiftUI only.
 //
@@ -113,6 +116,14 @@ public struct GitTicketsMyIssuesView: View {
                             .help("Report an issue")
                     }
                 }
+            }
+            // Inside the NavigationStack on purpose: a `.toolbar` applied to
+            // the stack itself does not reach the navigation bar on iOS.
+            .refreshTriggers(
+                pollInterval: configuredPollInterval,
+                accessibilityLabel: "Refresh reports"
+            ) {
+                await reload()
             }
         }
         .task { await reload() }
