@@ -14,9 +14,44 @@ import SnapshotTesting
 /// First run records the baseline images under `__Snapshots__/SnapshotTests/`.
 /// Subsequent runs compare. Re-record after intentional layout changes with
 /// `SNAPSHOT_TESTING_RECORD=1 swift test --filter SnapshotTests`.
-@available(macOS 13.0, *)
+///
+/// **This suite is LOCAL-ONLY and skips itself on CI.** The baselines are
+/// deliberately untracked (`__Snapshots__/` contents are gitignored) because
+/// rendered image bytes depend on the exact OS version and font rasterizer, so a
+/// runner's output would never match a developer's. That makes CI a
+/// baseline-free checkout every time, where `assertSnapshot` records fresh and
+/// reports `No reference was found on disk` as a *failure* — six guaranteed red
+/// tests that say nothing about the code. See `setUpWithError` below.
 @MainActor
 final class SnapshotTests: XCTestCase {
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        // Skip on CI. Keeping these local means a green CI run is a statement
+        // about the code, not about which machine recorded a PNG.
+        //
+        // NOTE on how `CI` actually arrives here: `swift test` inherits the
+        // shell environment, so the `CI=true` that GitHub Actions (and most
+        // other providers) set is visible directly. `xcodebuild test` does
+        // NOT forward its environment into the XCTest process, so the CI
+        // workflow has to pass `TEST_RUNNER_CI=true` — xcodebuild strips the
+        // `TEST_RUNNER_` prefix and injects `CI=true` here. If you change this
+        // variable name, change it in .github/workflows/swift.yml too, or this
+        // guard silently stops firing on CI.
+        //
+        // Do NOT "fix" this by un-ignoring `__Snapshots__/` and committing
+        // baselines without also deleting this guard: the two are a pair.
+        // Run them locally before tagging a release:
+        //   swift test --filter SnapshotTests
+        if ProcessInfo.processInfo.environment["CI"] != nil {
+            throw XCTSkip("""
+                Snapshot baselines are not tracked in git, so on CI every \
+                assertion would record-and-fail. Visual regressions are \
+                caught by running `swift test --filter SnapshotTests` locally \
+                before a release.
+                """)
+        }
+    }
 
     private let publicRepo = RepoCoordinate(owner: "alanw", name: "GitTickets", visibility: .public)
     private let privateRepo = RepoCoordinate(owner: "alanw", name: "InternalTool", visibility: .private)
