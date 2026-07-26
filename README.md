@@ -56,17 +56,18 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-**v2.1.0 is the current release** — an additive minor. It adds optional
-generic attachment labels (so filenames stay out of public issue bodies), a
-built-in absolute-path redactor that is **on by default**, and a way to load
-the relay shared secret from `Info.plist` instead of committing it. It also
-fixes a security defect present since 1.x in which malformed input to
-`SharedSecret(hex:)` / `SharedSecret(base64:)` produced a usable-but-wrong
-signing key instead of failing. See [`CHANGELOG.md`](CHANGELOG.md).
+**v2.2.0 is the current release** — an additive minor. It fixes a macOS gap
+where an open "My Reports" or Issue Detail window could not be refreshed at
+all: `.refreshable` on a `ScrollView` installs nothing on macOS, so closing and
+reopening the window was the only way to see a new report or reply. There is
+now a toolbar Refresh control (⌘R), an automatic re-fetch when the scene
+becomes active, and `MyIssuesPolicy.pollInterval` finally does something — it
+was public but unread. Polling stays **off by default**. iOS pull-to-refresh
+worked all along and is unchanged. See [`CHANGELOG.md`](CHANGELOG.md).
 
-**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.1.0"` deliberately. An existing `upToNextMajorVersion` pin from 2.0.0 *does* pick up 2.1.0 automatically.
+**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.2.0"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.2.0 automatically.
 
-**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 290/290 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
+**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 301/301 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
 
 Feature scope is frozen; the Phase 2 "My Reports" in-app reply view is on the roadmap as a 2.x point release. See [`CHANGELOG.md`](CHANGELOG.md) for what landed and [`TASKS.md`](TASKS.md) for the active board.
 
