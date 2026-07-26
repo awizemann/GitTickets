@@ -4,6 +4,64 @@ All notable changes to GitTickets are documented here. Format: [Keep a Changelog
 
 The SDK and the relay templates version independently.
 
+## [2.3.0] — 2026-07-26
+
+Additive minor. Closes a silent-failure path in "My Reports" reported by the
+ShabuBox integration.
+
+No public API was removed or changed in signature. The platform floor is
+**unchanged** at macOS 14 / iOS 18.
+
+### Fixed
+
+- **"My Reports" could go permanently empty with no error when a label was
+  dropped.** The screen is narrowed twice: the backend lists issues carrying the
+  configured label, then matches embedded submission-ID markers against the IDs
+  the client asked about. An issue whose label was never applied — or was
+  removed later — fails the *first* narrowing, so it can never match the second.
+  The backend answers `200` with zero matches, `refreshMyIssues()` returned an
+  empty array, and the screen rendered its ordinary "No reports yet" state. The
+  user's reports still existed on GitHub; nothing said they could not be found.
+
+  `SubmittedIssue.missingLabels` already caught this at **submission** time and
+  still does. It is not sufficient on its own: it cannot see a label removed
+  from existing issues in bulk, a changed label on the backend, or a swapped
+  repository. In all three the user files nothing new, so nothing fires, yet
+  every past report disappears. Comparing what was asked for against what came
+  back catches all of them.
+
+- **A refresh no longer blanks the list to a spinner.** Every refresh dropped
+  the screen to `.loading` first. With the three triggers added in 2.2.0 —
+  toolbar, scene reactivation, polling — that replaced a perfectly good list
+  with a spinner on each one, and flickered on an interval when polling was
+  enabled. Only the first load shows the spinner now.
+
+### Added
+
+- **`GitTickets.refreshMyIssuesDetailed()`** returning **`MyIssuesRefresh`**,
+  which carries the matched `issues` alongside `requestedCount`, `unmatchedCount`
+  and `allMissing`. Same call, same cost as `refreshMyIssues()`, which is
+  unchanged and now delegates to it.
+- **A shortfall is logged through `Configuration.logger`** with two deliberately
+  different severities: a total miss at `.warning`, naming the label and the
+  likely causes, and a partial miss at `.info`, because a deleted issue produces
+  a partial miss legitimately and a warning there would cry wolf.
+- **A distinct "Can't find your reports" state** in the built-in view, shown
+  only when cached submissions exist but none came back. It does not tell the
+  user their reports are gone — they are not — and it does not mention labels or
+  permissions, which mean nothing to them; that detail goes to the logger.
+- **`GitTicketsMyIssuesView(loadDetailed:…)`** for hosts supplying their own
+  loader that knows how many submissions it looked up. The existing
+  `loadIssues:` initializer still works and reports no shortfall.
+
+### Notes for adopters
+
+- **Nothing is required of you.** `refreshMyIssues()` behaves exactly as before.
+  To act on this, either wire `Configuration.logger` and watch for the warning,
+  or call `refreshMyIssuesDetailed()` and read `allMissing`.
+- **`requestedCount == 0` is not a fault** — a device that has filed nothing
+  legitimately has nothing to show, and `allMissing` stays `false`.
+
 ## [2.2.0] — 2026-07-26
 
 ### Fixed
@@ -367,9 +425,10 @@ _Nothing yet._
 
 ---
 
+[2.3.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.3.0
 [2.2.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.2.0
 [2.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.1.0
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.3.0...HEAD

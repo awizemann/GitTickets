@@ -89,14 +89,80 @@ public enum GitTickets {
     /// Powers the manual-refresh action in ``GitTicketsMyIssuesView``.
     ///
     /// Failures from the submitter propagate; the cache is left intact.
+    ///
+    /// - Note: This returns only the matched issues, so an empty array cannot be
+    ///   told apart from "the backend matched nothing it should have". Prefer
+    ///   ``refreshMyIssuesDetailed()`` when you need that distinction — it is
+    ///   the same call and the same cost.
     public static func refreshMyIssues() async throws -> [SubmittedIssue] {
+        try await refreshMyIssuesDetailed().issues
+    }
+
+    /// Like ``refreshMyIssues()``, but also reports how many cached submissions
+    /// were looked up — so a caller can tell "you have no reports" apart from
+    /// "we could not find your reports".
+    ///
+    /// The backend finds issues by label. If a label was never applied or has
+    /// since been removed, matching returns nothing and the screen would
+    /// otherwise go quietly empty forever. See ``MyIssuesRefresh/allMissing``.
+    ///
+    /// A shortfall is also logged through ``Configuration/logger``: a total miss
+    /// at `.warning`, a partial one at `.info`, since a deleted issue produces a
+    /// partial miss legitimately.
+    public static func refreshMyIssuesDetailed() async throws -> MyIssuesRefresh {
         guard let configuration else { throw GitTicketsError.notConfigured }
         let submitter = try resolveSubmitter(configuration: configuration)
         let cache = cacheStorage.shared(logger: configuration.logger)
         let cachedIDs = (try? cache?.allRecords())?.map(\.submissionID) ?? []
-        guard !cachedIDs.isEmpty else { return [] }
+        guard !cachedIDs.isEmpty else {
+            return MyIssuesRefresh(issues: [], requestedCount: 0)
+        }
         let deviceID = currentDeviceID(logger: configuration.logger)
-        return try await submitter.fetchMyIssues(submissionIDs: cachedIDs, deviceID: deviceID)
+        let issues = try await submitter.fetchMyIssues(
+            submissionIDs: cachedIDs,
+            deviceID: deviceID
+        )
+        let result = MyIssuesRefresh(issues: issues, requestedCount: cachedIDs.count)
+        logShortfall(result, configuration: configuration)
+        return result
+    }
+
+    /// Reports a mismatch between what was asked for and what came back.
+    ///
+    /// Deliberately two severities: losing every submission is a configuration
+    /// fault worth waking someone up for, whereas losing one is what a deleted
+    /// issue looks like and must not cry wolf.
+    private static func logShortfall(
+        _ result: MyIssuesRefresh,
+        configuration: Configuration
+    ) {
+        guard result.unmatchedCount > 0 else { return }
+        let label = configuration.myIssues.label
+        if result.allMissing {
+            configuration.logger?.log(
+                level: .warning,
+                message: """
+                    My Reports matched none of \(result.requestedCount) cached \
+                    submission(s). Issues are found by the "\(label)" label, so \
+                    this usually means the label was never applied (the GitHub \
+                    App may lack push permission), was removed from the issues, \
+                    or the backend's configured label or repository changed. \
+                    Check SubmittedIssue.missingLabels on new submissions.
+                    """,
+                error: nil
+            )
+        } else {
+            configuration.logger?.log(
+                level: .info,
+                message: """
+                    My Reports did not return \(result.unmatchedCount) of \
+                    \(result.requestedCount) cached submission(s). A deleted \
+                    issue does this legitimately; a count that keeps growing \
+                    suggests the "\(label)" label is being dropped.
+                    """,
+                error: nil
+            )
+        }
     }
 
     /// Fetches the comment thread for one issue. Reads through to the active
