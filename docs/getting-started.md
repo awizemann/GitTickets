@@ -35,7 +35,7 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "2.3.0"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "2.3.1"),
 ]
 ```
 
@@ -153,10 +153,11 @@ MyIssuesPolicy(pollInterval: 0)   // default; > 0 polls every N seconds
 Each open screen costs one request per interval against your relay and GitHub's
 rate limits.
 
-**When the list comes back empty.** Issues are found by label, so a label that
-was never applied — or removed later — makes past reports invisible. Set
-`Configuration.logger` and the SDK warns when it asked about cached submissions
-and matched none. To handle it yourself:
+**When the list comes back empty.** Issues are found by label, so a report is
+missing from the result if it was **deleted** — or if its label was never
+applied or was removed later. Those look identical from the SDK. Set
+`Configuration.logger` and it warns when it asked about cached submissions and
+matched none. To handle it yourself:
 
 ```swift
 let refresh = try await GitTickets.refreshMyIssuesDetailed()
