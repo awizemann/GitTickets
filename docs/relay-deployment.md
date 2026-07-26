@@ -61,6 +61,17 @@ submission should land as an issue in your repo within a few seconds.
 - **`401 from GitHub`** — the App's installation token doesn't have
   `Issues: Write` on the target repo, or the App isn't installed on that
   repo. Recheck the GitHub App settings page.
+- **Issues appear, but "My Reports" is permanently empty** — GitHub
+  *silently drops* labels when the App lacks push access on the target repo.
+  The issue is created, but without the label "My Reports" queries by, so it
+  is invisible in-app forever with nothing raised at the failure point. You
+  do not need a smoke test for this: the relay returns `appliedLabels`, and
+  the SDK compares it against what it asked for. Check
+  `SubmittedIssue.missingLabels` after a submit, and set
+  `Configuration.logger` — a non-empty result also logs at `.warning` naming
+  the dropped labels. Treat `nil` as *unknown* (an older relay didn't
+  report), not as "all applied". The fix is granting the App `Issues: Write`
+  **and** push access, then re-submitting.
 - **`PEM read error`** — the private key env var has unescaped newlines.
   See the Vercel README's "PKCS#1 → PKCS#8" note. The standard fix is to
   base64-encode the PEM file as the env value, then decode at boot.
