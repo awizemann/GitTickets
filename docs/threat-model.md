@@ -93,12 +93,24 @@ is widely read.
 content the user happens to have there. Capture is always user-initiated; the
 SDK never captures in the background.
 
-The form's "Add screenshot" button captures the app **behind** the form: on
-macOS the report window is excluded from the ScreenCaptureKit filter, and on
-iOS the root view is rendered rather than the whole window, so a modally
-presented form and its dimming are left out. That is a usability decision
-rather than a privacy one — it means the shot contains your app's real screen,
-which is exactly the content worth thinking about below.
+The form's "Add screenshot" button captures **your application only**, minus the
+report window. On macOS the ScreenCaptureKit filter is scoped to the host
+process's own windows; on iOS the root view is rendered rather than the whole
+window, so a modally presented form and its dimming are left out.
+
+Scoping to the application is a **privacy** decision, not just a usability one.
+Excluding one window from the whole display — which is what v2.4.0 did, and what
+`SCContentFilter(display:excludingWindows:)` means — still photographs every
+other running app, the desktop, and anything else on screen, and that content can
+end up attached to a public issue. Reported by an adopter and fixed in v2.5.0.
+
+The shot still contains your own app's real screen, which is the content worth
+thinking about below.
+
+**To remove the control entirely**, set
+`PrivacyPolicy(allowsScreenshotCapture: false)`. It defaults to `true`. Users can
+still attach an image by hand, so this narrows what the SDK can put on screen
+without removing the ability to include a picture.
 
 Adopters should:
 

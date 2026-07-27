@@ -60,10 +60,14 @@ public enum ScreenshotCapture {
     /// button would be worse than useless: the user taps it to show you a
     /// problem and gets a picture of the form covering that problem.
     ///
-    /// - macOS: the report window is excluded from the ScreenCaptureKit content
-    ///   filter, so the shot is the app underneath with no gap or flicker. The
-    ///   window is identified as the key window at capture time, which is sound
-    ///   because the user just clicked a button in it.
+    /// - macOS: the capture is restricted to **this application's windows**,
+    ///   minus the report window. Scoping to the app is deliberate — excluding
+    ///   one window from the whole display would still photograph every other
+    ///   app and the desktop, and that content can end up attached to a public
+    ///   issue. The report window is identified as the key window, read
+    ///   *before* the first `await`, because focus can move while
+    ///   `SCShareableContent` is in flight and a later read would name the
+    ///   wrong window.
     /// - iOS: renders the root view controller's view rather than the whole
     ///   window. A modally-presented form lives in a sibling transition view, so
     ///   rendering the root excludes it and its dimming.
@@ -71,7 +75,13 @@ public enum ScreenshotCapture {
     /// Edge case, on both platforms: if the host embeds the form as its root UI
     /// rather than presenting it over something, there is nothing underneath to
     /// exclude and the result is the same as ``capture()``.
-    static func captureExcludingReporter() async -> Result<Data, ScreenshotCaptureError> {
+    ///
+    /// **Public because hosts with their own reporting UI have exactly this
+    /// problem**: calling ``capture()`` while your own report sheet is up
+    /// photographs the sheet. On macOS this also restricts the capture to your
+    /// application's windows, so no other app's content can end up attached to
+    /// an issue — which matters when the destination repository is public.
+    public static func captureExcludingReporter() async -> Result<Data, ScreenshotCaptureError> {
         await platformCapture(excludingReporter: true)
     }
 
@@ -104,7 +114,7 @@ public enum ScreenshotCapture {
     ///
     /// Split from ``failureMessage(for:)`` on purpose: the adopter needs to know
     /// it was a missing Screen Recording grant, and the user does not.
-    static func diagnosticMessage(for error: ScreenshotCaptureError) -> String {
+    public static func diagnosticMessage(for error: ScreenshotCaptureError) -> String {
         switch error {
         case .permissionRequired:
             "Screenshot capture was refused: Screen Recording permission is not granted for this app (macOS). The form fell back to manual image attachment; submission is unaffected."

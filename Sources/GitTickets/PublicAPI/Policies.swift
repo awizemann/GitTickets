@@ -372,17 +372,37 @@ public struct PrivacyPolicy: Sendable {
     /// destination repo is public and filenames are sensitive.
     public var attachmentNames: AttachmentNameDisplay
 
-    /// - Note: `attachmentNames` is defaulted and trailing so the older
+    /// Whether the form offers to capture a screenshot. Default: `true`
+    /// (existing behavior).
+    ///
+    /// Set `false` to remove the "Add screenshot" control entirely. The user
+    /// can still attach an image by hand, so this narrows what the SDK can put
+    /// on screen — it does not take away the ability to include a picture.
+    ///
+    /// Exists because an adopter cannot otherwise promise their users that the
+    /// SDK will never photograph their screen. Pinning an old version was the
+    /// only way to guarantee that, and a pin is a bad place to keep a privacy
+    /// guarantee: it silently expires the moment someone bumps the dependency.
+    ///
+    /// - Note: this governs the SDK's own UI. ``ScreenshotCapture/capture()``
+    ///   is public and still works — a host that calls it directly has already
+    ///   decided to capture, and this flag does not second-guess that.
+    public var allowsScreenshotCapture: Bool
+
+    /// - Note: `attachmentNames` and `allowsScreenshotCapture` are defaulted
+    ///   and trailing so the older
     ///   `PrivacyPolicy(bannerText:requireExplicitConsent:)` call keeps
     ///   compiling unchanged.
     public init(
         bannerText: String? = nil,
         requireExplicitConsent: Bool = true,
-        attachmentNames: AttachmentNameDisplay = .filename
+        attachmentNames: AttachmentNameDisplay = .filename,
+        allowsScreenshotCapture: Bool = true
     ) {
         self.bannerText = bannerText
         self.requireExplicitConsent = requireExplicitConsent
         self.attachmentNames = attachmentNames
+        self.allowsScreenshotCapture = allowsScreenshotCapture
     }
 
     public static let `default` = PrivacyPolicy()

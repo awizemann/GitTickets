@@ -20,5 +20,12 @@ let package = Package(
             name: "SDKHarness",
             dependencies: [.product(name: "GitTickets", package: "GitTickets")]
         ),
+        // Answers "what does the form's screenshot button actually photograph?"
+        // — a question no unit test can reach, since it depends on
+        // ScreenCaptureKit and on what else is on screen.
+        .executableTarget(
+            name: "ScreenshotScope",
+            dependencies: [.product(name: "GitTickets", package: "GitTickets")]
+        ),
     ]
 )

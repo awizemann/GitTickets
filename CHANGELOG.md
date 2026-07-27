@@ -6,7 +6,50 @@ The SDK and the relay templates version independently.
 
 ## [Unreleased]
 
-_Nothing yet._
+All three items reported by an adopter against 2.4.0.
+
+### Fixed
+
+- **The form's screenshot captured the whole display, not just your app.**
+  v2.4.0 used `SCContentFilter(display:excludingWindows:)`, which is *the entire
+  display minus one window* — every other running application, the desktop,
+  anything on screen — while the docs promised "the app behind the form". On a
+  public repository that means another app's content could be attached to an
+  issue. The filter is now scoped to the host process's own applications, so the
+  capture contains your app and nothing else. Verified against real
+  ScreenCaptureKit output, not inferred — see `Harnesses/ScreenshotScope`.
+
+- **A race could exclude the wrong window.** The report window was identified
+  *after* `await SCShareableContent…`. If focus moved while that call was in
+  flight, the wrong window was excluded — capturing the form and hiding the very
+  thing the user meant to show. The window is now read before the first `await`.
+
+### Added
+
+- **`PrivacyPolicy.allowsScreenshotCapture`**, defaulting to `true`, so existing
+  adopters see no change. Set `false` to remove the "Add screenshot" control
+  entirely.
+
+  This exists because pinning an old version was previously the only way for an
+  adopter to promise their users the SDK would never photograph their screen —
+  and a version pin is a bad place to keep a privacy guarantee, since it expires
+  silently the first time someone bumps the dependency. Manual image attachment
+  is unaffected, so the user can still choose to include a picture.
+
+- **`ScreenshotCapture.captureExcludingReporter()` is now public.** Hosts that
+  present their own reporting UI hit the same problem the built-in form does:
+  `capture()` while your sheet is up photographs the sheet. On macOS this also
+  restricts the capture to your application's windows.
+
+- **`ScreenshotCapture.diagnosticMessage(for:)` is now public**, for hosts
+  logging their own capture failures.
+
+### Notes for adopters
+
+- `ScreenshotCapture.capture()` is **unchanged** and still captures everything
+  on screen. It is for capturing *before* you present a reporting surface.
+- Closed-over behavior worth stating plainly: the SDK still never captures
+  without a direct user action, and a failed capture never blocks submission.
 
 ## [2.4.0] — 2026-07-26
 

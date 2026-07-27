@@ -62,6 +62,44 @@ final class ScreenshotCaptureTests: XCTestCase {
         )
     }
 
+    // MARK: Adopter opt-out
+
+    /// Default must stay `true`, or upgrading silently removes a control that
+    /// existing adopters already ship.
+    func test_screenshotCaptureAllowedByDefault() {
+        XCTAssertTrue(PrivacyPolicy.default.allowsScreenshotCapture)
+        XCTAssertTrue(PrivacyPolicy().allowsScreenshotCapture)
+    }
+
+    /// The flag is what lets a privacy-sensitive adopter stop pinning an old
+    /// version to guarantee the SDK never photographs a user's screen.
+    func test_screenshotCaptureCanBeDisabled() {
+        XCTAssertFalse(PrivacyPolicy(allowsScreenshotCapture: false).allowsScreenshotCapture)
+    }
+
+    /// The pre-existing initializer must keep compiling and keep its meaning —
+    /// this is the call site adopters already have in their source.
+    func test_olderInitializerStillAllowsCapture() {
+        let policy = PrivacyPolicy(bannerText: "x", requireExplicitConsent: true)
+        XCTAssertTrue(policy.allowsScreenshotCapture)
+        XCTAssertEqual(policy.attachmentNames, .filename)
+    }
+
+    /// Disabling capture must not disturb the other privacy settings — an
+    /// adopter turning this off is not asking for different banner behavior.
+    func test_disablingCaptureLeavesOtherPrivacySettingsAlone() {
+        let policy = PrivacyPolicy(
+            bannerText: "custom",
+            requireExplicitConsent: false,
+            attachmentNames: .generic,
+            allowsScreenshotCapture: false
+        )
+        XCTAssertEqual(policy.bannerText, "custom")
+        XCTAssertFalse(policy.requireExplicitConsent)
+        XCTAssertEqual(policy.attachmentNames, .generic)
+        XCTAssertFalse(policy.allowsScreenshotCapture)
+    }
+
     // MARK: Error type
 
     func test_errorEqualityWorks() {

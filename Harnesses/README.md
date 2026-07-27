@@ -29,6 +29,22 @@ swift run SDKHarness partial     # 3 filed, 1 missing — the inline notice
 ./ios/run-ios-harness.sh   # iOS: needs a booted simulator
 ```
 
+```bash
+swift run ScreenshotScope   # macOS: what does the form's screenshot button photograph?
+```
+
+`ScreenshotScope` writes two PNGs into `.build-scope/` (gitignored — they are
+real screen captures and must never be committed): `own-app.png` from the same
+path the form's button uses, and `whole-screen.png` from the public
+`capture()`. Open the first. If it shows your other windows, the desktop, or
+the menu bar, the app-scoping has regressed.
+
+That regression is exactly what shipped in v2.4.0: the filter was
+`SCContentFilter(display:excludingWindows:)`, which is the whole display minus
+one window, while the docs promised "the app behind the form". An adopter
+caught it. Fixed in v2.5.0 by scoping the filter to the host process's own
+applications.
+
 ### What each one is for
 
 | Harness | Question | Method |

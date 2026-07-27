@@ -131,11 +131,22 @@ present(nav, animated: true)
 
 ### Screenshots
 
-The form has an **Add screenshot** button beside **Add image**. It captures the
-app *behind* the form — the report window is excluded on macOS, and on iOS the
-root view is rendered rather than the whole window — so the user gets a picture
-of the problem, not of the reporter covering it. The result appears as a
-thumbnail they can preview at full size or remove before submitting.
+The form has an **Add screenshot** button beside **Add image**. It captures
+**your app only**, minus the report window — on macOS the capture is scoped to
+your process's windows, and on iOS the root view is rendered rather than the
+whole window. So the user gets a picture of the problem, not of the reporter
+covering it, and never a picture of some other app they had open. The result
+appears as a thumbnail they can preview at full size or remove before
+submitting.
+
+Don't want the SDK offering it at all?
+
+```swift
+PrivacyPolicy(allowsScreenshotCapture: false)   // defaults to true
+```
+
+That removes the control. Manual image attachment still works, so users can
+still include a picture on their own terms.
 
 On macOS this needs Screen Recording permission. **The SDK never asks for it.**
 If it is missing, the button says screenshots aren't available, points at

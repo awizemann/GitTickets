@@ -10,6 +10,13 @@ extension ScreenshotCapture {
     /// (macOS 14+, which is the package floor).
     static func platformCapture(excludingReporter: Bool) async -> Result<Data, ScreenshotCaptureError> {
         do {
+            // Read the reporter window BEFORE any await. `NSApp.keyWindow` is
+            // live state: if focus moves while `SCShareableContent` is in
+            // flight, a later read names a different window, and we would
+            // exclude the wrong one — capturing the form and hiding exactly
+            // what the user meant to show. Reported by an adopter.
+            let reporterID = excludingReporter ? await reporterWindowID() : nil
+
             let content = try await SCShareableContent.excludingDesktopWindows(
                 false,
                 onScreenWindowsOnly: true
@@ -17,15 +24,31 @@ extension ScreenshotCapture {
             guard let display = content.displays.first else {
                 return .failure(.captureFailed("No displays available"))
             }
-            // Leave the report window out when the capture was started from
-            // inside it, or the user gets a picture of the form covering the
-            // thing they are trying to show us. Key window is the right handle:
-            // they just clicked a button in it.
-            var excluded: [SCWindow] = []
-            if excludingReporter, let reporterID = await reporterWindowID() {
-                excluded = content.windows.filter { $0.windowID == reporterID }
+
+            let filter: SCContentFilter
+            if excludingReporter {
+                // Scope to THIS application's windows only, minus the report
+                // window. `excludingWindows:` alone would capture the whole
+                // display — every other app, the desktop, everything — and
+                // that content can end up attached to a public issue. The form
+                // promises a picture of the app behind it, so that is all it
+                // may take.
+                let ownApplications = content.applications.filter {
+                    $0.processID == ProcessInfo.processInfo.processIdentifier
+                }
+                let excluded = reporterID.map { id in
+                    content.windows.filter { $0.windowID == id }
+                } ?? []
+                filter = SCContentFilter(
+                    display: display,
+                    including: ownApplications,
+                    exceptingWindows: excluded
+                )
+            } else {
+                // Public `capture()` — documented as everything on screen, for
+                // hosts capturing before they present their own UI. Unchanged.
+                filter = SCContentFilter(display: display, excludingWindows: [])
             }
-            let filter = SCContentFilter(display: display, excludingWindows: excluded)
             let configuration = SCStreamConfiguration()
             configuration.width = Int(display.width)
             configuration.height = Int(display.height)

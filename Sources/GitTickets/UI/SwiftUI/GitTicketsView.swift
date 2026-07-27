@@ -193,7 +193,9 @@ public struct GitTicketsView: View {
                 style: fieldStyle,
                 theme: theme,
                 addAttachment: { showingFileImporter = true },
-                addScreenshot: screenshot == nil ? { Task { await captureScreenshot() } } : nil,
+                addScreenshot: allowsScreenshotCapture && screenshot == nil
+                    ? { Task { await captureScreenshot() } }
+                    : nil,
                 isCapturingScreenshot: isCapturingScreenshot,
                 thumbnails: { AnyView(attachmentThumbnails) }
             )
@@ -282,6 +284,12 @@ public struct GitTicketsView: View {
     }
 
     // MARK: Derived
+
+    /// Whether the form may offer screenshot capture. Defaults to `true` when
+    /// no configuration is active, matching ``PrivacyPolicy/default``.
+    private var allowsScreenshotCapture: Bool {
+        configuration?.privacy.allowsScreenshotCapture ?? true
+    }
 
     private var isPublicRepo: Bool { configuration?.repo.visibility != .private }
     private var requiresConsent: Bool { configuration?.privacy.requireExplicitConsent ?? true }
