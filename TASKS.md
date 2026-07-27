@@ -11,13 +11,29 @@
 - [ ] **iOS Sim XCTest Keychain entitlement failures**: Discovered during PR 14 iOS Sim test run — 26 tests across `TokenStoreTests`, `KeychainTests`, `DeviceIdentityTests` fail with `errSecMissingEntitlement (-34018)` when run via `xcodebuild test` on iOS Sim (real iOS devices and `swift test` on macOS both work). Fix likely needs an `entitlements` file with `keychain-access-groups`, OR a host-app target for unit tests, OR `kSecUseDataProtectionKeychain: true` on every Keychain call. Pre-existing latent issue — not a PR 14 regression. (added: 2026-06-06)
 - [ ] **PR 20 — Tag + push v1.0.0 (user action)**: source is release-ready. Run `git tag v1.0.0 && git push origin v1.0.0` for the SDK; tag `relay-vercel-v1.0.0` and `relay-cloudflare-v1.0.0` against the same HEAD for hotfix freedom; submit to Swift Package Index via spi.yml. CHANGELOG, UserAgent.sdkVersion, README "Status" all updated to 1.0.0. (added: 2026-06-06)
 - [ ] [After Initial Code Works Full Circle] - expand on the relay for the users, so we can report telemetry and other stats for them since we load in each application. If there is anything we can monitor that is beneficial, and provide the user with the ability to turn the monitor on and off, we could have a very powerful product on our hands. (added: 2026-06-06)
+- [ ] Built-in form has no way to add a screenshot (id: t-66c07278) (added: 2026-07-26) (priority: high)
 
 ## Doing
 
-- [ ] Release GitTickets v1.1.0 (Swift 6) — validate in Memophant, roll out to GitHub (id: t-822c22e2) (added: 2026-06-23) (priority: high)
 
 ## Done
+- [x] Write release and tagging runbooks (id: t-4889a656) (added: 2026-07-26)
 
+- [x] Audit all docs, GitHub surfaces, tags and release notes for accuracy (id: t-50da72b3) (added: 2026-07-26)
+- [x] Detect dropped labels at fetch time, not just at submit (id: t-a28cb42b) (added: 2026-07-26) (priority: high)
+- [x] Keep the refresh-affordance harnesses in the repo (id: t-1600b9ec) (added: 2026-07-26)
+- [x] Add real refresh triggers to My Reports + Issue Detail (id: t-8a80d5b4) (added: 2026-07-26) (priority: high)
+- [x] v2.1.0 P5: relay docs cross-ref, CHANGELOG, tag 2.1.0 (id: t-9493d988) (added: 2026-07-26) (priority: high)
+- [x] v2.1.0 P3: full-size preview of pending attachment (id: t-91462076) (added: 2026-07-26)
+- [x] v2.1.0 P4: suppress attachment display names (id: t-732afe87) (added: 2026-07-26) (priority: urgent)
+- [x] v2.1.0 P1: built-in absolute-path redactor + safe ordering (id: t-7a4acd7f) (added: 2026-07-26) (priority: high)
+- [x] v2.1.0 P2: SharedSecret from Info.plist (id: t-56dc81bf) (added: 2026-07-26) (priority: high)
+- [x] Release GitTickets v1.1.0 (Swift 6) — validate in Memophant, roll out to GitHub (id: t-822c22e2) (added: 2026-06-23) (priority: high)
+- [x] v2.0.0 P5: integration audit, fresh-eyes review, tag 2.0.0 (id: t-2b805ee2) (added: 2026-07-25) (priority: high)
+- [x] v2.0.0 P4: version metadata, CHANGELOG, docs (id: t-ced6a69a) (added: 2026-07-25) (priority: high)
+- [x] v2.0.0 P3: make CI meaningful (runner, destinations, snapshots) (id: t-59ed0d9c) (added: 2026-07-25) (priority: high)
+- [x] v2.0.0 P1: availability cleanup + SwiftUI modernization (id: t-bd61de6c) (added: 2026-07-25) (priority: high)
+- [x] v2.0.0 P2: collapse ScreenCaptureKit to SCScreenshotManager (id: t-ebc833b6) (added: 2026-07-25) (priority: high)
 - [x] **PR 1 — Bootstrap** _(2026-06-04)_: `Package.swift`, `LICENSE` (MIT), `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, `.github/workflows/swift.yml`, `.spi.yml`, extended `.gitignore`, stub `Sources/GitTickets/PublicAPI/GitTickets.swift`, baseline tests. Verified `swift build` + `swift test` green on macOS (Swift 6.2.4), `xcodebuild` green for iOS Simulator.
 - [x] **PR 2 — Public API skeleton** _(2026-06-04)_: full public surface laid down across `Configuration.swift`, `AuthMode.swift` (`RepoCoordinate`, `SharedSecret` with base64/hex inits, `DeviceFlowScope`), `Models.swift` (`Report`, `SubmittedIssue`, `ReportKind`, `ReportAttachment`), `GitTicketsError.swift` (12 cases + `CustomStringConvertible`), `Policies.swift` (`DiagnosticsPolicy`, `DiagnosticsRedactor` with email/IPv4/IPv6/bearer-token statics, `PrivacyPolicy`, `MyIssuesPolicy`), `Theme.swift` (`GitTicketsTheme`, `GitTicketsImageSource`, `GitTicketsButtonStyle`, SwiftUI `EnvironmentKey`), `Logger.swift`. 13/13 tests green on macOS, iOS Sim build clean.
 - [x] **PR 3 — Bodybuilder** _(2026-06-04)_: internal `Sources/GitTickets/Bodybuilder/` — `CorrelationMarker` (HTML-comment UUID embed + whitespace-tolerant regex extractor, returns first marker / nil on absent or malformed UUID), `BodyTemplates` (per-`ReportKind` starter bodies + default labels), `IssueBodyBuilder` (assembles trimmed body + screenshot image + fenced diagnostics block + image/link attachments + correlation marker; marker always last so extractor never trips on earlier comments), `UploadedAttachment` struct. 22 new tests covering round-trip, unicode, whitespace-only inputs, multi-marker selection, malformed UUIDs. 35/35 green on macOS, iOS Sim clean.
