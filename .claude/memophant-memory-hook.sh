@@ -51,9 +51,8 @@ if [ -s "$PROMPT_FILE" ]; then
   echo ''
 fi
 echo '## Repo memory (managed by Memophant) — the single source of truth'
-echo 'Use the repo memory; record durable decisions/learnings here, not in session-private memory.'
-echo 'File every memory note under ONE of the six folders (architecture/conventions/decisions/operations/project/roadmap) — never at the .memory/ root. The write_memory folder argument lists each folder and its purpose.'
-echo 'PREFER the `memophant` MCP server tools for everything they can do — searching, reading, and writing memory/wiki/design/code/vendors/templates (search_memories, read_memory, write_memory, edit_memory, build_context, and more). They are the PRIMARY interface; get to know them before you start and reach for ad-hoc file reads/greps/hand-edits only as a last resort. Found or made a credential? Store it as a project vendor with `set_vendor_credential` instead of leaving it in chat. Fallback when the server is down: grep .memory/ and wiki/.'
+echo 'Search the repo memory before assuming; record durable decisions/learnings as memory notes (write_memory) or wiki pages — never in session-private memory. Search before writing and edit the existing note (edit_memory) rather than forking a near-duplicate. File every note under ONE of the six folders (architecture/conventions/decisions/operations/project/roadmap); when a note is grounded in code, pass source_paths so Memory Health can drift-check it — an unanchored code note cannot be kept current.'
+echo 'PREFER the `memophant` MCP tools for everything they cover (search_memories, read_memory, write_memory, edit_memory, build_context, tasks, tier files, and more) — they carry the guards (slug-gen, validation, secret scan). Found or made a credential → store it with set_vendor_credential, never in chat. Server down → grep .memory/ and wiki/.'
 if [ -d "$ROOT/.memory" ]; then
   echo ''
   total=$(find "$ROOT/.memory" -type f -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
@@ -75,6 +74,10 @@ fi
 if [ -d "$ROOT/design" ]; then
   echo ''
   echo 'Design tier present (design/): consult before UI work — search the `gittickets-design` project via the memophant MCP server, or grep design/.'
+fi
+if [ -d "$ROOT/documents" ]; then
+  echo ''
+  echo 'Documents tier present (documents/ — exact lowercase at the repo root): save agent-generated artifacts (plans/reports/briefs) there via write_tier_file(tier:"documents", path:...) — NEVER in a docs/ folder (docs/ is hand-authored documentation the project owns) and never a case-variant like Documents/.'
 fi
 if [ -f "$ROOT/TASKS.md" ]; then
   echo ''
