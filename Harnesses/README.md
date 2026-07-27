@@ -26,12 +26,15 @@ swift run ReproHarness     # macOS: three-way container control
 swift run SDKHarness       # macOS: the real shipped GitTicketsMyIssuesView
 swift run SDKHarness unmatched   # that view in the "nothing came back" state
 swift run SDKHarness partial     # 3 filed, 1 missing — the inline notice
+swift run ScreenshotScope  # macOS: what does the screenshot button photograph?
 ./ios/run-ios-harness.sh   # iOS: needs a booted simulator
 ```
 
-```bash
-swift run ScreenshotScope   # macOS: what does the form's screenshot button photograph?
-```
+**Every target lives in the one package at `Harnesses/RefreshAffordance/`, so
+run them all from there** — including `ScreenshotScope`, which is not about
+refreshing and only lives under that name because the package predates it.
+There is no `Harnesses/ScreenshotScope/` directory; an adopter tried that and it
+does not exist.
 
 `ScreenshotScope` writes two PNGs into `.build-scope/` (gitignored — they are
 real screen captures and must never be committed): `own-app.png` from the same

@@ -21,7 +21,8 @@ All three items reported by an adopter against 2.4.0.
   public repository that means another app's content could be attached to an
   issue. The filter is now scoped to the host process's own applications, so the
   capture contains your app and nothing else. Verified against real
-  ScreenCaptureKit output, not inferred — see `Harnesses/ScreenshotScope`.
+  ScreenCaptureKit output, not inferred — re-run it yourself with
+  `cd Harnesses/RefreshAffordance && swift run ScreenshotScope`.
 
 - **A race could exclude the wrong window.** The report window was identified
   *after* `await SCShareableContent…`. If focus moved while that call was in
