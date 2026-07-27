@@ -64,6 +64,49 @@ final class MyIssuesRefreshTests: XCTestCase {
         XCTAssertTrue(labelDroppedFromAll.allMissing)
     }
 
+    // MARK: Partial shortfall
+
+    /// The case that was silent before: 3 filed, 1 gone. The list still renders
+    /// the surviving 2, so the screen must say something or the missing one is
+    /// indistinguishable from never having been filed.
+    func test_partialShortfallIsFlaggedSeparatelyFromTotal() {
+        let refresh = MyIssuesRefresh(issues: [issue(1), issue(2)], requestedCount: 3)
+        XCTAssertTrue(refresh.hasPartialShortfall)
+        XCTAssertFalse(refresh.allMissing)
+        XCTAssertEqual(refresh.unmatchedCount, 1)
+    }
+
+    /// The two signals drive different UI — an inline notice versus a
+    /// full-screen state — so they must never both be true.
+    func test_partialAndTotalAreMutuallyExclusive() {
+        let cases = [
+            MyIssuesRefresh(issues: [], requestedCount: 0),
+            MyIssuesRefresh(issues: [], requestedCount: 4),
+            MyIssuesRefresh(issues: [issue(1)], requestedCount: 3),
+            MyIssuesRefresh(issues: [issue(1), issue(2)], requestedCount: 2),
+        ]
+        for refresh in cases {
+            XCTAssertFalse(
+                refresh.allMissing && refresh.hasPartialShortfall,
+                "allMissing and hasPartialShortfall both true for \(refresh)"
+            )
+        }
+    }
+
+    /// Everything came back — no notice, or it would appear on every healthy
+    /// refresh.
+    func test_noPartialShortfallWhenEverythingMatched() {
+        XCTAssertFalse(
+            MyIssuesRefresh(issues: [issue(1), issue(2)], requestedCount: 2).hasPartialShortfall
+        )
+    }
+
+    /// A total miss is NOT a partial one, even though both have a shortfall —
+    /// otherwise the inline notice would render behind the full-screen state.
+    func test_totalMissIsNotAPartialShortfall() {
+        XCTAssertFalse(MyIssuesRefresh(issues: [], requestedCount: 3).hasPartialShortfall)
+    }
+
     func test_fullMatchHasNoShortfall() {
         let refresh = MyIssuesRefresh(issues: [issue(1), issue(2)], requestedCount: 2)
         XCTAssertFalse(refresh.allMissing)

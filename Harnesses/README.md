@@ -25,6 +25,7 @@ cd Harnesses/RefreshAffordance
 swift run ReproHarness     # macOS: three-way container control
 swift run SDKHarness       # macOS: the real shipped GitTicketsMyIssuesView
 swift run SDKHarness unmatched   # that view in the "nothing came back" state
+swift run SDKHarness partial     # 3 filed, 1 missing — the inline notice
 ./ios/run-ios-harness.sh   # iOS: needs a booted simulator
 ```
 

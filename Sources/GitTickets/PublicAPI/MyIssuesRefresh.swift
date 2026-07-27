@@ -70,4 +70,23 @@ public struct MyIssuesRefresh: Sendable, Equatable {
     public var allMissing: Bool {
         requestedCount > 0 && issues.isEmpty
     }
+
+    /// Some cached submissions came back and some did not.
+    ///
+    /// Mutually exclusive with ``allMissing``: that one means *nothing* came
+    /// back, this one means *something did, but not everything*.
+    ///
+    /// Carries the same ambiguity as ``allMissing`` and for the same reason —
+    /// a report is absent whether it was deleted or lost its label. The
+    /// difference is only how loudly it is worth saying: losing one report of
+    /// twenty does not deserve a full-screen state, but it should not be
+    /// silent either. Before this existed, a report that lost its label looked
+    /// exactly like one that was never filed.
+    ///
+    /// Internal because ``unmatchedCount`` and ``issues`` already give a host
+    /// everything needed to compute it; this exists so the view does not
+    /// hand-roll the condition.
+    var hasPartialShortfall: Bool {
+        !issues.isEmpty && unmatchedCount > 0
+    }
 }

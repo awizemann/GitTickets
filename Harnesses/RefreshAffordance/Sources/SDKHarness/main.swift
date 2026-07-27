@@ -48,12 +48,23 @@ private func sampleIssues() -> [SubmittedIssue] {
 /// eye (there is no snapshot coverage of this view).
 private let unmatchedMode = CommandLine.arguments.contains("unmatched")
 
+/// `swift run SDKHarness partial` reproduces 3 filed / 1 missing — the case
+/// that rendered a plain list of 2 with no hint anything was gone.
+private let partialMode = CommandLine.arguments.contains("partial")
+
 struct Root: View {
     var body: some View {
         Group {
             if unmatchedMode {
                 GitTicketsMyIssuesView(
                     loadDetailed: { MyIssuesRefresh(issues: [], requestedCount: 3) },
+                    detail: { IssueDetailView(issue: $0) }
+                )
+            } else if partialMode {
+                GitTicketsMyIssuesView(
+                    loadDetailed: {
+                        MyIssuesRefresh(issues: Array(sampleIssues().prefix(2)), requestedCount: 3)
+                    },
                     detail: { IssueDetailView(issue: $0) }
                 )
             } else {
@@ -65,8 +76,8 @@ struct Root: View {
         }
         .frame(width: 560, height: 460)
         .task {
-            guard !unmatchedMode else {
-                print("unmatched mode: window stays open — read the copy, then quit.")
+            guard !(unmatchedMode || partialMode) else {
+                print("\(unmatchedMode ? "unmatched" : "partial") mode: window stays open — read the copy, then quit.")
                 return
             }
             try? await Task.sleep(for: .seconds(3))

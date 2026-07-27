@@ -126,7 +126,7 @@ public struct GitTicketsMyIssuesView: View {
 
                 case .loaded(let refresh):
                     if !refresh.issues.isEmpty {
-                        list(refresh.issues)
+                        list(refresh.issues, unmatched: refresh.hasPartialShortfall ? refresh.unmatchedCount : 0)
                     } else if refresh.allMissing {
                         // Cached submissions exist but the backend matched
                         // none. Saying "No reports yet" here would be a lie.
@@ -167,9 +167,14 @@ public struct GitTicketsMyIssuesView: View {
 
     // MARK: List
 
-    private func list(_ issues: [SubmittedIssue]) -> some View {
+    /// - Parameter unmatched: cached submissions that did not come back. `0`
+    ///   hides the notice.
+    private func list(_ issues: [SubmittedIssue], unmatched: Int) -> some View {
         ScrollView {
             LazyVStack(spacing: 8) {
+                if unmatched > 0 {
+                    unmatchedNotice(count: unmatched)
+                }
                 ForEach(sorted(issues)) { issue in
                     NavigationLink(value: issue) {
                         MyReportRow(issue: issue, kind: kindFor(issue.id), closed: isClosed(issue), theme: theme)
@@ -192,6 +197,36 @@ public struct GitTicketsMyIssuesView: View {
     }
 
     // MARK: States
+
+    /// Inline notice for a *partial* shortfall — some reports came back, some
+    /// did not.
+    ///
+    /// Deliberately not the full-screen ``unmatchedState``: losing one report
+    /// out of twenty does not justify taking over the screen, and a deleted
+    /// issue produces this legitimately. But silence was worse — a report that
+    /// lost its label looked exactly like one that was never filed, which is
+    /// the same failure the full-screen state exists to prevent, only quieter.
+    ///
+    /// Same wording constraint as ``unmatchedState``: "isn't showing up" is
+    /// true whether the issue was deleted or merely lost its label, and the SDK
+    /// cannot tell those apart.
+    private func unmatchedNotice(count: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.circle")
+                .foregroundStyle(.orange)
+            Text(
+                count == 1
+                    ? "1 earlier report isn't showing up."
+                    : "\(count) earlier reports aren't showing up."
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+        .accessibilityElement(children: .combine)
+    }
 
     /// Shown when this device has filed reports but the backend returned none
     /// of them.

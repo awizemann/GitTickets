@@ -30,6 +30,19 @@ _Nothing yet._
   Closed issues were never a cause and still are not — the backend lists with
   `state=all`.
 
+- **A partial shortfall was invisible to the user.** If 3 reports were filed and
+  1 stopped coming back, the screen rendered a perfectly ordinary list of 2 and
+  said nothing — the missing one was indistinguishable from one never filed.
+  Only a *total* miss got a state, which made the threshold arbitrary: 3-of-3
+  missing took over the screen, 2-of-3 missing was silent.
+
+  There is now a non-blocking inline notice above the list — *"1 earlier report
+  isn't showing up."* It is deliberately not the full-screen state, because a
+  deleted issue produces a partial shortfall legitimately and losing one report
+  of twenty does not warrant taking over the screen. The wording carries the
+  same constraint as the total case: it never claims to know why, because the
+  SDK cannot.
+
 ## [2.3.0] — 2026-07-26
 
 Additive minor. Closes a silent-failure path in "My Reports" reported by the

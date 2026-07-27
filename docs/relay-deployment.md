@@ -82,7 +82,9 @@ submission should land as an issue in your repo within a few seconds.
   what came back. Call `GitTickets.refreshMyIssuesDetailed()` and read
   `MyIssuesRefresh.allMissing`, or just set `Configuration.logger` — a total
   miss logs at `.warning`, a partial miss at `.info`. The built-in view shows a
-  distinct state rather than claiming the user has none.
+  distinct state for a total miss rather than claiming the user has none, and a
+  non-blocking inline notice when only *some* reports fail to come back — that
+  case used to render an ordinary list with the missing rows silently absent.
 
   **`allMissing` says *that*, not *why*.** The relay lists by label, so an
   issue is absent whether it was **deleted** or merely **lost its label** —
