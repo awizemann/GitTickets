@@ -35,7 +35,7 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "2.4.0"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "2.5.0"),
 ]
 ```
 

@@ -6,6 +6,10 @@ The SDK and the relay templates version independently.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [2.5.0] — 2026-07-26
+
 All three items reported by an adopter against 2.4.0.
 
 ### Fixed
@@ -533,6 +537,7 @@ roadmap as a v1.x point release.
 
 ---
 
+[2.5.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.5.0
 [2.4.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.4.0
 [2.3.1]: https://github.com/awizemann/GitTickets/releases/tag/v2.3.1
 [2.3.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.3.0
@@ -541,4 +546,4 @@ roadmap as a v1.x point release.
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.5.0...HEAD
