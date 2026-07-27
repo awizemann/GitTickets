@@ -56,13 +56,17 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-**v2.3.1 is the current release** — a patch, fixing both halves of how missing
-reports were handled. The screen no longer claims to know *why* a report didn't
-come back: issues are found by label, so one is absent whether it was **deleted**
-or merely **lost its label**, and 2.3.0 wrongly told the deleted case "they
-haven't been lost". And when only *some* reports fail to come back, there is now
-an inline notice — that case previously rendered an ordinary list with the
-missing rows silently absent.
+**v2.4.0 is the current release** — an additive minor. The built-in form can
+finally **add a screenshot**: the state and thumbnail existed, but nothing ever
+assigned them and no control was wired. It captures the app *behind* the form
+rather than the form itself, and a failed capture never blocks submission — on
+macOS a missing Screen Recording permission is treated as a shrug, not an error.
+
+**v2.3.1** fixed both halves of how missing reports were handled. The screen no
+longer claims to know *why* a report didn't come back: issues are found by
+label, so one is absent whether it was **deleted** or merely **lost its label**,
+and 2.3.0 wrongly told the deleted case "they haven't been lost". And when only
+*some* reports fail to come back, there is now an inline notice.
 
 **v2.3.0** closed the silent failure underneath it: "My Reports" could go
 permanently empty with no error, because a dropped label made every past report
@@ -77,9 +81,9 @@ re-fetch when the scene becomes active, and a working
 `MyIssuesPolicy.pollInterval` (still **off by default**). See
 [`CHANGELOG.md`](CHANGELOG.md).
 
-**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.3.1"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.3.1 automatically.
+**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.4.0"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.4.0 automatically.
 
-**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 311/311 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
+**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 315/315 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
 
 The Phase 2 "My Reports" in-app reply view **has shipped** — browse past submissions, read developer replies, and refresh without reopening the window. See [`CHANGELOG.md`](CHANGELOG.md) for what landed in each release and [`TASKS.md`](TASKS.md) for the active board.
 

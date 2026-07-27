@@ -35,7 +35,7 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "2.3.1"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "2.4.0"),
 ]
 ```
 
@@ -127,6 +127,29 @@ full pure-AppKit pattern.
 ```swift
 let nav = UINavigationController(rootViewController: GitTicketsViewController())
 present(nav, animated: true)
+```
+
+### Screenshots
+
+The form has an **Add screenshot** button beside **Add image**. It captures the
+app *behind* the form — the report window is excluded on macOS, and on iOS the
+root view is rendered rather than the whole window — so the user gets a picture
+of the problem, not of the reporter covering it. The result appears as a
+thumbnail they can preview at full size or remove before submitting.
+
+On macOS this needs Screen Recording permission. **The SDK never asks for it.**
+If it is missing, the button says screenshots aren't available, points at
+manual image attachment, and submission is unaffected; the real reason is
+logged through `Configuration.logger`.
+
+Capturing from your own UI instead? `ScreenshotCapture.capture()` is public and
+captures **everything on screen**, so call it *before* you present your own
+reporting surface:
+
+```swift
+if case .success(let png) = await ScreenshotCapture.capture() {
+    // pass as Report.screenshot
+}
 ```
 
 ### My Reports
