@@ -11,6 +11,8 @@ tags:
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-06
+updated: 2026-06-24
 ---
 
 PR 12 ships the package's own SwiftUI form. The integration pattern in Memophant (host owns the inline form, calls `GitTickets.submit(_:)` programmatically) is now superseded by `GitTicketsView()` — Memophant can switch in PR 13's window-controller wiring or via a single sheet presentation.

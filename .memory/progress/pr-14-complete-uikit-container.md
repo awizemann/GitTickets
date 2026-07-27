@@ -12,6 +12,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/UI/UIKit/GitTicketsViewController.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 14 ships the iOS-side mirror of PR 13's macOS-only AppKit factory: a single thin `UIHostingController<GitTicketsView>` subclass that lets UIKit hosts present the form via the standard `present(_:animated:)` / `pushViewController(_:animated:)` patterns.

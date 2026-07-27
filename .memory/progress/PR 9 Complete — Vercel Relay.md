@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: relay/README.md, relay/shared/payload-schema.md, .github/workflows/relay-vercel.yml
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 9 (Vercel relay) shipped 2026-06-05. The TypeScript serverless functions match the locked SDK wire contract; HMAC vector is asserted byte-for-byte on both sides.

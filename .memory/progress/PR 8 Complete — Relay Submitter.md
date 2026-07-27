@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Auth/IssueSubmitter.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 8 (Relay submitter) shipped 2026-06-04. The full Swift-side submission pipeline is live. PR 9 (Vercel relay) implements the server side to match this contract.

@@ -20,7 +20,7 @@ v1.1.0 was tagged and pushed on 2026-07-25 (annotated tag on 51b13d9 = origin/ma
 - [constraint] CI cannot validate this package as configured: macos-14 caps Xcode at 16.2 and the iOS destination is pinned to iPhone 15 / OS=17.5. Bump the runner image before trusting any CI signal #ci
 
 ## Relations
-- relates_to [[Swift 6 Language Mode Migration V1 1 0]]
+- relates_to [[Swift 6 Language Mode Migration (v1.1.0)]]
 
 
 ## Resolved in v2.0.0 (2026-07-26)

@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/PublicAPI/Models.swift, Sources/GitTickets/UI/SwiftUI/GitTicketsMyIssuesView.swift, Sources/GitTickets/UI/SwiftUI/IssueDetailView.swift, Sources/GitTickets/UI/SwiftUI/MarkdownCommentView.swift, relay/vercel/api/comments.ts, relay/cloudflare/src/handlers/comments.ts, relay/vercel/vercel.json, relay/shared/payload-schema.md
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 Phase 2's full UI + fetch surface landed in one PR. Both submitters now implement all three fetch methods; both relay templates have a `/comments` endpoint at parity; the SwiftUI tier ships a list view, a detail view, and a markdown comment renderer. Manual refresh in v1 as the task spec called for.

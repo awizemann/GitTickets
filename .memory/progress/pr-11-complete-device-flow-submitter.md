@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Auth/DeviceFlow/DeviceFlowPayloads.swift, Sources/GitTickets/Auth/DeviceFlow/TokenStore.swift, Sources/GitTickets/Auth/DeviceFlow/DeviceFlowCoordinator.swift, Sources/GitTickets/Auth/DeviceFlow/DeviceFlowSubmitter.swift, Tests/GitTicketsTests/Auth/DeviceFlow/DeviceFlowCoordinatorTests.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 11 ships the second production `IssueSubmitter` — the GitHub Device Flow path that lets end-users author issues with their own account, no developer-hosted relay needed. Closes the auth tier; the form work in PR 12 can now hook a discrete `.deviceFlowNotAuthorized` error into the OAuth sheet.

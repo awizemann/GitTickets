@@ -23,4 +23,4 @@ The meta-lesson: a CI guard must be verified through the SAME command CI uses. T
 
 ## Relations
 - relates_to [[GitTickets v1.1.0 real toolchain floor is above Swift 6.0]]
-- relates_to [[Footgun Ios Sim Xctest Has No Keychain Entitlement]]
+- relates_to [[Footgun — iOS Sim XCTest Has No Keychain Entitlement]]

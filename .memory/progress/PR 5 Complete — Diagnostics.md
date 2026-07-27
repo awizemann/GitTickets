@@ -12,6 +12,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Diagnostics/RedactionPipeline.swift, Sources/GitTickets/Diagnostics/DeviceInfo.swift, Sources/GitTickets/Diagnostics/OSLogTailer.swift, Sources/GitTickets/Diagnostics/DiagnosticsBlob.swift, Sources/GitTickets/Diagnostics/DiagnosticsCollector.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 5 (Diagnostics) shipped 2026-06-04. The collect-and-redact pipeline is live; collector wired in PR 8/12.

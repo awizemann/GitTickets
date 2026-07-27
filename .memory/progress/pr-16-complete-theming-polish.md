@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/UI/SwiftUI/HeaderImage.swift, Tests/GitTicketsTests/UI/SwiftUI/SnapshotTests.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 16 closes the theme-values audit loop the Pass 2 review flagged: every public field of `GitTicketsTheme` is now actually consumed by `GitTicketsView`, and we have a small snapshot-test safety net for the form layout going forward.

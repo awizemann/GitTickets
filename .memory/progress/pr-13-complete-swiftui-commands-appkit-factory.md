@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/UI/SwiftUI/GitTicketsCommands.swift, Sources/GitTickets/UI/AppKit/GitTicketsMenuItemFactory.swift, Sources/GitTickets/UI/AppKit/ReportWindowController.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 13 ships the menu-integration tier. SwiftUI hosts add a single line to `.commands`; AppKit hosts get a fully-wired `NSMenuItem` from a factory call. Both routes converge on `GitTicketsView` — the form from PR 12 is the destination of either trigger.

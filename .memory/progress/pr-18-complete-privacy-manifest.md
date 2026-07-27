@@ -12,6 +12,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, docs/privacy.md
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 18 ships the App Store / Apple-required privacy manifest for the SDK. Adopter-side guidance (how to merge with the host app's own manifest) lands in PR 17's docs.

@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Screenshot/ScreenshotCapture.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+macOS.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+iOS.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-level wiring lands in PR 12.

@@ -11,6 +11,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Networking/UserAgent.swift, Sources/GitTickets/Networking/RateLimitBackoff.swift, Sources/GitTickets/Networking/HTTPClient.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 7 (Networking core) shipped 2026-06-04. HTTPClient is the transport substrate PR 8 (relay submitter) and PR 11 (Device Flow) build on.
