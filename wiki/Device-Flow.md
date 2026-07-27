@@ -2,6 +2,8 @@
 title: Device-Flow
 type: note
 permalink: gittickets-wiki/device-flow
+created: 2026-06-04
+updated: 2026-06-04
 ---
 
 # Device Flow

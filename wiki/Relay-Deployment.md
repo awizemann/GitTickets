@@ -2,6 +2,8 @@
 title: Relay-Deployment
 type: note
 permalink: gittickets-wiki/relay-deployment
+created: 2026-06-04
+updated: 2026-06-06
 ---
 
 # Relay Deployment

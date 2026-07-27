@@ -2,6 +2,8 @@
 title: Getting-Started
 type: note
 permalink: gittickets-wiki/getting-started
+created: 2026-06-04
+updated: 2026-06-06
 ---
 
 # Getting Started

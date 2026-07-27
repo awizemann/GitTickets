@@ -2,6 +2,8 @@
 title: Diagnostics-and-Screenshots
 type: note
 permalink: gittickets-wiki/diagnostics-and-screenshots
+created: 2026-06-04
+updated: 2026-06-04
 ---
 
 # Diagnostics & Screenshots

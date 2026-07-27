@@ -2,6 +2,8 @@
 title: Threat-Model
 type: note
 permalink: gittickets-wiki/threat-model
+created: 2026-06-04
+updated: 2026-06-06
 ---
 
 # Threat Model

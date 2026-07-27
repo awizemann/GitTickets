@@ -2,6 +2,8 @@
 title: Patterns-and-Gotchas
 type: note
 permalink: gittickets-wiki/patterns-and-gotchas
+created: 2026-06-06
+updated: 2026-06-06
 ---
 
 # Patterns and Gotchas

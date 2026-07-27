@@ -2,6 +2,8 @@
 title: Build-Sequence
 type: note
 permalink: gittickets-wiki/build-sequence
+created: 2026-06-04
+updated: 2026-06-06
 ---
 
 # Build Sequence
