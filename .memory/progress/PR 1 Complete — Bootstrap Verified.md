@@ -11,6 +11,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Package.swift, LICENSE, README.md, CONTRIBUTING.md, SECURITY.md, CHANGELOG.md, .github/workflows/swift.yml, .spi.yml, .gitignore, Sources/GitTickets/PublicAPI/GitTickets.swift, Tests/GitTicketsTests/GitTicketsTests.swift
 source_paths_inferred: true
+created: 2026-06-04
+updated: 2026-07-12
 ---
 
 PR 1 (Bootstrap) shipped 2026-06-04. Repo skeleton is live and verified.

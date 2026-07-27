@@ -9,6 +9,8 @@ tags:
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-04
+updated: 2026-06-24
 ---
 
 After OAuth Device Flow approval on github.com, the user is stranded on a "you're all set" GitHub page with no automatic return to the app. The naive implementation leaves users confused.

@@ -16,6 +16,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, Examples/README.md, docs/getting-started.md, docs/relay-deployment.md, docs/device-flow.md, docs/theming.md, docs/diagnostics.md, docs/privacy.md, docs/threat-model.md, docs/architecture.md, README.md, CHANGELOG.md
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 Phase 1 is feature-complete and release-prepped. Four PRs landed in one pass: docs (PR 17), privacy manifest (PR 18), example apps (PR 19), and release prep (PR 20). User runs the actual `git tag` + `git push --tags` when ready.

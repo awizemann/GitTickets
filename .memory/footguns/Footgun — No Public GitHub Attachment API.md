@@ -9,6 +9,8 @@ tags:
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-04
+updated: 2026-06-24
 ---
 
 GitHub has no public REST or GraphQL endpoint for uploading images to issues or comments. The web UI uploads to a private S3-backed CDN.

@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Storage/Keychain.swift, Sources/GitTickets/Storage/DeviceIdentity.swift, Sources/GitTickets/Storage/SubmissionRecord.swift, Sources/GitTickets/Storage/SubmissionCache.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 4 (Storage) shipped 2026-06-04. Local persistence is live — Keychain wrapper, stable device identifier, SQLite cache for Phase 2.

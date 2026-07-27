@@ -12,6 +12,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/PublicAPI/GitTickets.swift, Sources/GitTickets/Auth/IssueSubmitter.swift, Sources/GitTickets/PublicAPI/AuthMode.swift, Sources/GitTickets/Diagnostics/DiagnosticsCollector.swift, Sources/GitTickets/Screenshot/ScreenshotCapture.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 Multi-angle audit triggered by the discovery that `GitTickets.submit(_:)` had been a PR-2 stub the whole time. Three parallel Explore agents (stub/TODO hunter, public-API reachability, Vercel/Cloudflare parity). Total findings: 27; actionable now: 5; deferred: rest.

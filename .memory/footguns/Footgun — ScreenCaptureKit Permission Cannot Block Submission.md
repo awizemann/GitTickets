@@ -9,6 +9,8 @@ tags:
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-04
+updated: 2026-06-24
 ---
 
 On macOS, ScreenCaptureKit and `CGWindowListCreateImage` both require Screen Recording permission (System Settings → Privacy & Security). First-time call triggers a permission prompt; if denied, all subsequent calls return empty/black images silently.

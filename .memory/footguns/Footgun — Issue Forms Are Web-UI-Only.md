@@ -9,6 +9,8 @@ tags:
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-04
+updated: 2026-06-24
 ---
 
 `.github/ISSUE_TEMPLATE/*.yml` Issue Forms are rendered ONLY by the GitHub web UI. There is no REST endpoint like "create issue from template X with field values." Forms compile to plain markdown that goes into `body`.

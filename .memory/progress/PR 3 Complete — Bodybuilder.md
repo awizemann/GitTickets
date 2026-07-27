@@ -11,6 +11,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Bodybuilder/CorrelationMarker.swift, Sources/GitTickets/Bodybuilder/BodyTemplates.swift, Sources/GitTickets/Bodybuilder/IssueBodyBuilder.swift
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 PR 3 (Bodybuilder) shipped 2026-06-04. The markdown assembly + UUID correlation layer is live; submitters in PR 8+ wire to it.

@@ -2,21 +2,18 @@
 title: Swift 6 Language Mode Migration (v1.1.0)
 type: note
 permalink: gittickets/decisions/swift-6-language-mode-migration-v1-1-0
-tags:
-- swift6
-- concurrency
-- migration
-- release
-- v1.1.0
+tags: [swift6, concurrency, migration, release, v1.1.0]
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
+updated: 2026-07-25
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-23
 ---
 
 GitTickets migrated to the Swift 6 language mode, shipping as **v1.1.0** (release-prepped 2026-06-23; tag/push held pending validation in Memophant). Driven by the host app **Memophant** moving to Swift 6. **ZERO runtime-behavior change** — concurrency annotations + one deprecated-API rename + build config only.
 
 ## Observations
-- [decision] `Package.swift`: swift-tools-version 5.9 → 6.0 + package-level `swiftLanguageModes: [.v6]` (library AND tests compile in Swift 6 mode; `-swift-version 6` confirmed passed to swiftc). Minimum toolchain now Swift 6.0 / Xcode 16+; runtime floor unchanged (macOS 13 / iOS 16). #swift6 #build
+- [decision] `Package.swift`: swift-tools-version 5.9 → 6.0 + package-level `swiftLanguageModes: [.v6]` (library AND tests compile in Swift 6 mode; `-swift-version 6` confirmed passed to swiftc). Minimum toolchain is NOT Swift 6.0 / Xcode 16+ as originally documented — see the corrected floor below; runtime floor unchanged (macOS 13 / iOS 16). #swift6 #build
 - [fix] ISO8601 statics (`RelaySubmitter.iso8601` / `iso8601NoFractional`) → `nonisolated(unsafe)`. Immutable-after-init, parse-only (inbound relay dates); outbound wire serialization (`RelayJSON.encoder`) untouched. Kept `ISO8601DateFormatter` (NOT `Date.ISO8601FormatStyle`) to preserve byte-identical parsing. NOT `@MainActor` — the relay submitter must stay off-main + Sendable. #concurrency
 - [fix] `GitTicketsMenuItemFactory` enum + `MenuActionTarget` trampoline → `@MainActor`. Genuine AppKit UI construction; enforces the main-thread requirement that already held at runtime. Source-compatible for documented usage. (This was the "main-actor-isolated default value in a nonisolated context" error.) #appkit
 - [fix] `DeviceInfo`: `String(validatingUTF8:)` → `String(validatingCString:)`. Pre-existing deprecation surfaced by the clean rebuild; pure rename, identical semantics. #cleanup

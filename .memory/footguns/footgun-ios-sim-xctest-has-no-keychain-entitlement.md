@@ -13,6 +13,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/Storage/Keychain.swift, .github/workflows/swift.yml
 source_paths_inferred: true
+created: 2026-06-06
+updated: 2026-07-12
 ---
 
 A SwiftPM XCTest bundle running on iOS Simulator via `xcodebuild test` cannot reach the Keychain — every `SecItemAdd` / `SecItemCopyMatching` / `SecItemDelete` returns `errSecMissingEntitlement (-34018)`. The same tests pass on macOS via `swift test` and would pass on a real iOS device, but the Sim test bundle has no `keychain-access-groups` entitlement and the unit-test runner doesn't run inside a host app that could supply one.

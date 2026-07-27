@@ -9,6 +9,8 @@ tags:
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
 reviewed: 2026-06-24
 reviewed_by: human
+created: 2026-06-06
+updated: 2026-06-24
 ---
 
 A transport-level retry of a POST (Vercel cold-start returns 504 *after* the relay called the GitHub API; URLSession sees `URLError(.networkConnectionLost)` while the server already processed the request) creates a duplicate GitHub issue.

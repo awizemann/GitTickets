@@ -11,6 +11,8 @@ reviewed: 2026-06-24
 reviewed_by: human
 source_paths: Sources/GitTickets/PublicAPI/GitTickets.swift, Sources/GitTickets/PublicAPI/Configuration.swift, Sources/GitTickets/PublicAPI/AuthMode.swift, Sources/GitTickets/PublicAPI/Models.swift, Sources/GitTickets/PublicAPI/GitTicketsError.swift, Sources/GitTickets/PublicAPI/Policies.swift, Sources/GitTickets/PublicAPI/Theme.swift, Sources/GitTickets/PublicAPI/Logger.swift
 source_paths_inferred: true
+created: 2026-06-04
+updated: 2026-07-12
 ---
 
 PR 2 (Public API skeleton) shipped 2026-06-04. Full public surface exists; auth submitters, UI, and storage are still PR 3+.
