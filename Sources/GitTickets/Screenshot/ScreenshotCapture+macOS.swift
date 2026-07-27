@@ -8,7 +8,7 @@ extension ScreenshotCapture {
 
     /// macOS capture using ScreenCaptureKit's one-shot `SCScreenshotManager`
     /// (macOS 14+, which is the package floor).
-    static func platformCapture() async -> Result<Data, ScreenshotCaptureError> {
+    static func platformCapture(excludingReporter: Bool) async -> Result<Data, ScreenshotCaptureError> {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(
                 false,
@@ -17,7 +17,15 @@ extension ScreenshotCapture {
             guard let display = content.displays.first else {
                 return .failure(.captureFailed("No displays available"))
             }
-            let filter = SCContentFilter(display: display, excludingWindows: [])
+            // Leave the report window out when the capture was started from
+            // inside it, or the user gets a picture of the form covering the
+            // thing they are trying to show us. Key window is the right handle:
+            // they just clicked a button in it.
+            var excluded: [SCWindow] = []
+            if excludingReporter, let reporterID = await reporterWindowID() {
+                excluded = content.windows.filter { $0.windowID == reporterID }
+            }
+            let filter = SCContentFilter(display: display, excludingWindows: excluded)
             let configuration = SCStreamConfiguration()
             configuration.width = Int(display.width)
             configuration.height = Int(display.height)
@@ -42,6 +50,18 @@ extension ScreenshotCapture {
             }
             return .failure(.captureFailed(String(describing: error)))
         }
+    }
+
+    /// `CGWindowID` of the window the capture was started from, if any.
+    ///
+    /// `NSWindow.windowNumber` and `SCWindow.windowID` are the same coordinate
+    /// space, so this maps cleanly onto the ScreenCaptureKit content list.
+    @MainActor
+    private static func reporterWindowID() -> CGWindowID? {
+        guard let window = NSApp.keyWindow ?? NSApp.mainWindow else { return nil }
+        let number = window.windowNumber
+        guard number > 0 else { return nil }
+        return CGWindowID(number)
     }
 
     private static func pngData(from cgImage: CGImage) -> Data? {

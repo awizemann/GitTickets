@@ -6,7 +6,33 @@ The SDK and the relay templates version independently.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **The built-in form can finally add a screenshot.** `GitTicketsView` held
+  `screenshot` state, rendered a thumbnail for it, offered Remove and submitted
+  it — but nothing ever assigned it and there was no control to. The state was
+  only ever set to `nil`, so the feature existed everywhere except where a user
+  could reach it. There is now an "Add screenshot" button beside "Add image".
+
+  **It captures the app behind the form, not the form.** A naive button would
+  have been worse than none: macOS captures the whole display and iOS renders
+  the key window, so the user would tap it to show you a problem and get a
+  picture of the report form covering that problem. The new internal
+  `captureExcludingReporter()` excludes the report window from the
+  ScreenCaptureKit filter on macOS, and renders the root view instead of the
+  window on iOS, where a modally presented form lives in a sibling transition
+  view.
+
+  The public `ScreenshotCapture.capture()` is **unchanged** and still captures
+  everything — it is for hosts capturing *before* presenting their own UI.
+
+- **Failure never blocks submission.** A failed capture shows one informational
+  line pointing at "Add image", and the form carries on. On macOS a missing
+  Screen Recording permission is treated as a shrug rather than an incident:
+  the SDK does not ask for the permission and the copy does not mention it,
+  send anyone to System Settings, or imply they did something wrong. The real
+  cause goes to `Configuration.logger` at `.info`, because the adopter needs it
+  and the user does not.
 
 ## [2.3.1] — 2026-07-26
 

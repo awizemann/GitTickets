@@ -24,6 +24,12 @@ struct DetailsSection: View {
     let style: GitTicketsFieldStyle
     let theme: GitTicketsTheme
     let addAttachment: () -> Void
+    /// Capture a screenshot. `nil` hides the control — used when a screenshot
+    /// is already attached, since the form holds exactly one.
+    let addScreenshot: (() -> Void)?
+    /// `true` while a capture is running, so the control can show progress and
+    /// refuse a second tap.
+    let isCapturingScreenshot: Bool
     /// EXISTING: pass-through so the host's ScreenshotThumbnail can render.
     let thumbnails: () -> AnyView
 
@@ -114,29 +120,54 @@ struct DetailsSection: View {
     }
 
     private var attachmentsRow: some View {
-        HStack(spacing: 12) {
-            Button(action: addAttachment) {
-                Label("Add image", systemImage: "photo")
-                    .font(.footnote.weight(.medium))
-                    .padding(.horizontal, 12).padding(.vertical, 9)
-                    .background(
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(theme.accentTint)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Button(action: addAttachment) {
+                    chip(label: "Add image", systemImage: "photo")
+                }
+                .buttonStyle(.plain)
+
+                // Only while no screenshot is attached — the form holds one,
+                // and Remove on the thumbnail is how you get back here.
+                if let addScreenshot {
+                    Button(action: addScreenshot) {
+                        chip(
+                            label: isCapturingScreenshot ? "Capturing\u{2026}" : "Add screenshot",
+                            systemImage: "camera.viewfinder"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isCapturingScreenshot)
+                    .help("Capture the screen behind this form")
+                    .accessibilityLabel(
+                        isCapturingScreenshot ? "Capturing screenshot" : "Add screenshot"
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .strokeBorder(theme.resolvedAccent.opacity(0.4),
-                                          style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                    )
-                    .foregroundStyle(theme.resolvedAccent)
+                }
             }
-            .buttonStyle(.plain)
 
             // EXISTING: host's ScreenshotThumbnail(s) for screenshot + attachments
             if hasScreenshot || attachmentCount > 0 {
                 thumbnails()
             }
         }
+    }
+
+    /// Shared chrome for the attachment controls, so a second button did not
+    /// mean a second copy of the dashed-border styling.
+    private func chip(label: String, systemImage: String) -> some View {
+        Label(label, systemImage: systemImage)
+            .font(.footnote.weight(.medium))
+            .padding(.horizontal, 12).padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(theme.accentTint)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(theme.resolvedAccent.opacity(0.4),
+                                  style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            )
+            .foregroundStyle(theme.resolvedAccent)
     }
 }
 

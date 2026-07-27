@@ -7,14 +7,25 @@ extension ScreenshotCapture {
     /// iOS capture using `UIGraphicsImageRenderer` over the key window.
     /// No permission prompt — entire process stays in-app.
     @MainActor
-    static func platformCapture() async -> Result<Data, ScreenshotCaptureError> {
+    static func platformCapture(excludingReporter: Bool) async -> Result<Data, ScreenshotCaptureError> {
         guard let window = activeKeyWindow() else {
             return .failure(.noActiveWindow)
         }
-        let bounds = window.bounds
+        // A modally-presented form is not inside `rootViewController.view` — it
+        // lives in a sibling transition view owned by the window. So rendering
+        // the root view gives the app underneath, without the form or its
+        // dimming. If the host embedded the form as its root instead, there is
+        // nothing to exclude and this is simply the whole window again.
+        let source: UIView = excludingReporter
+            ? (window.rootViewController?.view ?? window)
+            : window
+        let bounds = source.bounds
+        guard bounds.width > 0, bounds.height > 0 else {
+            return .failure(.noActiveWindow)
+        }
         let renderer = UIGraphicsImageRenderer(bounds: bounds)
         let image = renderer.image { _ in
-            window.drawHierarchy(in: bounds, afterScreenUpdates: false)
+            source.drawHierarchy(in: bounds, afterScreenUpdates: false)
         }
         guard let data = image.pngData() else {
             return .failure(.encodingFailed)

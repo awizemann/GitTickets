@@ -89,13 +89,32 @@ is widely read.
 
 ### Side-channel data in screenshots
 
-The SDK's `ScreenshotCapture` (on iOS) renders the key window — including
-any sensitive content the user has on screen. Adopters should:
+`ScreenshotCapture` renders whatever is on screen — including any sensitive
+content the user happens to have there. Capture is always user-initiated; the
+SDK never captures in the background.
 
-- Show the screenshot thumbnail before submission (the form does this).
-- Let the user clear it if they don't want it included.
-- Consider using `UIView.isHidden` on sensitive subviews when offering the
-  attach button.
+The form's "Add screenshot" button captures the app **behind** the form: on
+macOS the report window is excluded from the ScreenCaptureKit filter, and on
+iOS the root view is rendered rather than the whole window, so a modally
+presented form and its dimming are left out. That is a usability decision
+rather than a privacy one — it means the shot contains your app's real screen,
+which is exactly the content worth thinking about below.
+
+Adopters should:
+
+- Show the screenshot thumbnail before submission (the form does this) and
+  offer a full-size preview (it does this too).
+- Let the user clear it if they don't want it included (Remove on the tile).
+- Consider hiding sensitive subviews while the reporting UI is up.
+- Remember the public `ScreenshotCapture.capture()` deliberately captures
+  everything, including your own UI — it is for hosts capturing *before* they
+  present a reporting surface.
+
+On macOS a capture needs Screen Recording permission. The SDK does not ask for
+it and does not nag: if it is missing, the button reports that screenshots
+aren't available, points the user at manual image attachment, and submission
+proceeds unaffected. The real reason is logged through `Configuration.logger`
+for the adopter.
 
 ## Compliance posture
 

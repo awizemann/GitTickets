@@ -57,6 +57,12 @@ public struct GitTicketsView: View {
     @State private var diagnosticsExpanded = true   // transparency: always open by default
     @State private var diagnostics: DiagnosticsBlob?
     @State private var screenshot: Data?
+    /// True while a capture is in flight, so the control can show progress and
+    /// a second tap cannot start an overlapping capture.
+    @State private var isCapturingScreenshot = false
+    /// Non-blocking explanation when a capture fails. Never prevents
+    /// submission — the user can always add an image by hand instead.
+    @State private var screenshotError: String?
     @State private var attachments: [ReportAttachment] = []
     @State private var isSubmitting = false
     @State private var submitError: String?
@@ -77,6 +83,14 @@ public struct GitTicketsView: View {
                     if let attachmentError {
                         Label(attachmentError, systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    // Informational, not a warning: a failed capture costs the
+                    // user nothing — they can attach an image and submit.
+                    if let screenshotError {
+                        Label(screenshotError, systemImage: "camera.badge.ellipsis")
+                            .foregroundStyle(.secondary)
                             .font(.caption)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -179,6 +193,8 @@ public struct GitTicketsView: View {
                 style: fieldStyle,
                 theme: theme,
                 addAttachment: { showingFileImporter = true },
+                addScreenshot: screenshot == nil ? { Task { await captureScreenshot() } } : nil,
+                isCapturingScreenshot: isCapturingScreenshot,
                 thumbnails: { AnyView(attachmentThumbnails) }
             )
         }
@@ -191,6 +207,35 @@ public struct GitTicketsView: View {
                 blobText: diagnostics?.text ?? "Collecting diagnostics\u{2026}",
                 isExpanded: $diagnosticsExpanded,
                 theme: theme
+            )
+        }
+    }
+
+    /// Captures the screen behind this form and attaches it.
+    ///
+    /// Uses ``ScreenshotCapture/captureExcludingReporter()`` rather than the
+    /// public `capture()`, so the shot is the app underneath instead of a
+    /// picture of this form covering the problem the user is reporting.
+    ///
+    /// Failure is never fatal. A missing Screen Recording permission on macOS
+    /// is a shrug — the SDK does not nag for it — so the message points at
+    /// "Add image" and the user submits regardless.
+    private func captureScreenshot() async {
+        guard !isCapturingScreenshot else { return }
+        isCapturingScreenshot = true
+        screenshotError = nil
+        defer { isCapturingScreenshot = false }
+
+        switch await ScreenshotCapture.captureExcludingReporter() {
+        case .success(let data):
+            screenshot = data
+        case .failure(let error):
+            screenshotError = ScreenshotCapture.failureMessage(for: error)
+            // The adopter needs the real reason; the user does not.
+            configuration?.logger?.log(
+                level: .info,
+                message: ScreenshotCapture.diagnosticMessage(for: error),
+                error: nil
             )
         }
     }
