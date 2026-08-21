@@ -2,17 +2,14 @@
 title: PR 1 Complete — Bootstrap Verified
 type: note
 permalink: gittickets/progress/pr-1-complete-bootstrap-verified
-tags:
-- progress
-- pr-1
-- bootstrap
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Package.swift, LICENSE, README.md, CONTRIBUTING.md, SECURITY.md, CHANGELOG.md, .github/workflows/swift.yml, .spi.yml, .gitignore, Sources/GitTickets/PublicAPI/GitTickets.swift, Tests/GitTicketsTests/GitTicketsTests.swift
+tags: [progress, pr-1, bootstrap]
+source_paths: [Package.swift, LICENSE, README.md, CONTRIBUTING.md, SECURITY.md, CHANGELOG.md, .github/workflows/swift.yml, .spi.yml, .gitignore, Sources/GitTickets/PublicAPI/GitTickets.swift, Tests/GitTicketsTests/GitTicketsTests.swift]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-04
 updated: 2026-07-12
+reviewed: 2026-07-26
+reviewed_by: audit:claude-code (background)
 ---
 
 PR 1 (Bootstrap) shipped 2026-06-04. Repo skeleton is live and verified.

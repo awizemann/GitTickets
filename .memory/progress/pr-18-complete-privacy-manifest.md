@@ -2,18 +2,14 @@
 title: PR 18 Complete — Privacy Manifest
 type: note
 permalink: gittickets/progress/pr-18-complete-privacy-manifest
-tags:
-- progress
-- pr-18
-- privacy
-- app-store
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, docs/privacy.md
+tags: [progress, pr-18, privacy, app-store]
+source_paths: [Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, docs/privacy.md]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-07-26
+reviewed_by: audit:claude-code (background)
 ---
 
 PR 18 ships the App Store / Apple-required privacy manifest for the SDK. Adopter-side guidance (how to merge with the host app's own manifest) lands in PR 17's docs.

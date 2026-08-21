@@ -2,19 +2,14 @@
 title: PR 15 Complete — My Issues (Phase 2)
 type: note
 permalink: gittickets/progress/pr-15-complete-my-issues-phase-2
-tags:
-- progress
-- pr-15
-- phase-2
-- my-issues
-- swiftui
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Sources/GitTickets/PublicAPI/Models.swift, Sources/GitTickets/UI/SwiftUI/GitTicketsMyIssuesView.swift, Sources/GitTickets/UI/SwiftUI/IssueDetailView.swift, Sources/GitTickets/UI/SwiftUI/MarkdownCommentView.swift, relay/vercel/api/comments.ts, relay/cloudflare/src/handlers/comments.ts, relay/vercel/vercel.json, relay/shared/payload-schema.md
+tags: [progress, pr-15, phase-2, my-issues, swiftui]
+source_paths: [Sources/GitTickets/PublicAPI/Models.swift, Sources/GitTickets/UI/SwiftUI/GitTicketsMyIssuesView.swift, Sources/GitTickets/UI/SwiftUI/IssueDetailView.swift, Sources/GitTickets/UI/SwiftUI/MarkdownCommentView.swift, relay/vercel/api/comments.ts, relay/cloudflare/src/handlers/comments.ts, relay/vercel/vercel.json, relay/shared/payload-schema.md]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-07-26
+reviewed_by: audit:claude-code (background)
 ---
 
 Phase 2's full UI + fetch surface landed in one PR. Both submitters now implement all three fetch methods; both relay templates have a `/comments` endpoint at parity; the SwiftUI tier ships a list view, a detail view, and a markdown comment renderer. Manual refresh in v1 as the task spec called for.
