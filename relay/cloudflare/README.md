@@ -117,6 +117,8 @@ GITTICKETS_R2_PUBLIC_BASE_URL = "https://attachments.your-app.com"
 GITTICKETS_LABEL = "gittickets"
 GITTICKETS_IP_HOURLY_LIMIT = "30"
 GITTICKETS_DEVICE_HOURLY_LIMIT = "10"
+GITTICKETS_READ_IP_HOURLY_LIMIT = "60"
+GITTICKETS_READ_DEVICE_HOURLY_LIMIT = "30"   # reads have their own buckets; see note below
 GITTICKETS_ATTACHMENT_BYTE_LIMIT = "5242880"
 GITTICKETS_REPLAY_WINDOW_SECONDS = "300"
 
@@ -133,6 +135,8 @@ id = "<id from CLI>"
 binding = "IDEMPOTENCY"
 id = "<id from CLI>"
 ```
+
+Rate limits are hourly and counted in two separate sets of buckets. Writes (`/report`, `/attachment`) use `GITTICKETS_IP_HOURLY_LIMIT` and `GITTICKETS_DEVICE_HOURLY_LIMIT`. Reads (`/my-issues`, `/comments`) use `GITTICKETS_READ_IP_HOURLY_LIMIT` and `GITTICKETS_READ_DEVICE_HOURLY_LIMIT`, so checking for replies can't use up the budget for filing a report. The per-IP read cap is the one that really bounds read traffic, because `deviceID` is chosen by the client. Setting an IP limit to `0` blocks that endpoint class. For what each read costs in GitHub API calls and when the SDK reads, see the [Vercel relay's knobs table](../vercel/README.md#operational-knobs); the variables are the same.
 
 **2. Deploy from a pinned tag.** The relay ships in the same repo as the Swift SDK, so the SDK version tag you depend on is the matching relay:
 

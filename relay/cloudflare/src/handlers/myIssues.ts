@@ -42,7 +42,7 @@ export async function handleMyIssues(
     return jsonError(400, "payload_invalid", err instanceof Error ? err.message : "Could not parse body.");
   }
 
-  const rateLimited = await enforceRateLimits(env, auth, parsed.deviceID, now);
+  const rateLimited = await enforceRateLimits(env, auth, parsed.deviceID, now, "/my-issues");
   if (rateLimited) return rateLimited;
 
   let token: string;

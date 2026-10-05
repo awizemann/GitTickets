@@ -115,10 +115,14 @@ All optional; defaults shown:
 | Env var | Default | Notes |
 | --- | --- | --- |
 | `GITTICKETS_LABEL` | `gittickets` | Label applied to every submission; also the filter for `/my-issues`. |
-| `GITTICKETS_IP_HOURLY_LIMIT` | `30` | Per-IP `/report` and `/attachment` cap. |
-| `GITTICKETS_DEVICE_HOURLY_LIMIT` | `10` | Per-deviceID cap on `/report` and `/my-issues`. |
+| `GITTICKETS_IP_HOURLY_LIMIT` | `30` | Per-IP cap on writes (`/report`, `/attachment`). |
+| `GITTICKETS_DEVICE_HOURLY_LIMIT` | `10` | Per-deviceID cap on `/report`. (`/attachment` carries no deviceID, so only the IP cap applies.) |
+| `GITTICKETS_READ_IP_HOURLY_LIMIT` | `60` | Per-IP cap on reads (`/my-issues`, `/comments`). This is the real bound on read traffic: `deviceID` is chosen by the client and the shared secret can be extracted, so the device cap only throttles well-behaved clients. |
+| `GITTICKETS_READ_DEVICE_HOURLY_LIMIT` | `30` | Per-deviceID cap on reads. The SDK's `GitTickets.checkForReplies()` (new in 2.6.0) refreshes at most every 15 minutes, and only when the host app calls it. A host that sets `MyIssuesPolicy.pollInterval` and keeps My Reports open can go over this cap. |
 | `GITTICKETS_ATTACHMENT_BYTE_LIMIT` | `5242880` (5 MB) | Per-file upload cap. Mirror it on the SDK side for consistent UX. |
 | `GITTICKETS_REPLAY_WINDOW_SECONDS` | `300` (5 min) | Signed-timestamp tolerance for clock skew. |
+
+Reads and writes are counted in separate buckets (`ip:`/`dev:` for writes, `rip:`/`rdev:` for reads), so checking for replies never uses up the budget for filing a report, and the reverse is also true. When a bucket runs out, the relay returns `429` with `Retry-After`. Setting an IP limit to `0` blocks that whole endpoint class (for example, `GITTICKETS_READ_IP_HOURLY_LIMIT=0` turns off `/my-issues` and `/comments`). Setting a device limit to `0` blocks only the endpoints that send a `deviceID`, which means everything except `/attachment`.
 
 ---
 
@@ -137,4 +141,4 @@ For ~100 reports per day:
 - Vercel Blob: ~$0 (a few MB of screenshots).
 - Upstash Redis: free tier covers ~10k commands/day.
 
-For higher volume see [Vercel Pricing](https://vercel.com/pricing). The relay does ≤ 3 GitHub API calls per submission (token mint, issue create, optional comment fetch on `/my-issues`) so GitHub rate limits aren't a concern at any realistic SDK volume.
+For higher volume see [Vercel Pricing](https://vercel.com/pricing). Writes are cheap: a `/report` makes one issue-create call, plus a token mint when the cached installation token has expired. Reads cost more. `/my-issues` lists the labelled issues (up to 5 pages of 100), then looks up the latest comment on each matching issue that has replies (one call, occasionally two). `/comments` reads up to 5 pages of comments. All of these share the installation token's GitHub rate limit with `/report`, which is why the read caps above are deliberately modest.

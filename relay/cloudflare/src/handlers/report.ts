@@ -51,7 +51,7 @@ export async function handleReport(
     return jsonError(400, "payload_invalid", "Missing X-GitTickets-Idempotency-Key header.");
   }
 
-  const rateLimited = await enforceRateLimits(env, auth, parsed.deviceID, now);
+  const rateLimited = await enforceRateLimits(env, auth, parsed.deviceID, now, "/report");
   if (rateLimited) return rateLimited;
 
   const bodyHash = await sha256Hex(raw);

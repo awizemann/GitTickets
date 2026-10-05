@@ -5,7 +5,7 @@ This folder holds reference implementations of the [GitTickets relay wire spec](
 | Template | Runtime | Storage | Rate-limit backend |
 | --- | --- | --- | --- |
 | [`vercel/`](vercel/) | Node 20 Vercel Functions | Vercel Blob | Upstash Redis or in-memory |
-| `cloudflare/` _(ships in PR 10)_ | Cloudflare Workers (V8 isolates) | R2 | KV or Durable Objects |
+| [`cloudflare/`](cloudflare/) | Cloudflare Workers (V8 isolates) | R2 | Workers KV or in-memory |
 
 Both implement the same endpoints, the same HMAC signing scheme, the same idempotency semantics, and the same error envelope. Switching between them is a configuration change, not a re-integration.
 

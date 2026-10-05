@@ -36,7 +36,7 @@ export async function handleAttachment(
   const auth = await authenticate(request, env, raw, now);
   if (!auth.ok) return auth.response;
 
-  const rateLimited = await enforceRateLimits(env, auth, null, now);
+  const rateLimited = await enforceRateLimits(env, auth, null, now, "/attachment");
   if (rateLimited) return rateLimited;
 
   const contentType = request.headers.get("content-type") ?? "";

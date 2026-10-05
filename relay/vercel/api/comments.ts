@@ -59,7 +59,7 @@ export default async function handler(
     return;
   }
 
-  if (!(await enforceRateLimits(res, auth, parsed.deviceID, now))) return;
+  if (!(await enforceRateLimits(res, auth, parsed.deviceID, now, "/comments"))) return;
 
   let token: string;
   try {

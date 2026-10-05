@@ -24,6 +24,8 @@ beforeEach(() => {
     // Clear optional overrides another test might have set
     GITTICKETS_IP_HOURLY_LIMIT: undefined,
     GITTICKETS_DEVICE_HOURLY_LIMIT: undefined,
+    GITTICKETS_READ_IP_HOURLY_LIMIT: undefined,
+    GITTICKETS_READ_DEVICE_HOURLY_LIMIT: undefined,
     GITTICKETS_ATTACHMENT_BYTE_LIMIT: undefined,
     GITTICKETS_REPLAY_WINDOW_SECONDS: undefined,
     GITTICKETS_LABEL: undefined,
@@ -42,6 +44,9 @@ describe("env loader", () => {
     expect(env.githubOwner).toBe("alanw");
     expect(env.label).toBe("gittickets"); // default
     expect(env.ipHourlyLimit).toBe(30);
+    expect(env.deviceHourlyLimit).toBe(10);
+    expect(env.readIpHourlyLimit).toBe(60);
+    expect(env.readDeviceHourlyLimit).toBe(30);
     expect(env.attachmentByteLimit).toBe(5_242_880);
     expect(env.replayWindowSeconds).toBe(300);
     expect(env.sharedSecret.length).toBe(32);
@@ -59,6 +64,29 @@ describe("env loader", () => {
     });
     _resetEnvForTests();
     expect(() => getEnv()).toThrow(/PEM/);
+  });
+
+  it("honours read rate-limit overrides", () => {
+    setEnv({
+      GITTICKETS_READ_IP_HOURLY_LIMIT: "500",
+      GITTICKETS_READ_DEVICE_HOURLY_LIMIT: "120",
+    });
+    _resetEnvForTests();
+    const env = getEnv();
+    expect(env.readIpHourlyLimit).toBe(500);
+    expect(env.readDeviceHourlyLimit).toBe(120);
+    // Write limits are untouched by the read vars.
+    expect(env.ipHourlyLimit).toBe(30);
+    expect(env.deviceHourlyLimit).toBe(10);
+  });
+
+  it("rejects invalid read rate-limit overrides", () => {
+    setEnv({ GITTICKETS_READ_IP_HOURLY_LIMIT: "-1" });
+    _resetEnvForTests();
+    expect(() => getEnv()).toThrow(/GITTICKETS_READ_IP_HOURLY_LIMIT/);
+    setEnv({ GITTICKETS_READ_IP_HOURLY_LIMIT: undefined, GITTICKETS_READ_DEVICE_HOURLY_LIMIT: "abc" });
+    _resetEnvForTests();
+    expect(() => getEnv()).toThrow(/GITTICKETS_READ_DEVICE_HOURLY_LIMIT/);
   });
 
   it("rejects negative integer overrides", () => {

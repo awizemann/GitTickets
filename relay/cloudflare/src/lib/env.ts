@@ -16,6 +16,8 @@ export interface WorkerEnv {
   GITTICKETS_LABEL?: string;
   GITTICKETS_IP_HOURLY_LIMIT?: string;
   GITTICKETS_DEVICE_HOURLY_LIMIT?: string;
+  GITTICKETS_READ_IP_HOURLY_LIMIT?: string;
+  GITTICKETS_READ_DEVICE_HOURLY_LIMIT?: string;
   GITTICKETS_ATTACHMENT_BYTE_LIMIT?: string;
   GITTICKETS_REPLAY_WINDOW_SECONDS?: string;
   GITTICKETS_R2_PUBLIC_BASE_URL?: string;
@@ -35,6 +37,8 @@ export interface ParsedEnv {
   label: string;
   ipHourlyLimit: number;
   deviceHourlyLimit: number;
+  readIpHourlyLimit: number;
+  readDeviceHourlyLimit: number;
   attachmentByteLimit: number;
   replayWindowSeconds: number;
   r2PublicBaseURL: string | undefined;
@@ -58,6 +62,8 @@ export function parseEnv(env: WorkerEnv): ParsedEnv {
     label: env.GITTICKETS_LABEL ?? "gittickets",
     ipHourlyLimit: parsePositiveInt(env.GITTICKETS_IP_HOURLY_LIMIT, 30, "GITTICKETS_IP_HOURLY_LIMIT"),
     deviceHourlyLimit: parsePositiveInt(env.GITTICKETS_DEVICE_HOURLY_LIMIT, 10, "GITTICKETS_DEVICE_HOURLY_LIMIT"),
+    readIpHourlyLimit: parsePositiveInt(env.GITTICKETS_READ_IP_HOURLY_LIMIT, 60, "GITTICKETS_READ_IP_HOURLY_LIMIT"),
+    readDeviceHourlyLimit: parsePositiveInt(env.GITTICKETS_READ_DEVICE_HOURLY_LIMIT, 30, "GITTICKETS_READ_DEVICE_HOURLY_LIMIT"),
     attachmentByteLimit: parsePositiveInt(env.GITTICKETS_ATTACHMENT_BYTE_LIMIT, 5_242_880, "GITTICKETS_ATTACHMENT_BYTE_LIMIT"),
     replayWindowSeconds: parsePositiveInt(env.GITTICKETS_REPLAY_WINDOW_SECONDS, 300, "GITTICKETS_REPLAY_WINDOW_SECONDS"),
     r2PublicBaseURL: env.GITTICKETS_R2_PUBLIC_BASE_URL?.replace(/\/+$/, ""),

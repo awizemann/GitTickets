@@ -23,6 +23,8 @@ interface OptionalEnv {
   label: string;
   ipHourlyLimit: number;
   deviceHourlyLimit: number;
+  readIpHourlyLimit: number;
+  readDeviceHourlyLimit: number;
   attachmentByteLimit: number;
   replayWindowSeconds: number;
 }
@@ -104,6 +106,8 @@ export function getEnv(): Env {
     label: process.env.GITTICKETS_LABEL ?? "gittickets",
     ipHourlyLimit: optionalIntEnv("GITTICKETS_IP_HOURLY_LIMIT", 30),
     deviceHourlyLimit: optionalIntEnv("GITTICKETS_DEVICE_HOURLY_LIMIT", 10),
+    readIpHourlyLimit: optionalIntEnv("GITTICKETS_READ_IP_HOURLY_LIMIT", 60),
+    readDeviceHourlyLimit: optionalIntEnv("GITTICKETS_READ_DEVICE_HOURLY_LIMIT", 30),
     attachmentByteLimit: optionalIntEnv("GITTICKETS_ATTACHMENT_BYTE_LIMIT", 5_242_880),
     replayWindowSeconds: optionalIntEnv("GITTICKETS_REPLAY_WINDOW_SECONDS", 300),
   };

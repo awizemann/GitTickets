@@ -85,7 +85,7 @@ export default async function handler(
     return;
   }
 
-  if (!(await enforceRateLimits(res, auth, parsed.deviceID, now))) return;
+  if (!(await enforceRateLimits(res, auth, parsed.deviceID, now, "/report"))) return;
 
   const bodyHash = createHash("sha256").update(body).digest("hex");
   const cached = await idempotencyLookup({

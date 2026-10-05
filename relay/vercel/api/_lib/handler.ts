@@ -12,7 +12,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { getEnv, type Env } from "./env.js";
 import { verifySignature, type VerifyResult } from "./hmac.js";
-import { checkRateLimits } from "./rateLimit.js";
+import {
+  checkRateLimits,
+  ENDPOINT_RATE_LIMIT_KIND,
+  type RateLimitedEndpoint,
+} from "./rateLimit.js";
 import { log } from "./logger.js";
 
 const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB hard ceiling
@@ -121,11 +125,13 @@ export async function enforceRateLimits(
   auth: AuthenticatedRequest,
   deviceID: string | null,
   now: number,
+  endpoint: RateLimitedEndpoint,
 ): Promise<boolean> {
   const result = await checkRateLimits({
     env: auth.env,
     ip: auth.ip,
     deviceID,
+    kind: ENDPOINT_RATE_LIMIT_KIND[endpoint],
     now,
   });
   if (!result.allowed) {

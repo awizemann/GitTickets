@@ -62,7 +62,7 @@ export async function run(
   const auth = authenticate(req, res, body, now);
   if (!auth) return;
 
-  if (!(await enforceRateLimits(res, auth, /* deviceID */ null, now))) return;
+  if (!(await enforceRateLimits(res, auth, /* deviceID */ null, now, "/attachment"))) return;
 
   const contentType = headerValue(req, "content-type");
   if (!contentType || !contentType.toLowerCase().startsWith("multipart/form-data")) {

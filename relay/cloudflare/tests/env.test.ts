@@ -27,6 +27,9 @@ describe("parseEnv (Workers)", () => {
     expect(env.githubAppId).toBe("12345");
     expect(env.label).toBe("gittickets");
     expect(env.ipHourlyLimit).toBe(30);
+    expect(env.deviceHourlyLimit).toBe(10);
+    expect(env.readIpHourlyLimit).toBe(60);
+    expect(env.readDeviceHourlyLimit).toBe(30);
     expect(env.attachmentByteLimit).toBe(5_242_880);
     expect(env.sharedSecret.byteLength).toBe(32);
   });
@@ -45,6 +48,27 @@ describe("parseEnv (Workers)", () => {
   it("strips trailing slashes from r2PublicBaseURL", () => {
     const env = parseEnv(validEnv({ GITTICKETS_R2_PUBLIC_BASE_URL: "https://example.com//" }));
     expect(env.r2PublicBaseURL).toBe("https://example.com");
+  });
+
+  it("honours read rate-limit overrides", () => {
+    const env = parseEnv(
+      validEnv({
+        GITTICKETS_READ_IP_HOURLY_LIMIT: "500",
+        GITTICKETS_READ_DEVICE_HOURLY_LIMIT: "120",
+      }),
+    );
+    expect(env.readIpHourlyLimit).toBe(500);
+    expect(env.readDeviceHourlyLimit).toBe(120);
+    // Write limits are untouched by the read vars.
+    expect(env.ipHourlyLimit).toBe(30);
+    expect(env.deviceHourlyLimit).toBe(10);
+  });
+
+  it("rejects invalid read rate-limit overrides", () => {
+    expect(() => parseEnv(validEnv({ GITTICKETS_READ_IP_HOURLY_LIMIT: "-1" }))).toThrow(EnvError);
+    expect(() => parseEnv(validEnv({ GITTICKETS_READ_DEVICE_HOURLY_LIMIT: "abc" }))).toThrow(
+      /GITTICKETS_READ_DEVICE_HOURLY_LIMIT/,
+    );
   });
 
   it("rejects negative integer overrides", () => {

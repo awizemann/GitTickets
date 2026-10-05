@@ -4,7 +4,11 @@
  */
 
 import { verifySignature } from "./hmac.js";
-import { checkRateLimits } from "./rateLimit.js";
+import {
+  checkRateLimits,
+  ENDPOINT_RATE_LIMIT_KIND,
+  type RateLimitedEndpoint,
+} from "./rateLimit.js";
 import { jsonError, rateLimitedResponse } from "./responses.js";
 import { log } from "./logger.js";
 import type { ParsedEnv } from "./env.js";
@@ -62,8 +66,10 @@ export async function enforceRateLimits(
   auth: AuthOK,
   deviceID: string | null,
   now: number,
+  endpoint: RateLimitedEndpoint,
 ): Promise<Response | null> {
-  const result = await checkRateLimits({ env, ip: auth.ip, deviceID, now });
+  const kind = ENDPOINT_RATE_LIMIT_KIND[endpoint];
+  const result = await checkRateLimits({ env, ip: auth.ip, deviceID, kind, now });
   if (result.allowed) return null;
   return rateLimitedResponse(result.retryAfter ?? 3600);
 }

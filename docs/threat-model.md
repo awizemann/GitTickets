@@ -40,8 +40,18 @@ returns 409.
 
 ### Rate-limit abuse
 
-The relay rate-limits per `deviceID` (default 5 reports/hour) and per
-client IP (default 50/hour). Adjustable via env vars.
+The relay rate-limits writes (`/report`, `/attachment`) per `deviceID`
+(default 10/hour) and per client IP (default 30/hour). Reads (`/my-issues`,
+`/comments`) have their own buckets: per `deviceID` (default 30/hour) and per
+client IP (default 60/hour). Because they are separate, checking for replies
+can't use up the budget for filing a report. `deviceID` is chosen by the
+client and the shared secret can be extracted, so the per-IP limits are the
+real bound. Reads cost more GitHub API calls than writes and use the same
+installation token, which is why the read IP limit is only 2x the write limit.
+Every limit is adjustable via env vars (`GITTICKETS_IP_HOURLY_LIMIT`,
+`GITTICKETS_DEVICE_HOURLY_LIMIT`, `GITTICKETS_READ_IP_HOURLY_LIMIT`,
+`GITTICKETS_READ_DEVICE_HOURLY_LIMIT`). Setting an IP limit to `0` blocks
+that endpoint class.
 
 ### MITM tampering with the body
 

@@ -68,7 +68,7 @@ export default async function handler(
     return;
   }
 
-  if (!(await enforceRateLimits(res, auth, parsed.deviceID, now))) return;
+  if (!(await enforceRateLimits(res, auth, parsed.deviceID, now, "/my-issues"))) return;
 
   let token: string;
   try {

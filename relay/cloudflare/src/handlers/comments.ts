@@ -37,7 +37,7 @@ export async function handleComments(
     return jsonError(400, "payload_invalid", err instanceof Error ? err.message : "Could not parse body.");
   }
 
-  const rateLimited = await enforceRateLimits(env, auth, parsed.deviceID, now);
+  const rateLimited = await enforceRateLimits(env, auth, parsed.deviceID, now, "/comments");
   if (rateLimited) return rateLimited;
 
   let token: string;

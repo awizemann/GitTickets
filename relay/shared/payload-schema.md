@@ -221,7 +221,7 @@ When the relay returns a non-2xx status with a JSON body, the body MUST conform 
 | `409` | `idempotency_replay_mismatch` | Same idempotency key, different body. Relay refuses to dedupe. |
 | `413` | `attachment_too_large` | Body exceeds the configured byte limit. `byteLimit` field is REQUIRED here. |
 | `415` | `unsupported_media_type` | Attachment MIME not in whitelist. |
-| `429` | `rate_limited` | Per-IP or per-device hourly limit hit. `Retry-After` header included. |
+| `429` | `rate_limited` | Per-IP or per-device hourly limit hit. `Retry-After` header included. Writes (`/report`, `/attachment`) and reads (`/my-issues`, `/comments`) are counted in separate buckets, so a 429 on a read never implies a write would be refused (and vice versa). |
 | `5xx` | `internal_error` / `github_error` | Server bug or GitHub API failure. |
 
 ---

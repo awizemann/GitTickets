@@ -18,6 +18,8 @@ const env: Env = {
   label: "gittickets",
   ipHourlyLimit: 30,
   deviceHourlyLimit: 10,
+  readIpHourlyLimit: 60,
+  readDeviceHourlyLimit: 30,
   attachmentByteLimit: 5_242_880,
   replayWindowSeconds: 300,
 };

@@ -11,10 +11,33 @@
 
 import type { ParsedEnv } from "./env.js";
 
+/**
+ * Which budget a request draws from. Writes (`/report`, `/attachment`) and
+ * reads (`/my-issues`, `/comments`) use disjoint buckets so polling for
+ * replies can never exhaust the budget a user needs to file a report.
+ */
+export type RateLimitKind = "write" | "read";
+
+/**
+ * The single source of truth for which budget each endpoint draws from.
+ * Handlers pass their route here (via `enforceRateLimits`) rather than a kind,
+ * so the mapping is data the tests can pin down.
+ */
+export const ENDPOINT_RATE_LIMIT_KIND = {
+  "/report": "write",
+  "/attachment": "write",
+  "/my-issues": "read",
+  "/comments": "read",
+} as const satisfies Record<string, RateLimitKind>;
+
+export type RateLimitedEndpoint = keyof typeof ENDPOINT_RATE_LIMIT_KIND;
+
 export interface RateLimitArgs {
   env: ParsedEnv;
   ip: string | null;
   deviceID: string | null;
+  /** Defaults to "write" (the original, shared `ip:` / `dev:` buckets). */
+  kind?: RateLimitKind;
   now: number;
 }
 
@@ -31,11 +54,7 @@ interface Counter {
 const memoryBuckets = new Map<string, Counter>();
 
 export async function checkRateLimits(args: RateLimitArgs): Promise<RateLimitResult> {
-  const checks: Array<{ key: string; limit: number }> = [];
-  if (args.ip) checks.push({ key: `ip:${args.ip}`, limit: args.env.ipHourlyLimit });
-  if (args.deviceID) {
-    checks.push({ key: `dev:${args.deviceID}`, limit: args.env.deviceHourlyLimit });
-  }
+  const checks = bucketsFor(args);
   if (checks.length === 0) return { allowed: true };
 
   for (const { key, limit } of checks) {
@@ -47,6 +66,25 @@ export async function checkRateLimits(args: RateLimitArgs): Promise<RateLimitRes
     }
   }
   return { allowed: true };
+}
+
+/**
+ * Bucket keys + limits for a request. Write keys (`ip:`, `dev:`) are unchanged
+ * from earlier releases so existing deployments keep their counters and limits;
+ * reads get their own `rip:` / `rdev:` keys and `GITTICKETS_READ_*` limits.
+ */
+export function bucketsFor(
+  args: Pick<RateLimitArgs, "env" | "ip" | "deviceID" | "kind">,
+): Array<{ key: string; limit: number }> {
+  const read = args.kind === "read";
+  const ipPrefix = read ? "rip" : "ip";
+  const devPrefix = read ? "rdev" : "dev";
+  const ipLimit = read ? args.env.readIpHourlyLimit : args.env.ipHourlyLimit;
+  const devLimit = read ? args.env.readDeviceHourlyLimit : args.env.deviceHourlyLimit;
+  const checks: Array<{ key: string; limit: number }> = [];
+  if (args.ip) checks.push({ key: `${ipPrefix}:${args.ip}`, limit: ipLimit });
+  if (args.deviceID) checks.push({ key: `${devPrefix}:${args.deviceID}`, limit: devLimit });
+  return checks;
 }
 
 function incrementMemory(key: string, now: number): Counter {
