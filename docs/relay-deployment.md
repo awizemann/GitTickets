@@ -9,7 +9,7 @@ the GitHub Issues API using its token.
 Two reference templates ship in this repo. Pick whichever platform you
 already use:
 
-- [`relay/vercel/`](../relay/vercel/) — Node 20 + TypeScript on Vercel.
+- [`relay/vercel/`](../relay/vercel/) — Node 22.12+ and TypeScript on Vercel (Vercel runs its current LTS).
 - [`relay/cloudflare/`](../relay/cloudflare/) — TypeScript on Cloudflare
   Workers + R2 for attachments + KV for rate-limit/idempotency.
 

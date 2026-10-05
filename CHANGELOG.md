@@ -102,6 +102,11 @@ platform floor is
   base URL yields `.invalid` links, not `r2.dev` URLs. `docs/threat-model.md`
   also had the wrong rate-limit defaults (it said 5 and 50; they are 10 and 30).
 
+- **Node floor raised to 22.12 for both relays** (`engines.node`, and CI now
+  tests on Node 22). wrangler 4 needs Node 22 and vitest 4's vite needs
+  22.12; the old `>=20` let a deploy fail on Node 20. Vercel already deploys
+  the relay on its current LTS, so the production runtime is unchanged.
+
 ### Notes for adopters
 
 - **Redeploy your relay.** Both relay changes live in the templates, not the

@@ -92,7 +92,7 @@ Same private-key conversion gotcha as the Vercel template — `openssl pkcs8 -to
 npx wrangler deploy
 ```
 
-Requires Node 22+ (wrangler 4's floor). With `workers_dev = false` and a custom-domain route, the relay URL is that route, e.g. `https://tickets.your-app.com`. That URL is what you paste into the Swift SDK's `AuthMode.relay(url:sharedSecret:)`.
+Requires Node 22.12+ (wrangler 4 needs 22+, and vitest 4's vite needs 22.12+). With `workers_dev = false` and a custom-domain route, the relay URL is that route, e.g. `https://tickets.your-app.com`. That URL is what you paste into the Swift SDK's `AuthMode.relay(url:sharedSecret:)`.
 
 ---
 
