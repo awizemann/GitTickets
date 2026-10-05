@@ -60,7 +60,7 @@ struct ReportCard: View {
                 MarkdownBody(markdown: report.body)
                 if report.includedDiagnostics {
                     Divider().overlay(GTSurface.hairline)
-                    DiagnosticsAffordance(theme: theme)
+                    DiagnosticsAffordance()
                 }
             }
             .padding(14)
@@ -69,15 +69,12 @@ struct ReportCard: View {
     }
 }
 
-/// The quiet "Diagnostics attached · Show" line inside the report card.
+/// The quiet "Diagnostics attached" line inside the report card.
 struct DiagnosticsAffordance: View {
-    let theme: GitTicketsTheme
     var body: some View {
         HStack(spacing: 7) {
             Image(systemName: "checkmark.shield").font(.caption)
             Text("Diagnostics attached").font(.caption)
-            Text("·").font(.caption).foregroundStyle(.tertiary)
-            Text("View on GitHub").font(.caption.weight(.semibold)).foregroundStyle(theme.resolvedAccent)
             Spacer(minLength: 0)
         }
         .foregroundStyle(.secondary)
@@ -105,7 +102,7 @@ struct ReporterPost: View {
                     MarkdownBody(markdown: report.body)
                     if report.includedDiagnostics {
                         Divider().overlay(GTSurface.hairline)
-                        DiagnosticsAffordance(theme: theme)
+                        DiagnosticsAffordance()
                     }
                 }
                 .padding(14)
@@ -187,11 +184,15 @@ struct IssueStateCard: View {
 
     let kind: Kind
     let theme: GitTicketsTheme
+    /// `false` on private repos: no "Open on GitHub" button and no copy
+    /// pointing reporters at GitHub (it would 404 / hit a login wall).
+    let showsGitHubLink: Bool
     let retry: () -> Void
 
-    init(_ kind: Kind, theme: GitTicketsTheme, retry: @escaping () -> Void) {
+    init(_ kind: Kind, theme: GitTicketsTheme, showsGitHubLink: Bool = true, retry: @escaping () -> Void) {
         self.kind = kind
         self.theme = theme
+        self.showsGitHubLink = showsGitHubLink
         self.retry = retry
     }
 
@@ -210,20 +211,24 @@ struct IssueStateCard: View {
                 .frame(maxWidth: 300)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 8) {
-                Link(destination: issueURL) {
-                    Text("Open on GitHub").font(.footnote.weight(.semibold))
-                }
-                .buttonStyle(.bordered).controlSize(.regular).tint(.primary)
+            if hasActions {
+                HStack(spacing: 8) {
+                    if let linkURL {
+                        Link(destination: linkURL) {
+                            Text("Open on GitHub").font(.footnote.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered).controlSize(.regular).tint(.primary)
+                    }
 
-                if isError {
-                    Button("Retry", action: retry)
-                        .font(.footnote.weight(.semibold))
-                        .buttonStyle(.borderedProminent).controlSize(.regular)
-                        .tint(theme.resolvedAccent)
+                    if isError {
+                        Button("Retry", action: retry)
+                            .font(.footnote.weight(.semibold))
+                            .buttonStyle(.borderedProminent).controlSize(.regular)
+                            .tint(theme.resolvedAccent)
+                    }
                 }
+                .padding(.top, 2)
             }
-            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 32).padding(.horizontal, 24)
@@ -235,16 +240,23 @@ struct IssueStateCard: View {
         )
     }
 
-    private var isError: Bool { if case .error = kind { return true }; return false }
+    var isError: Bool { if case .error = kind { return true }; return false }
+    /// Private + no replies leaves nothing to show — skip the row (and its padding).
+    var hasActions: Bool { linkURL != nil || isError }
+    /// The "Open on GitHub" destination, or `nil` when the link is hidden.
+    /// The body renders the button iff this is non-nil.
+    var linkURL: URL? { showsGitHubLink ? issueURL : nil }
     private var symbol: String { isError ? "exclamationmark.triangle" : "ellipsis.bubble" }
     private var tint: Color { isError ? GTSemantic.danger : .secondary }
     private var title: String { isError ? "Couldn't load replies" : "No replies yet" }
-    private var message: String {
+    var message: String {
         switch kind {
         case .noReplies:
             return "Your report is saved above. We'll show replies here as soon as a maintainer responds."
         case .error:
-            return "Your report is saved above. Replies live on GitHub — check your connection and try again."
+            return showsGitHubLink
+                ? "Your report is saved above. Replies live on GitHub — check your connection and try again."
+                : "Your report is saved above. Check your connection and try again."
         }
     }
     private var issueURL: URL {

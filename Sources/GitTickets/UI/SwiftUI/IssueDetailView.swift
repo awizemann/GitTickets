@@ -29,13 +29,20 @@ public struct IssueDetailView: View {
 
     private let issue: SubmittedIssue
     private let cachedReport: CachedReport?
+    private let configuration: Configuration?
     private let loadComments: () async throws -> [IssueComment]
 
     /// Theme the view paints with. Reads from the active SDK configuration
     /// when present; falls back to the SwiftUI environment value. Same
     /// pattern as ``GitTicketsView`` / ``GitTicketsMyIssuesView``.
     private var theme: GitTicketsTheme {
-        GitTickets.configuration?.theme ?? envTheme
+        configuration?.theme ?? envTheme
+    }
+
+    /// GitHub links are hidden on private repos — see ``RepoVisibility/isPublic(_:)``.
+    /// The single source every GitHub link on this screen derives from.
+    var showsGitHubLink: Bool {
+        RepoVisibility.isPublic(configuration)
     }
 
     public init(
@@ -43,8 +50,26 @@ public struct IssueDetailView: View {
         cachedReport: CachedReport?,
         loadComments: @escaping () async throws -> [IssueComment]
     ) {
+        self.init(
+            issue: issue,
+            cachedReport: cachedReport,
+            configuration: GitTickets.configuration,
+            loadComments: loadComments
+        )
+    }
+
+    /// Configuration-injecting init — the test/preview seam, matching
+    /// ``GitTicketsView/init(configuration:onSubmitted:)``. The public inits
+    /// pass the active ``GitTickets/configuration``.
+    init(
+        issue: SubmittedIssue,
+        cachedReport: CachedReport?,
+        configuration: Configuration?,
+        loadComments: @escaping () async throws -> [IssueComment]
+    ) {
         self.issue = issue
         self.cachedReport = cachedReport
+        self.configuration = configuration
         self.loadComments = loadComments
     }
 
@@ -71,7 +96,7 @@ public struct IssueDetailView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                IssueHeader(issue: issue, kind: cachedReport?.kind, theme: theme)
+                header
 
                 if placement == .card, let report = cachedReport {
                     ReportCard(report: report, theme: theme)
@@ -106,7 +131,7 @@ public struct IssueDetailView: View {
 
         case .loaded(let comments):
             if comments.isEmpty && placement == .card {
-                IssueStateCard(.noReplies(issueURL: issue.issueURL), theme: theme, retry: { Task { await reload() } })
+                stateCard(.noReplies(issueURL: issue.issueURL))
             } else {
                 VStack(alignment: .leading, spacing: 16) {
                     threadLabel(count: comments.count)
@@ -121,10 +146,19 @@ public struct IssueDetailView: View {
             }
 
         case .failed(let message):
-            IssueStateCard(.error(message: message, issueURL: issue.issueURL),
-                           theme: theme,
-                           retry: { Task { await reload() } })
+            stateCard(.error(message: message, issueURL: issue.issueURL))
         }
+    }
+
+    // The only places this screen builds link-bearing subviews; internal so
+    // tests can check the link each one would render for a given configuration.
+
+    var header: IssueHeader {
+        IssueHeader(issue: issue, kind: cachedReport?.kind, theme: theme, showsGitHubLink: showsGitHubLink)
+    }
+
+    func stateCard(_ kind: IssueStateCard.Kind) -> IssueStateCard {
+        IssueStateCard(kind, theme: theme, showsGitHubLink: showsGitHubLink, retry: { Task { await reload() } })
     }
 
     private func threadLabel(count: Int) -> some View {
@@ -155,6 +189,8 @@ struct IssueHeader: View {
     let issue: SubmittedIssue
     let kind: ReportKind?
     let theme: GitTicketsTheme
+    /// `false` on private repos — the link would 404 for reporters.
+    var showsGitHubLink: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -182,15 +218,21 @@ struct IssueHeader: View {
             }
             .font(.caption).foregroundStyle(.secondary)
 
-            Link(destination: issue.issueURL) {
-                Label("Open on GitHub", systemImage: "arrow.up.right.square")
-                    .font(.footnote.weight(.semibold))
+            if let linkURL {
+                Link(destination: linkURL) {
+                    Label("Open on GitHub", systemImage: "arrow.up.right.square")
+                        .font(.footnote.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .tint(.primary)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
-            .tint(.primary)
         }
     }
+
+    /// The "Open on GitHub" destination, or `nil` when the link is hidden.
+    /// The body renders the link iff this is non-nil.
+    var linkURL: URL? { showsGitHubLink ? issue.issueURL : nil }
 
     private var dot: some View {
         Circle().fill(.tertiary).frame(width: 3, height: 3)

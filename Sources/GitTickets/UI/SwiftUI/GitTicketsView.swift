@@ -291,7 +291,7 @@ public struct GitTicketsView: View {
         configuration?.privacy.allowsScreenshotCapture ?? true
     }
 
-    private var isPublicRepo: Bool { configuration?.repo.visibility != .private }
+    private var isPublicRepo: Bool { RepoVisibility.isPublic(configuration) }
     private var requiresConsent: Bool { configuration?.privacy.requireExplicitConsent ?? true }
 
     private var repoSlug: String {

@@ -20,8 +20,9 @@ import SnapshotTesting
 /// rendered image bytes depend on the exact OS version and font rasterizer, so a
 /// runner's output would never match a developer's. That makes CI a
 /// baseline-free checkout every time, where `assertSnapshot` records fresh and
-/// reports `No reference was found on disk` as a *failure* — six guaranteed red
-/// tests that say nothing about the code. See `setUpWithError` below.
+/// reports `No reference was found on disk` as a *failure* — every test here
+/// would go red without saying anything about the code. See `setUpWithError`
+/// below.
 @MainActor
 final class SnapshotTests: XCTestCase {
 
@@ -135,6 +136,79 @@ final class SnapshotTests: XCTestCase {
             of: host(view, size: NSSize(width: 640, height: 720), appearance: .darkAqua),
             as: .image(precision: 0.99)
         )
+    }
+
+    // MARK: - IssueStateCard (public vs private repo)
+
+    private let issueURL = URL(string: "https://github.com/alanw/GitTickets/issues/42")!
+
+    private func stateCard(_ kind: IssueStateCard.Kind, showsGitHubLink: Bool) -> some View {
+        IssueStateCard(kind, theme: .default, showsGitHubLink: showsGitHubLink, retry: {})
+            .frame(width: 480)
+            .padding()
+            .background(Color.white)
+    }
+
+    func test_stateCardNoRepliesPublic() {
+        let view = stateCard(.noReplies(issueURL: issueURL), showsGitHubLink: true)
+        assertSnapshot(of: host(view, size: NSSize(width: 520, height: 280)), as: .image(precision: 0.99))
+    }
+
+    func test_stateCardNoRepliesPrivate() {
+        let view = stateCard(.noReplies(issueURL: issueURL), showsGitHubLink: false)
+        assertSnapshot(of: host(view, size: NSSize(width: 520, height: 280)), as: .image(precision: 0.99))
+    }
+
+    func test_stateCardErrorPublic() {
+        let view = stateCard(.error(message: "offline", issueURL: issueURL), showsGitHubLink: true)
+        assertSnapshot(of: host(view, size: NSSize(width: 520, height: 280)), as: .image(precision: 0.99))
+    }
+
+    func test_stateCardErrorPrivate() {
+        let view = stateCard(.error(message: "offline", issueURL: issueURL), showsGitHubLink: false)
+        assertSnapshot(of: host(view, size: NSSize(width: 520, height: 280)), as: .image(precision: 0.99))
+    }
+
+    // MARK: - IssueHeader (public vs private repo)
+
+    private func header(showsGitHubLink: Bool) -> some View {
+        let issue = SubmittedIssue(
+            id: UUID(),
+            issueNumber: 42,
+            issueURL: issueURL,
+            title: "Crash on launch",
+            createdAt: Date(timeIntervalSince1970: 1_750_000_000)
+        )
+        return IssueHeader(issue: issue, kind: .bug, theme: .default, showsGitHubLink: showsGitHubLink)
+            .frame(width: 480)
+            .padding()
+            .background(Color.white)
+    }
+
+    func test_issueHeaderPublic() {
+        assertSnapshot(of: host(header(showsGitHubLink: true), size: NSSize(width: 520, height: 180)),
+                       as: .image(precision: 0.99))
+    }
+
+    func test_issueHeaderPrivate() {
+        assertSnapshot(of: host(header(showsGitHubLink: false), size: NSSize(width: 520, height: 180)),
+                       as: .image(precision: 0.99))
+    }
+
+    // MARK: - ReportCard with diagnostics (no "View on GitHub" affordance)
+
+    func test_reportCardWithDiagnostics() {
+        let report = CachedReport(
+            kind: .bug,
+            body: "The app crashes when I tap **Export**.",
+            submittedAt: Date(timeIntervalSince1970: 1_750_000_000),
+            includedDiagnostics: true
+        )
+        let view = ReportCard(report: report, theme: .default)
+            .frame(width: 480)
+            .padding()
+            .background(Color.white)
+        assertSnapshot(of: host(view, size: NSSize(width: 520, height: 200)), as: .image(precision: 0.99))
     }
 }
 #endif

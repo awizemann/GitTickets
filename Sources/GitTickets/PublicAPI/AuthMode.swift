@@ -32,6 +32,19 @@ public enum RepoVisibility: Sendable, Hashable {
     case `private`
 }
 
+extension RepoVisibility {
+    /// Whether `configuration`'s repo is world-readable. `nil` (no active
+    /// configuration — tests, previews) counts as public. Shared by the form's
+    /// privacy copy and the detail screen, which hides GitHub links on private
+    /// repos (reporters would hit a 404 / login wall; replies are in-app only).
+    static func isPublic(_ configuration: Configuration?) -> Bool {
+        switch configuration?.repo.visibility {
+        case .public, nil: return true
+        case .private: return false
+        }
+    }
+}
+
 /// How the SDK authenticates to GitHub.
 ///
 /// Two production modes plus a test-only mock.
