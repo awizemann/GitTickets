@@ -11,12 +11,23 @@
 - [ ] **iOS Sim XCTest Keychain entitlement failures**: Discovered during PR 14 iOS Sim test run — 26 tests across `TokenStoreTests`, `KeychainTests`, `DeviceIdentityTests` fail with `errSecMissingEntitlement (-34018)` when run via `xcodebuild test` on iOS Sim (real iOS devices and `swift test` on macOS both work). Fix likely needs an `entitlements` file with `keychain-access-groups`, OR a host-app target for unit tests, OR `kSecUseDataProtectionKeychain: true` on every Keychain call. Pre-existing latent issue — not a PR 14 regression. (added: 2026-06-06)
 - [ ] **PR 20 — Tag + push v1.0.0 (user action)**: source is release-ready. Run `git tag v1.0.0 && git push origin v1.0.0` for the SDK; tag `relay-vercel-v1.0.0` and `relay-cloudflare-v1.0.0` against the same HEAD for hotfix freedom; submit to Swift Package Index via spi.yml. CHANGELOG, UserAgent.sdkVersion, README "Status" all updated to 1.0.0. (added: 2026-06-06)
 - [ ] [After Initial Code Works Full Circle] - expand on the relay for the users, so we can report telemetry and other stats for them since we load in each application. If there is anything we can monitor that is beneficial, and provide the user with the ability to turn the monitor on and off, we could have a very powerful product on our hands. (added: 2026-06-06)
+- [ ] Relay: cache the labelled-issue list for /my-issues (id: t-726688ef) (added: 2026-10-05) (priority: low)
+- [ ] Harness: AX tree is empty until queried (id: t-3a2c4207) (added: 2026-10-05) (priority: low)
 
 ## Doing
 
 
 ## Done
 
+- [x] Relay: Node floor says 20, wrangler 4 needs 22 (id: t-0d1d72e0) (added: 2026-10-05) (priority: low)
+- [x] Release v2.6.0: version, CHANGELOG, README, tag locally (id: t-8931f47c) (added: 2026-10-05)
+- [x] 2.6.0: reply alert API (unreadReplyCount + checkForReplies) (id: t-444cd5d7) (added: 2026-10-05) (priority: high)
+- [x] Relay: separate rate-limit bucket for reads (id: t-11fe32c9) (added: 2026-10-05) (priority: high)
+- [x] 2.6.0: optional close button on My Reports (id: t-7442e859) (added: 2026-10-05)
+- [x] 2.6.0: hide GitHub links in My Reports for private repos (id: t-034fdaa2) (added: 2026-10-05) (priority: high)
+- [x] Relay bug: "last reply" date uses the oldest reply (id: t-180443d3) (added: 2026-10-05) (priority: high)
+- [x] Relay README: deploying the relay for another app (id: t-77414e67) (added: 2026-10-05)
+- [x] Design: tell the host app when a report gets a reply (id: t-38342558) (added: 2026-10-05)
 - [x] Built-in form has no way to add a screenshot (id: t-66c07278) (added: 2026-07-26)
 - [x] Write release and tagging runbooks (id: t-4889a656) (added: 2026-07-26)
 - [x] Audit all docs, GitHub surfaces, tags and release notes for accuracy (id: t-50da72b3) (added: 2026-07-26)
