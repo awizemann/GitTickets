@@ -35,7 +35,7 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "2.5.0"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "2.6.0"),
 ]
 ```
 
@@ -216,6 +216,49 @@ if refresh.allMissing {
 
 `requestedCount == 0` is not a fault: a device that has filed nothing has
 nothing to show. See [`relay-deployment.md`](relay-deployment.md) for the fix.
+
+### Showing a new-reply badge
+
+To tell the user a developer replied without them opening My Reports — which
+matters most on a private repo, where replies are in-app only — use
+`GitTickets.unreadReplyCount` (reads the on-device cache, synchronous, `0` when
+not configured) and `GitTickets.checkForReplies()` (refreshes from the network,
+returns the new total, never throws):
+
+```swift
+struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var unreadReplies = GitTickets.unreadReplyCount
+    @State private var showingMyReports = false
+
+    var body: some View {
+        Button(unreadReplies > 0 ? "My Reports (\(unreadReplies))" : "My Reports") {
+            showingMyReports = true
+        }
+            .task { unreadReplies = await GitTickets.checkForReplies() }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                Task { unreadReplies = await GitTickets.checkForReplies() }
+            }
+            .sheet(isPresented: $showingMyReports, onDismiss: {
+                // Opening an issue marks its replies read.
+                unreadReplies = GitTickets.unreadReplyCount
+            }) {
+                GitTicketsMyIssuesView(onClose: { showingMyReports = false })
+            }
+    }
+}
+```
+
+The view is main-actor isolated, so `.task` and the unstructured `Task` both
+assign `unreadReplies` on the main actor; only the lookup itself runs elsewhere.
+
+**Calling on every activation is fine — don't poll.** The SDK spaces network
+lookups at least 15 minutes apart (across relaunches, and a successful My
+Reports refresh counts too); a call inside that window returns the cached total without
+a request. Polling on a timer gains nothing and only adds wake-ups. Re-read
+`unreadReplyCount` when My Reports closes, as above, or the badge stays stale
+until the next check.
 
 ## 5. That's it
 

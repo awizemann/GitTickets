@@ -8,6 +8,122 @@ The SDK and the relay templates version independently.
 
 _Nothing yet._
 
+## [2.6.0] — 2026-10-05
+
+Additive minor. Lets a host app show a "new reply" badge outside My Reports,
+stops My Reports pointing reporters at GitHub on private repositories, and
+carries two relay changes that **only take effect once you redeploy your
+relay**.
+
+No public API was removed, and every existing call compiles unchanged. The
+platform floor is
+**unchanged** at macOS 14 / iOS 18.
+
+### Added
+
+- **`GitTickets.unreadReplyCount`** and **`GitTickets.checkForReplies()`**, for
+  a "you have replies" badge anywhere in your app. This matters most on a
+  private repository, where replies can only be read in-app and nothing else
+  will tell the user one arrived.
+
+  `unreadReplyCount` reads the on-device cache only: synchronous, no network,
+  and `0` when the SDK is not configured. `checkForReplies()` refreshes from
+  the relay (or GitHub) and returns the new unread total. It never throws — a
+  failed lookup returns the cached total.
+
+  **Lookups are spaced at least 15 minutes apart**, so calling it at launch and
+  on every activation is fine and does not need a throttle of your own. The
+  window survives relaunches, and a successful `refreshMyIssues()` /
+  `refreshMyIssuesDetailed()` — which My Reports uses — also starts it.
+  Concurrent calls share one request. A failed lookup starts the window too,
+  except when the device could not connect at all (relay) or, with Device
+  Flow, the user is not signed in yet; then the next call retries. With Device
+  Flow, per-issue failures, including being offline, return cached values and
+  count as a completed lookup. The single request is not retried on a server
+  error. It makes no request when the SDK is not
+  configured, `MyIssuesPolicy.enabled` is `false`, or nothing has been filed
+  from this install.
+
+- **`GitTicketsMyIssuesView(onNew:onClose:)`** shows a "Done" toolbar button
+  (Escape on macOS) on the list, for presenting My Reports in a sheet without
+  wrapping it in your own close bar. It is an explicit closure rather than
+  `@Environment(\.dismiss)`, which would close a whole `Window` scene.
+  `init(onNew:)` is unchanged. The overload's `onClose` deliberately has no
+  default: with two defaulted closures, `GitTicketsMyIssuesView { … }` in a
+  Swift 5 language-mode target binds the trailing closure to `onClose`
+  (SE-0286's backward scan), silently turning Report into Done.
+  The `loadIssues:` and `loadDetailed:` initializers gain a defaulted
+  `onClose:` parameter (before `detail:`), so existing calls compile unchanged.
+
+### Changed — behavior
+
+- **No GitHub links on private repositories.** On a private repo a GitHub link
+  is a 404 or a login wall for the people reporting, so Issue Detail now hides
+  "Open on GitHub" — in the header and on the no-replies and error cards — and
+  drops "Replies live on GitHub" from the error copy when
+  `repo.visibility == .private`. Public repos, and an unconfigured SDK, are
+  unchanged.
+
+### Fixed
+
+- **"View on GitHub" in the diagnostics line did nothing.** It was styled as a
+  link but was plain text, on every repository. It is removed.
+
+### Fixed — relay templates
+
+- **"Last reply" showed the *first* reply's date.** The relay asked GitHub's
+  per-issue comments endpoint for `sort=created&direction=desc&per_page=1`, but
+  that endpoint ignores sorting and always returns ascending order, so it
+  returned the oldest comment. `latestReplyAt` — which the app shows as "last
+  reply …" and sorts My Reports by — held the wrong date. Both relays now ask
+  for the last page directly, still one request per issue, with one fallback
+  request if a comment was deleted since. The wire contract is unchanged.
+
+### Changed — relay templates
+
+- **Reads have their own rate limits.** `/my-issues` and `/comments` now count
+  against separate hourly buckets, so checking for replies or refreshing My
+  Reports can no longer use up the budget a user needs to file a report. Two
+  new variables: `GITTICKETS_READ_DEVICE_HOURLY_LIMIT` (default `30`) and
+  `GITTICKETS_READ_IP_HOURLY_LIMIT` (default `60`). Write limits, their
+  variables and their existing counters are unchanged (`10` per device, `30`
+  per IP).
+
+  Read defaults are deliberately low: `deviceID` is chosen by the client, so the
+  per-IP limit is the real bound, and each read costs several GitHub API calls
+  on the same installation token `/report` uses.
+
+- **Documented deploying the relay for another app.** An adopter's relay config
+  lives in the adopter's own repository — its own `wrangler.toml`, deployed from
+  a pinned SDK tag, with per-Worker secrets — never as an `[env.*]` block in
+  this one. The same change corrects stale notes: `GITHUB_OWNER`,
+  `GITHUB_REPO` and `GITTICKETS_R2_PUBLIC_BASE_URL` are `[vars]`, not secrets;
+  the relay URL is the custom-domain route, not `workers.dev`; and a missing R2
+  base URL yields `.invalid` links, not `r2.dev` URLs. `docs/threat-model.md`
+  also had the wrong rate-limit defaults (it said 5 and 50; they are 10 and 30).
+
+### Notes for adopters
+
+- **Redeploy your relay.** Both relay changes live in the templates, not the
+  SDK, so updating the package alone changes neither. The relay ships in this
+  repository; deploy it from the `v2.6.0` tag.
+- **If you changed either write limit (`GITTICKETS_IP_HOURLY_LIMIT` or
+  `GITTICKETS_DEVICE_HOURLY_LIMIT`), review the two read variables.** Reads were
+  previously counted against the write limits; after redeploying they use the
+  new defaults (60 per IP, 30 per device) unless you set them. That is looser
+  if you had lowered the write limits and tighter if you had raised them. A
+  read IP limit of `0` turns reads off.
+- **Until you redeploy, reply checks still share the write budget.** On an older
+  relay, `checkForReplies()` draws from the same per-device bucket as filing a
+  report. The 15-minute spacing keeps that small, but a host that also
+  refreshes My Reports often can still spend a noticeable share of it.
+- **Re-read `unreadReplyCount` when My Reports closes.** Opening an issue there
+  marks its replies read, so a badge you set before presenting it will be stale.
+  See "Showing a new-reply badge" in
+  [`docs/getting-started.md`](docs/getting-started.md).
+- The on-device cache gains a small `meta` table. Existing rows are not
+  migrated or touched.
+
 ## [2.5.0] — 2026-07-26
 
 All three items reported by an adopter against 2.4.0.
@@ -538,6 +654,7 @@ roadmap as a v1.x point release.
 
 ---
 
+[2.6.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.0
 [2.5.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.5.0
 [2.4.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.4.0
 [2.3.1]: https://github.com/awizemann/GitTickets/releases/tag/v2.3.1
@@ -547,4 +664,4 @@ roadmap as a v1.x point release.
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.6.0...HEAD

@@ -56,13 +56,23 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-**v2.5.0 is the current release** — an additive minor, and it fixes a **privacy
-defect in 2.4.0**: the form's screenshot captured the whole display rather than
-just your app, so another application's content could be attached to a public
-issue. Capture is now scoped to your own process's windows. It also adds
-`PrivacyPolicy.allowsScreenshotCapture` (default `true`) to remove the control
-entirely, and fixes a race that could exclude the wrong window. **Adopters on
-2.4.0 should upgrade.**
+**v2.6.0 is the current release** — an additive minor. New
+`GitTickets.unreadReplyCount` and `GitTickets.checkForReplies()` let your app
+show a "new reply" badge outside My Reports — most useful on a private repo,
+where replies are in-app only. Checks are spaced at least 15 minutes apart, so
+calling on every activation is fine. On private repos My Reports no longer
+shows GitHub links. `GitTicketsMyIssuesView(onNew:onClose:)` adds a Done button
+for sheets. Two relay changes — the "last reply" date was the *oldest* reply's,
+and reads now have their own rate limits so checking for replies can't use up
+the budget for filing a report — **take effect only once you redeploy your
+relay.**
+
+**v2.5.0** fixed a **privacy defect in 2.4.0**: the form's screenshot captured
+the whole display rather than just your app, so another application's content
+could be attached to a public issue. Capture is now scoped to your own process's
+windows. It also added `PrivacyPolicy.allowsScreenshotCapture` (default
+`true`) to remove the control entirely, and fixed a race that could exclude the
+wrong window. **Adopters on 2.4.0 should upgrade.**
 
 **v2.4.0** added the form's **Add screenshot** button: the state and thumbnail
 existed, but nothing ever assigned them and no control was wired. A failed
@@ -88,9 +98,9 @@ re-fetch when the scene becomes active, and a working
 `MyIssuesPolicy.pollInterval` (still **off by default**). See
 [`CHANGELOG.md`](CHANGELOG.md).
 
-**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.5.0"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.5.0 automatically.
+**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.6.0"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.6.0 automatically.
 
-**Toolchain (what builds it):** built and tested locally on Xcode 26.6 / Swift 6.3.3 — `swift build` with 0 warnings, 319/319 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
+**Toolchain (what builds it):** built and tested locally on Xcode 27.0 / Swift 6.4 — `swift build` with 0 warnings, 378/378 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
 
 The Phase 2 "My Reports" in-app reply view **has shipped** — browse past submissions, read developer replies, and refresh without reopening the window. See [`CHANGELOG.md`](CHANGELOG.md) for what landed in each release and [`TASKS.md`](TASKS.md) for the active board.
 
