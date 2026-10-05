@@ -199,7 +199,9 @@ public struct GitTicketsMyIssuesView: View {
                 // would claim Return; on iOS the leading slot leaves the
                 // trailing side to Refresh / Report. Attached to the root
                 // content, so it does not appear on the pushed detail screen,
-                // where the leading slot belongs to the Back button.
+                // where the leading slot belongs to the Back button. The
+                // Report button avoids `.primaryAction` on macOS for the same
+                // Return-key reason — see `newReportPlacement`.
                 if showsCloseButton {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Done", action: close)
@@ -207,9 +209,10 @@ public struct GitTicketsMyIssuesView: View {
                     }
                 }
                 if let onNew {
-                    ToolbarItem(placement: .primaryAction) {
+                    ToolbarItem(placement: Self.newReportPlacement) {
                         Button(action: onNew) { Image(systemName: "square.and.pencil") }
                             .help("Report an issue")
+                            .accessibilityLabel("Report an issue")
                     }
                 }
             }
@@ -223,6 +226,26 @@ public struct GitTicketsMyIssuesView: View {
             }
         }
         .task { await reload() }
+    }
+
+    // MARK: Toolbar
+
+    /// Where the "Report an issue" toolbar button goes.
+    ///
+    /// macOS: `.automatic`, which groups it with the Refresh control. In a
+    /// sheet the toolbar is a bottom bar, and `.primaryAction` there lands in
+    /// the default-button slot next to "Done": drawn as a blue prominent
+    /// button AND bound to Return, so pressing Return opened the report form.
+    /// In a window toolbar `.automatic` still sits on the trailing side.
+    ///
+    /// iOS: `.primaryAction`, the trailing navigation-bar slot (Done takes the
+    /// leading one via `.cancellationAction`); no default-button behavior there.
+    static var newReportPlacement: ToolbarItemPlacement {
+        #if os(macOS)
+        .automatic
+        #else
+        .primaryAction
+        #endif
     }
 
     // MARK: Close
