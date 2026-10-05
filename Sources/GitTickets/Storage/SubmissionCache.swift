@@ -23,6 +23,8 @@ final class SubmissionCache: @unchecked Sendable {
 
     private let queue = DispatchQueue(label: "com.gittickets.submission-cache")
     private var db: OpaquePointer?
+    /// Whether the `meta` table is known to exist. Queue-bound.
+    private var metaTableReady = false
 
     // MARK: - Init
 
@@ -111,7 +113,24 @@ final class SubmissionCache: @unchecked Sendable {
             """
         try execute(createTable)
         try execute(createIndex)
+        // Best-effort: on a database created by v2.5.0 this is the first
+        // write, and a full disk or a write lock must not cost the user the
+        // whole cache (v2.5.0 would have opened). The meta accessors retry
+        // the creation and throw if it still fails.
+        metaTableReady = (try? execute(Self.createMetaTableSQL)) != nil
     }
+
+    /// Small key/value table for SDK bookkeeping that must survive a cold
+    /// launch — e.g. when the last reply check hit the network, so the check
+    /// throttle isn't reset every time iOS relaunches the app. Kept here
+    /// rather than in UserDefaults, which is a required-reason API and would
+    /// need a privacy-manifest entry.
+    private static let createMetaTableSQL = """
+        CREATE TABLE IF NOT EXISTS meta (
+            key TEXT PRIMARY KEY,
+            value REAL NOT NULL
+        );
+        """
 
     // MARK: - Public API
 
@@ -155,6 +174,84 @@ final class SubmissionCache: @unchecked Sendable {
     /// Removes every record. Tests only.
     func deleteAll() throws {
         try queue.sync { try _execute("DELETE FROM submissions") }
+    }
+
+    /// Number of cached submissions, without loading any rows.
+    func recordCount() throws -> Int {
+        try queue.sync { try _scalarInt("SELECT COUNT(*) FROM submissions") }
+    }
+
+    /// Sum of unread replies across every submission, computed in SQLite so
+    /// a badge read doesn't load cached bodies. Matches
+    /// ``SubmissionRecord/unreadReplyCount`` per row (never negative).
+    func unreadReplyTotal() throws -> Int {
+        try queue.sync {
+            try _scalarInt(
+                "SELECT COALESCE(SUM(MAX(0, reply_count - read_reply_count)), 0) FROM submissions"
+            )
+        }
+    }
+
+    /// Reads a timestamp from the `meta` table, or `nil` when unset.
+    ///
+    /// Throws when the table is missing and can't be created (e.g. the disk
+    /// was full on the first launch after upgrading from v2.5.0); callers
+    /// treat that as "no persisted value" and fall back to memory.
+    func metaDate(forKey key: String) throws -> Date? {
+        try queue.sync {
+            guard let db else { return nil }
+            try _ensureMetaTable()
+            var statement: OpaquePointer?
+            let sql = "SELECT value FROM meta WHERE key = ? LIMIT 1"
+            let prepareStatus = sqlite3_prepare_v2(db, sql, -1, &statement, nil)
+            guard prepareStatus == SQLITE_OK, let statement else {
+                throw CacheError.prepareFailed(prepareStatus, String(cString: sqlite3_errmsg(db)))
+            }
+            defer { sqlite3_finalize(statement) }
+            try Self.bind([.text(key)], to: statement)
+            switch sqlite3_step(statement) {
+            case SQLITE_ROW:
+                return Date(timeIntervalSince1970: sqlite3_column_double(statement, 0))
+            case SQLITE_DONE:
+                return nil
+            case let status:
+                throw CacheError.stepFailed(status, String(cString: sqlite3_errmsg(db)))
+            }
+        }
+    }
+
+    /// Writes a timestamp to the `meta` table.
+    func setMetaDate(_ date: Date, forKey key: String) throws {
+        try queue.sync {
+            try _ensureMetaTable()
+            try _execute(
+                """
+                INSERT INTO meta (key, value) VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """,
+                bindings: [.text(key), .double(date.timeIntervalSince1970)]
+            )
+        }
+    }
+
+    /// Removes a `meta` timestamp, but only while it still equals `expected`
+    /// — a compare-and-delete, so clearing a stale value can't wipe a newer
+    /// one written in the meantime.
+    func clearMetaDate(forKey key: String, ifEqualTo expected: Date) throws {
+        try queue.sync {
+            try _ensureMetaTable()
+            try _execute(
+                "DELETE FROM meta WHERE key = ? AND value = ?",
+                bindings: [.text(key), .double(expected.timeIntervalSince1970)]
+            )
+        }
+    }
+
+    /// Creates the `meta` table if the open-time attempt failed. Queue-bound.
+    private func _ensureMetaTable() throws {
+        guard !metaTableReady else { return }
+        try _execute(Self.createMetaTableSQL)
+        metaTableReady = true
     }
 
     // MARK: - Internal queue-bound implementations
@@ -262,6 +359,22 @@ final class SubmissionCache: @unchecked Sendable {
             let message = String(cString: sqlite3_errmsg(db))
             throw CacheError.stepFailed(stepStatus, message)
         }
+    }
+
+    /// Runs a query returning one integer in its first column.
+    private func _scalarInt(_ sql: String) throws -> Int {
+        guard let db else { return 0 }
+        var statement: OpaquePointer?
+        let prepareStatus = sqlite3_prepare_v2(db, sql, -1, &statement, nil)
+        guard prepareStatus == SQLITE_OK, let statement else {
+            throw CacheError.prepareFailed(prepareStatus, String(cString: sqlite3_errmsg(db)))
+        }
+        defer { sqlite3_finalize(statement) }
+        let stepStatus = sqlite3_step(statement)
+        guard stepStatus == SQLITE_ROW else {
+            throw CacheError.stepFailed(stepStatus, String(cString: sqlite3_errmsg(db)))
+        }
+        return Int(sqlite3_column_int64(statement, 0))
     }
 
     private func execute(_ sql: String) throws {

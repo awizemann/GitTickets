@@ -76,6 +76,29 @@ final class HTTPClientTests: XCTestCase {
         XCTAssertEqual(calls, 3)
     }
 
+    /// `attemptLimit` caps retries only inside its scope; outside it the
+    /// client's own `maxAttempts` applies unchanged.
+    func test_attemptLimitCaps5xxRetriesOnlyWithinScope() async throws {
+        let url = URL(string: "https://example.com/attempt-limit")!
+        var calls = 0
+        MockURLProtocol.handlers[url] = { _ in
+            calls += 1
+            return (HTTPURLResponse(url: url, statusCode: 503, httpVersion: nil, headerFields: nil)!, Data())
+        }
+        var post = request(url.absoluteString)
+        post.httpMethod = "POST"
+        let client = makeClient(maxAttempts: 3)
+
+        let capped = try await HTTPClient.$attemptLimit.withValue(1) {
+            try await client.send(post)
+        }
+        XCTAssertEqual(capped.statusCode, 503)
+        XCTAssertEqual(calls, 1)
+
+        _ = try await client.send(post)
+        XCTAssertEqual(calls, 4, "default behaviour still retries 5xx")
+    }
+
     func test_does_not_retry_on_4xx() async throws {
         let url = URL(string: "https://example.com/four")!
         var calls = 0

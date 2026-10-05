@@ -159,4 +159,90 @@ final class SubmissionCacheTests: XCTestCase {
         let fetched = try reopened.record(submissionID: record.submissionID)
         XCTAssertEqual(fetched, record)
     }
+
+    // MARK: - Upgrade from v2.5.0
+
+    /// The exact v2.5.0 schema (from `git show v2.5.0:…/SubmissionCache.swift`),
+    /// with one row: 3 replies, 1 read.
+    private func makeV250Database() throws -> (url: URL, id: UUID) {
+        let url = dbURL.deletingLastPathComponent().appendingPathComponent("v250.sqlite")
+        let id = UUID()
+        let handle = try SQLiteHandle(path: url.path)
+        try handle.exec("""
+            CREATE TABLE IF NOT EXISTS submissions (
+                submission_id TEXT PRIMARY KEY,
+                issue_number INTEGER NOT NULL,
+                issue_url TEXT NOT NULL,
+                title TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                body TEXT NOT NULL,
+                device_id TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                submitted_at REAL NOT NULL,
+                latest_reply_at REAL,
+                reply_count INTEGER NOT NULL DEFAULT 0,
+                read_reply_count INTEGER NOT NULL DEFAULT 0
+            );
+            """)
+        try handle.exec("""
+            CREATE INDEX IF NOT EXISTS idx_submissions_submitted_at
+                ON submissions(submitted_at DESC);
+            """)
+        try handle.exec("""
+            INSERT INTO submissions VALUES (
+                '\(id.uuidString)', 7, 'https://github.com/alanw/GitTickets/issues/7',
+                'Old report', 'bug', 'Old body', 'device', 1750000000, 1750000000,
+                NULL, 3, 1
+            );
+            """)
+        return (url, id)
+    }
+
+    /// A v2.5.0 database opens, keeps its rows, and gains a working `meta`
+    /// table.
+    func test_v250DatabaseUpgradesInPlace() throws {
+        let (url, id) = try makeV250Database()
+        let upgraded = try SubmissionCache(databaseURL: url)
+
+        let record = try XCTUnwrap(upgraded.record(submissionID: id))
+        XCTAssertEqual(record.issueNumber, 7)
+        XCTAssertEqual(record.body, "Old body")
+        XCTAssertEqual(try upgraded.recordCount(), 1)
+        XCTAssertEqual(try upgraded.unreadReplyTotal(), 2)
+
+        XCTAssertNil(try upgraded.metaDate(forKey: "k"))
+        let stamp = Date(timeIntervalSince1970: 1_750_000_123.5)
+        try upgraded.setMetaDate(stamp, forKey: "k")
+        XCTAssertEqual(try upgraded.metaDate(forKey: "k"), stamp)
+    }
+
+    /// On the first launch after upgrading, creating `meta` is the first
+    /// write. If it fails (here: another connection holds the write lock;
+    /// in the field, a full disk), the cache must still open with its data
+    /// — v2.5.0 would have — and `meta` comes up once writes work again.
+    func test_v250DatabaseOpensWhenMetaTableCannotBeCreated() throws {
+        let (url, id) = try makeV250Database()
+        let blocker = try SQLiteHandle(path: url.path)
+        try blocker.exec("BEGIN IMMEDIATE")
+
+        let upgraded = try SubmissionCache(databaseURL: url)
+        XCTAssertNotNil(try upgraded.record(submissionID: id))
+        XCTAssertEqual(try upgraded.unreadReplyTotal(), 2)
+        XCTAssertThrowsError(try upgraded.metaDate(forKey: "k"), "no meta table yet; callers fall back")
+
+        try blocker.exec("ROLLBACK")
+        let stamp = Date(timeIntervalSince1970: 1_750_000_456)
+        try upgraded.setMetaDate(stamp, forKey: "k")
+        XCTAssertEqual(try upgraded.metaDate(forKey: "k"), stamp)
+    }
+
+    func test_clearMetaDateOnlyClearsMatchingValue() throws {
+        let older = Date(timeIntervalSince1970: 1_750_000_000)
+        let newer = Date(timeIntervalSince1970: 1_750_000_030)
+        try cache.setMetaDate(newer, forKey: "k")
+        try cache.clearMetaDate(forKey: "k", ifEqualTo: older)
+        XCTAssertEqual(try cache.metaDate(forKey: "k"), newer)
+        try cache.clearMetaDate(forKey: "k", ifEqualTo: newer)
+        XCTAssertNil(try cache.metaDate(forKey: "k"))
+    }
 }

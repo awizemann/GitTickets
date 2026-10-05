@@ -122,6 +122,10 @@ public enum GitTickets {
             submissionIDs: cachedIDs,
             deviceID: deviceID
         )
+        // Any successful lookup — including My Reports' own refresh — spent a
+        // request from the relay's budget, so a `checkForReplies()` right
+        // after it has nothing new to learn and should be skipped.
+        replyCheckThrottle.recordCheck(cache: cache)
         let result = MyIssuesRefresh(issues: issues, requestedCount: cachedIDs.count)
         logShortfall(result, configuration: configuration)
         return result
@@ -188,6 +192,109 @@ public enum GitTickets {
         try? cache.markRepliesRead(submissionID: submissionID, count: count)
     }
 
+    // MARK: - Unread replies
+
+    /// Total unread developer replies across every cached submission.
+    ///
+    /// Reads the local ``SubmissionCache`` only — synchronous, never touches
+    /// the network, never throws. Use it to drive a "you have replies" badge
+    /// anywhere in your app, outside ``GitTicketsMyIssuesView``. Pair it with
+    /// ``checkForReplies()`` to bring the counts up to date.
+    ///
+    /// Returns `0` when ``configure(_:)`` has not been called, nothing has
+    /// been filed from this install, or the cache could not be opened.
+    ///
+    /// - Note: Opening an issue in My Reports marks its replies read, so
+    ///   re-read this property after My Reports closes to clear your badge.
+    public static var unreadReplyCount: Int {
+        guard let configuration,
+              let cache = cacheStorage.shared(logger: configuration.logger)
+        else { return 0 }
+        return (try? cache.unreadReplyTotal()) ?? 0
+    }
+
+    /// Refreshes reply counts from the network and returns the new
+    /// ``unreadReplyCount``.
+    ///
+    /// Meant to be called at launch and on app activation. The SDK spaces
+    /// network lookups at least 15 minutes apart; a call inside that window
+    /// returns the cached total without a request. The window survives app
+    /// relaunches, and a successful ``refreshMyIssuesDetailed()`` (which My
+    /// Reports uses) also starts it. Relays deployed from 2.6.0 on give these
+    /// lookups their own hourly budget. On older relays they share the
+    /// per-device budget with bug submission, so checking too often could get
+    /// the user's next report rejected as rate-limited; that is why the
+    /// throttle exists.
+    ///
+    /// Never throws. It returns the cached total, with no network request, when
+    /// the SDK is not configured, ``MyIssuesPolicy/enabled`` is `false`, or
+    /// nothing has been filed from this install. A failed lookup also returns
+    /// the cached total. Concurrent calls share a single request, and that
+    /// request is not retried on a server error.
+    ///
+    /// A failed lookup still starts the 15-minute window, except when the
+    /// device couldn't open a connection at all (offline, DNS failure,
+    /// host unreachable, TLS failure) or, with Device Flow, the user isn't
+    /// signed in yet; then the next call tries again.
+    /// With ``AuthMode/deviceFlow(clientID:scopes:)``, per-issue failures
+    /// (including being offline) are logged and the cached values returned
+    /// rather than reported as an error, so such a lookup counts as
+    /// completed and starts the window.
+    ///
+    /// ```swift
+    /// // At launch, and whenever the app becomes active:
+    /// .task { badge = await GitTickets.checkForReplies() }
+    /// .onChange(of: scenePhase) { _, phase in
+    ///     if phase == .active {
+    ///         Task { badge = await GitTickets.checkForReplies() }
+    ///     }
+    /// }
+    ///
+    /// // After My Reports closes (opening an issue marks its replies read):
+    /// .sheet(isPresented: $showingMyReports, onDismiss: {
+    ///     badge = GitTickets.unreadReplyCount
+    /// }) { GitTicketsMyIssuesView() }
+    /// ```
+    ///
+    /// - Returns: The unread reply total after the check.
+    @discardableResult
+    public static func checkForReplies() async -> Int {
+        guard let configuration,
+              configuration.myIssues.enabled,
+              let cache = cacheStorage.shared(logger: configuration.logger),
+              let filed = try? cache.recordCount(), filed > 0
+        else { return unreadReplyCount }
+
+        let check = replyCheckThrottle.claim(cache: cache) { token in
+            Task<Int, Never> {
+                let countsAgainstThrottle: Bool
+                do {
+                    // One attempt only: the relay counts each retry against
+                    // the same budget, and a badge check can simply wait for
+                    // the next window.
+                    _ = try await HTTPClient.$attemptLimit.withValue(1) {
+                        try await refreshMyIssuesDetailed()
+                    }
+                    countsAgainstThrottle = true
+                } catch {
+                    countsAgainstThrottle = ReplyCheckThrottle.countsAgainstThrottle(error)
+                    configuration.logger?.log(
+                        level: .info,
+                        message: countsAgainstThrottle
+                            ? "Reply check failed; using cached reply counts until the throttle interval passes."
+                            : "Reply check could not connect; using cached reply counts, the next call will retry.",
+                        error: error
+                    )
+                }
+                let total = unreadReplyCount
+                replyCheckThrottle.finish(token, countsAgainstThrottle: countsAgainstThrottle, cache: cache)
+                return total
+            }
+        }
+        guard let check else { return unreadReplyCount }
+        return await check.value
+    }
+
     /// Returns the cached report for a past submission — kind, the
     /// user-typed body (diagnostics + marker stripped), submitted timestamp,
     /// and whether diagnostics were attached. Used by ``IssueDetailView`` to
@@ -223,10 +330,36 @@ public enum GitTickets {
     static func _resetConfigurationForTesting() {
         configurationStorage.set(nil)
         cacheStorage.reset()
+        submitterOverride.set(nil)
+        replyCheckThrottle.reset()
+    }
+
+    /// Points the SDK at a specific cache instead of the default SQLite file.
+    /// Test-only; cleared by ``_resetConfigurationForTesting()``.
+    static func _setCacheForTesting(_ cache: SubmissionCache?) {
+        cacheStorage.override(with: cache)
+    }
+
+    /// Routes every submitter call to `submitter` instead of resolving one
+    /// from ``Configuration/auth``. Test-only; cleared by
+    /// ``_resetConfigurationForTesting()``.
+    static func _setSubmitterForTesting(_ submitter: (any IssueSubmitter)?) {
+        submitterOverride.set(submitter)
+    }
+
+    /// Replaces the reply-check clock and minimum interval. Test-only;
+    /// restored to the production values by ``_resetConfigurationForTesting()``.
+    static func _setReplyCheckClockForTesting(
+        now: @escaping @Sendable () -> Date,
+        minimumInterval: TimeInterval = ReplyCheckThrottle.defaultMinimumInterval
+    ) {
+        replyCheckThrottle.setClock(now: now, minimumInterval: minimumInterval)
     }
 
     private static let configurationStorage = ConfigurationStorage()
     private static let cacheStorage = SubmissionCacheStorage()
+    private static let submitterOverride = SubmitterOverrideStorage()
+    private static let replyCheckThrottle = ReplyCheckThrottle()
 
     // MARK: - Helpers
 
@@ -237,6 +370,7 @@ public enum GitTickets {
     private static func resolveSubmitter(
         configuration: Configuration
     ) throws -> any IssueSubmitter {
+        if let override = submitterOverride.get() { return override }
         switch configuration.auth {
         case .relay:
             guard let submitter = RelaySubmitter(
@@ -285,11 +419,13 @@ public enum GitTickets {
 private final class SubmissionCacheStorage: @unchecked Sendable {
     private let lock = NSLock()
     private var cache: SubmissionCache?
+    private var overridden: SubmissionCache?
     private var failedToOpen = false
 
     func shared(logger: GitTicketsLogger?) -> SubmissionCache? {
         lock.lock()
         defer { lock.unlock() }
+        if let overridden { return overridden }
         if let cache { return cache }
         if failedToOpen { return nil }
         do {
@@ -311,7 +447,210 @@ private final class SubmissionCacheStorage: @unchecked Sendable {
     func reset() {
         lock.lock()
         cache = nil
+        overridden = nil
         failedToOpen = false
+        lock.unlock()
+    }
+
+    /// Test-only: serve `cache` instead of opening the default database.
+    func override(with cache: SubmissionCache?) {
+        lock.lock()
+        overridden = cache
+        lock.unlock()
+    }
+}
+
+/// Test-only holder for a submitter that bypasses ``Configuration/auth``
+/// resolution. Always `nil` in production.
+private final class SubmitterOverrideStorage: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: (any IssueSubmitter)?
+
+    func get() -> (any IssueSubmitter)? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func set(_ value: (any IssueSubmitter)?) {
+        lock.lock()
+        self.value = value
+        lock.unlock()
+    }
+}
+
+/// Rate-limits ``GitTickets/checkForReplies()`` network lookups and
+/// coalesces concurrent callers onto one request.
+///
+/// Relays deployed from 2.6.0 on rate-limit `/my-issues` in a separate read
+/// budget. Older relays share one per-device hourly budget between
+/// `/my-issues` and `/report`, so a host calling `checkForReplies()` on every
+/// app activation could spend it and get the user's next bug report rejected
+/// with HTTP 429. Lookups are therefore spaced at least
+/// ``defaultMinimumInterval`` apart.
+///
+/// The time of the last lookup is persisted in the ``SubmissionCache``
+/// `meta` table (not UserDefaults, a required-reason API), so the window
+/// survives cold launches; iOS relaunches apps often enough that an
+/// in-memory window alone would rarely apply. It is read from the cache on
+/// every claim, with an in-memory copy as the fallback if the read fails.
+///
+/// The slot is claimed — and the check task created — under the lock, before
+/// anything is awaited, so two callers can never both start a request: the
+/// second joins the first one's task. Process-wide state, held like
+/// ``ConfigurationStorage`` behind an `NSLock`.
+///
+/// Deliberately *not* reset by ``GitTickets/configure(_:)``: the budget being
+/// protected is keyed by the per-install device ID, which a new configuration
+/// doesn't change, and a host that re-calls `configure` on activation would
+/// otherwise defeat the throttle. The cost is at most one interval's delay
+/// after switching configuration.
+final class ReplyCheckThrottle: @unchecked Sendable {
+
+    /// Minimum spacing between network lookups.
+    static let defaultMinimumInterval: TimeInterval = 15 * 60
+
+    /// `meta` table key holding the last lookup time.
+    static let metaKey = "reply_check.last_check_at"
+
+    private let lock = NSLock()
+    private var now: @Sendable () -> Date = { Date() }
+    private var minimumInterval: TimeInterval = ReplyCheckThrottle.defaultMinimumInterval
+    /// In-memory copy of the persisted value; used when the cache read fails.
+    private var lastCheckAt: Date?
+    /// The time the in-flight claim wrote, for ``finish``'s compare-and-delete.
+    private var claimedAt: Date?
+    private var inFlight: Task<Int, Never>?
+    /// Identifies the in-flight claim, so a stale finish (after a test
+    /// reset) can't clobber newer state.
+    private var generation = 0
+
+    /// Returns the task the caller should await — a new one, or the one
+    /// already in flight — or `nil` when the throttle says to answer from
+    /// the cache. `makeCheck` runs under the lock: it must only create the
+    /// task, never call back into the throttle synchronously.
+    func claim(
+        cache: SubmissionCache,
+        _ makeCheck: (_ token: Int) -> Task<Int, Never>
+    ) -> Task<Int, Never>? {
+        lock.lock()
+        defer { lock.unlock() }
+        if let inFlight { return inFlight }
+        let current = now()
+        let persisted: Date?
+        do {
+            persisted = try cache.metaDate(forKey: Self.metaKey)
+        } catch {
+            persisted = lastCheckAt
+        }
+        if let last = persisted {
+            let elapsed = current.timeIntervalSince(last)
+            // A negative elapsed time means the wall clock moved backwards
+            // (manual change, timezone bug, restored backup). Treat it as
+            // "allowed" rather than freezing the throttle until the clock
+            // catches up — possibly days later.
+            if elapsed >= 0, elapsed < minimumInterval { return nil }
+        }
+        store(current, cache: cache)
+        claimedAt = current
+        generation += 1
+        let task = makeCheck(generation)
+        inFlight = task
+        return task
+    }
+
+    /// Ends the in-flight claim. When the lookup failed in a way that
+    /// shouldn't count, the window is cleared so the next call retries.
+    /// Clearing (rather than restoring the previous time) is equivalent:
+    /// a claim only succeeds once the previous time is outside the window.
+    ///
+    /// The clear is a compare-and-delete against the time this claim wrote:
+    /// if a successful lookup elsewhere (``recordCheck(cache:)``, e.g. My
+    /// Reports refreshing meanwhile) stamped a newer time, that one stays.
+    func finish(_ token: Int, countsAgainstThrottle: Bool, cache: SubmissionCache) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard token == generation else { return }
+        inFlight = nil
+        guard !countsAgainstThrottle, let claimed = claimedAt else { return }
+        claimedAt = nil
+        if lastCheckAt == claimed { lastCheckAt = nil }
+        try? cache.clearMetaDate(forKey: Self.metaKey, ifEqualTo: claimed)
+    }
+
+    /// Starts a new window after a lookup that didn't go through ``claim``,
+    /// e.g. My Reports' own refresh.
+    func recordCheck(cache: SubmissionCache?) {
+        lock.lock()
+        defer { lock.unlock() }
+        let current = now()
+        if let cache {
+            store(current, cache: cache)
+        } else {
+            lastCheckAt = current
+        }
+    }
+
+    /// Caller holds `lock`.
+    private func store(_ date: Date, cache: SubmissionCache) {
+        lastCheckAt = date
+        try? cache.setMetaDate(date, forKey: Self.metaKey)
+    }
+
+    /// Transport errors that mean the request never left the device, so the
+    /// relay can't have counted it.
+    private static let preConnectionErrors: Set<URLError.Code> = [
+        .notConnectedToInternet,
+        .cannotFindHost,
+        .cannotConnectToHost,
+        .dnsLookupFailed,
+        .dataNotAllowed,
+        .internationalRoamingOff,
+        .secureConnectionFailed,
+    ]
+
+    /// Whether a failed lookup should still hold off the next one.
+    ///
+    /// Only failures where no request was sent clear the window:
+    /// ``GitTicketsError/relayUnreachable(underlying:)`` wrapping one of
+    /// ``preConnectionErrors``, so a flaky or absent network at launch
+    /// doesn't hide replies for 15 minutes; and
+    /// ``GitTicketsError/deviceFlowNotAuthorized``, thrown before any request
+    /// when there is no token, which signing in fixes.
+    ///
+    /// Everything else counts. That includes ``GitTicketsError/rateLimited(retryAfter:)``,
+    /// where retrying spends more of the budget (on older relays, the same
+    /// budget the user's next report needs), and
+    /// transport errors such as `.timedOut`, `.networkConnectionLost` or
+    /// `.cancelled`, which can happen after the relay received (and counted)
+    /// the request. Other relay rejections reached the relay too.
+    static func countsAgainstThrottle(_ error: any Error) -> Bool {
+        if case GitTicketsError.deviceFlowNotAuthorized = error { return false }
+        if case GitTicketsError.relayUnreachable(let underlying) = error,
+           let urlError = underlying as? URLError,
+           preConnectionErrors.contains(urlError.code) {
+            return false
+        }
+        return true
+    }
+
+    func setClock(now: @escaping @Sendable () -> Date, minimumInterval: TimeInterval) {
+        lock.lock()
+        self.now = now
+        self.minimumInterval = minimumInterval
+        lock.unlock()
+    }
+
+    /// Clears in-memory state only, like a process relaunch; the persisted
+    /// window in the cache is left alone.
+    func reset() {
+        lock.lock()
+        now = { Date() }
+        minimumInterval = Self.defaultMinimumInterval
+        lastCheckAt = nil
+        claimedAt = nil
+        inFlight = nil
+        generation += 1
         lock.unlock()
     }
 }

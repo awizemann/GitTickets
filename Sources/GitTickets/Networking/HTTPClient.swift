@@ -63,6 +63,17 @@ struct HTTPClient: Sendable {
         }
     }
 
+    /// Caps ``Configuration/maxAttempts`` for every request sent within a
+    /// `$attemptLimit.withValue(_:)` scope; `nil` (the default) leaves each
+    /// client's configuration alone.
+    ///
+    /// Used by ``GitTickets/checkForReplies()``: the relay counts every
+    /// attempt against the device's budget, so a background badge check
+    /// must not turn one 5xx into three counted requests. Scoped as a task
+    /// local so the cap reaches the relay call without threading a
+    /// parameter through ``IssueSubmitter``.
+    @TaskLocal static var attemptLimit: Int?
+
     let session: URLSession
     let configuration: Configuration
     let userAgent: String
@@ -89,9 +100,11 @@ struct HTTPClient: Sendable {
     /// only ~5 minutes, and reusing a stale signature across retries that
     /// straddle that window turns transient 5xx into permanent 401).
     func sendRetrying(buildRequest: (Int) async throws -> URLRequest) async throws -> HTTPResponse {
+        let maxAttempts = Self.attemptLimit.map { max(1, min($0, configuration.maxAttempts)) }
+            ?? configuration.maxAttempts
         var attempt = 0
         var lastError: (any Error)?
-        while attempt < configuration.maxAttempts {
+        while attempt < maxAttempts {
             let request = try await buildRequest(attempt)
             let isIdempotent = Self.isIdempotent(request)
             do {
@@ -106,7 +119,7 @@ struct HTTPClient: Sendable {
                     }
                 }
                 let envelope = HTTPResponse(statusCode: http.statusCode, headers: headers, body: data)
-                if (500...599).contains(http.statusCode), attempt + 1 < configuration.maxAttempts {
+                if (500...599).contains(http.statusCode), attempt + 1 < maxAttempts {
                     let delay = retryDelay(for: envelope, attempt: attempt)
                     try await Task.sleep(nanoseconds: nanoseconds(from: delay))
                     attempt += 1
@@ -120,7 +133,7 @@ struct HTTPClient: Sendable {
                 // issue but before the response reached us would otherwise
                 // double-file.
                 guard isIdempotent else { throw error }
-                if attempt + 1 >= configuration.maxAttempts { break }
+                if attempt + 1 >= maxAttempts { break }
                 let delay = RateLimitBackoff.exponentialDelay(
                     attempt: attempt,
                     base: configuration.baseBackoff,
