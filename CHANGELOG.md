@@ -8,6 +8,29 @@ The SDK and the relay templates version independently.
 
 _Nothing yet._
 
+## [2.6.1] — 2026-10-05
+
+Patch. No public API change; platform floor unchanged at macOS 14 / iOS 18.
+An existing pin from 2.x resolves to this release automatically. No relay
+changes — a relay deployed from 2.6.0 does not need redeploying.
+
+### Fixed
+
+- **"Report an issue" looked like the sheet's OK button, and Return opened the
+  form.** In a macOS sheet, `GitTicketsMyIssuesView`'s compose button used the
+  `.primaryAction` placement, which puts it in the sheet's default-button slot
+  next to "Done": drawn as a blue prominent button and bound to Return. On
+  macOS it now sits with Refresh on the left, Done stands alone on the right,
+  Return does nothing and Escape still closes. Window toolbars and iOS are
+  unchanged. Reported by an adopter.
+
+### Tests
+
+- The hosted "Done button" toolbar test is now local-only, like the snapshot
+  suite: the toolbar metadata it reads is an undocumented SwiftUI bridge that
+  differs on the CI runner's Xcode, which failed the v2.6.0 CI run. The
+  `onClose` plumbing tests still run on CI.
+
 ## [2.6.0] — 2026-10-05
 
 Additive minor. Lets a host app show a "new reply" badge outside My Reports,
@@ -659,6 +682,7 @@ roadmap as a v1.x point release.
 
 ---
 
+[2.6.1]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.1
 [2.6.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.0
 [2.5.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.5.0
 [2.4.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.4.0
@@ -669,4 +693,4 @@ roadmap as a v1.x point release.
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.6.1...HEAD

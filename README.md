@@ -56,7 +56,12 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-**v2.6.0 is the current release** — an additive minor. New
+**v2.6.1 is the current release** — a patch. In a macOS sheet, My Reports'
+"Report an issue" button sat in the sheet's default-button slot next to Done:
+drawn as a blue primary button and bound to Return, so it read as "OK" and
+Return opened the report form. It now sits with Refresh; Done stands alone.
+
+**v2.6.0** — an additive minor. New
 `GitTickets.unreadReplyCount` and `GitTickets.checkForReplies()` let your app
 show a "new reply" badge outside My Reports — most useful on a private repo,
 where replies are in-app only. Checks are spaced at least 15 minutes apart, so
@@ -98,7 +103,7 @@ re-fetch when the scene becomes active, and a working
 `MyIssuesPolicy.pollInterval` (still **off by default**). See
 [`CHANGELOG.md`](CHANGELOG.md).
 
-**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.6.0"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.6.0 automatically.
+**Runtime floor (what can run it): macOS 14 (Sonoma) / iOS 18.** Unchanged since 2.0.0, which raised it from macOS 13 / iOS 16 — that dropped platform support is why the major version moved. On iOS it drops two releases: **iOS 17 is excluded too.** Apps deploying below macOS 14 or below iOS 18 should pin `1.0.0`. If your dependency uses `upToNextMajorVersion` from 1.x, it will **not** auto-resolve to 2.x; bump the requirement to `from: "2.6.1"` deliberately. An existing `upToNextMajorVersion` pin from 2.x *does* pick up 2.6.1 automatically.
 
 **Toolchain (what builds it):** built and tested locally on Xcode 27.0 / Swift 6.4 — `swift build` with 0 warnings, 378/378 tests, clean generic iOS Simulator build. CI runs green on Xcode 26.3 / `macos-15`, testing iOS against a real iOS 18.6 simulator. Older Xcode versions are untested, so no minimum is claimed here; see [`CHANGELOG.md`](CHANGELOG.md) for the full detail, including a correction to v1.1.0's toolchain claim.
 
