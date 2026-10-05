@@ -61,10 +61,9 @@ id = "<id from CLI>"
 
 Workers can put bytes into R2, but external clients (GitHub's image renderer) need a public URL. Two options:
 
-1. **Custom domain (recommended).** In the Cloudflare dashboard: R2 → `gittickets-attachments` → Settings → Custom Domains → add a subdomain you own (e.g. `attachments.your-app.com`). Then set:
-   ```bash
-   npx wrangler secret put GITTICKETS_R2_PUBLIC_BASE_URL
-   # value: https://attachments.your-app.com
+1. **Custom domain (recommended).** In the Cloudflare dashboard: R2 → `gittickets-attachments` → Settings → Custom Domains → add a subdomain you own (e.g. `attachments.your-app.com`). Then set it under `[vars]` in `wrangler.toml` (it is public, not a secret):
+   ```toml
+   GITTICKETS_R2_PUBLIC_BASE_URL = "https://attachments.your-app.com"
    ```
 2. **r2.dev preview URL (dev only).** Enable Public Access in the bucket settings. The URLs work but Cloudflare doesn't guarantee them for production.
 
@@ -78,10 +77,10 @@ The relay's R2 wrapper deliberately uses an `.invalid` host as the fallback when
 npx wrangler secret put GITHUB_APP_ID
 npx wrangler secret put GITHUB_APP_PRIVATE_KEY_BASE64    # base64-wrapped PKCS#8 PEM
 npx wrangler secret put GITHUB_INSTALLATION_ID
-npx wrangler secret put GITHUB_OWNER
-npx wrangler secret put GITHUB_REPO
 npx wrangler secret put GITTICKETS_SHARED_SECRET         # openssl rand -hex 32
 ```
+
+`GITHUB_OWNER`, `GITHUB_REPO` and `GITTICKETS_R2_PUBLIC_BASE_URL` are public and live in `[vars]` in `wrangler.toml`, not as secrets.
 
 Same private-key conversion gotcha as the Vercel template — `openssl pkcs8 -topk8 -nocrypt` to convert from PKCS#1 to PKCS#8, then `base64 -i private-key-pkcs8.pem`.
 
@@ -91,10 +90,83 @@ Same private-key conversion gotcha as the Vercel template — `openssl pkcs8 -to
 
 ```bash
 npx wrangler deploy
-# Note the deploy URL: https://gittickets-relay.<your-account>.workers.dev
 ```
 
-That URL is what you paste into the Swift SDK's `AuthMode.relay(url:sharedSecret:)`.
+Requires Node 22+ (wrangler 4's floor). With `workers_dev = false` and a custom-domain route, the relay URL is that route, e.g. `https://tickets.your-app.com`. That URL is what you paste into the Swift SDK's `AuthMode.relay(url:sharedSecret:)`.
+
+---
+
+## Deploying the relay for another app
+
+The `wrangler.toml` in this directory is the maintainer's own deployment. If your app adopts GitTickets, don't add your configuration here — no accounts, domains, KV/R2 IDs, or repo names, and not as a wrangler `[env.*]` block either. Keep the config in your app's repo and deploy this template from a pinned tag.
+
+**1. Your own `wrangler.toml`**, as a top-level config (not an environment):
+
+```toml
+name = "your-app-relay"
+main = "src/worker.ts"
+compatibility_date = "2026-06-01"   # match this repo's wrangler.toml
+account_id = "<your account ID>"
+workers_dev = false
+routes = [{ pattern = "tickets.your-app.com", custom_domain = true }]
+
+[vars]
+GITHUB_OWNER = "your-org"
+GITHUB_REPO = "your-app"
+GITTICKETS_R2_PUBLIC_BASE_URL = "https://attachments.your-app.com"
+GITTICKETS_LABEL = "gittickets"
+GITTICKETS_IP_HOURLY_LIMIT = "30"
+GITTICKETS_DEVICE_HOURLY_LIMIT = "10"
+GITTICKETS_ATTACHMENT_BYTE_LIMIT = "5242880"
+GITTICKETS_REPLAY_WINDOW_SECONDS = "300"
+
+# Your own bucket + namespaces — see "Provisioning bindings" above.
+[[r2_buckets]]
+binding = "BLOB"
+bucket_name = "your-app-attachments"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "<id from CLI>"
+
+[[kv_namespaces]]
+binding = "IDEMPOTENCY"
+id = "<id from CLI>"
+```
+
+**2. Deploy from a pinned tag.** The relay ships in the same repo as the Swift SDK, so the SDK version tag you depend on is the matching relay:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+TAG="v2.6.0"                                   # the GitTickets SDK version your app uses
+CONFIG="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null && pwd)/wrangler.toml"
+[[ -f "$CONFIG" ]] || { echo "no wrangler.toml next to this script" >&2; exit 1; }
+
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+git clone --depth 1 --branch "$TAG" https://github.com/awizemann/GitTickets.git "$WORK/GitTickets"
+cp "$CONFIG" "$WORK/GitTickets/relay/cloudflare/wrangler.toml"
+
+cd "$WORK/GitTickets/relay/cloudflare"
+npm ci
+npx wrangler deploy
+```
+
+**3. Secrets are per Worker.** Set the four secrets from [Setting secrets](#setting-secrets) against your own config, so the Worker name and account come from it (run from a checkout of `relay/cloudflare`, e.g. the clone the script makes, or anywhere wrangler is installed):
+
+```bash
+npx wrangler secret put GITHUB_APP_ID                 --config path/to/your/wrangler.toml
+npx wrangler secret put GITHUB_APP_PRIVATE_KEY_BASE64 --config path/to/your/wrangler.toml
+npx wrangler secret put GITHUB_INSTALLATION_ID        --config path/to/your/wrangler.toml
+npx wrangler secret put GITTICKETS_SHARED_SECRET      --config path/to/your/wrangler.toml
+```
+
+Generate a fresh `GITTICKETS_SHARED_SECRET` for each app. Never reuse another deployment's.
+
+**4. Bind the R2 custom domain** to your bucket as in [R2 public access](#r2-public-access), and point `GITTICKETS_R2_PUBLIC_BASE_URL` at it. Skip this and uploads still succeed, but every image link in your issues is broken (it points at an `.invalid` host).
 
 ---
 
@@ -103,7 +175,7 @@ That URL is what you paste into the Swift SDK's `AuthMode.relay(url:sharedSecret
 Same curl recipe as Vercel; just change the URL and use `/report` (not `/api/report`) — though both paths work:
 
 ```bash
-RELAY_URL=https://gittickets-relay.<your-account>.workers.dev
+RELAY_URL=https://tickets.your-app.com   # your custom-domain route
 SECRET=<your-shared-secret-hex>
 TIMESTAMP=$(date +%s)
 BODY='{"schemaVersion":1,"title":"Smoke","body":"Body long enough to pass spam filter.\n\n<!-- gittickets-id: 11111111-2222-3333-4444-555555555555 -->","labels":["bug"],"submissionID":"11111111-2222-3333-4444-555555555555","deviceID":"smoke","attachmentURLs":[]}'
