@@ -122,6 +122,7 @@ export default async function handler(
         owner: auth.env.githubOwner,
         repo: auth.env.githubRepo,
         issueNumber: issue.number,
+        commentCount: issue.comments,
         installationToken: token,
       });
       latestReplyAt = latest?.createdAt ?? null;

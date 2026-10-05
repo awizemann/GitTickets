@@ -158,22 +158,58 @@ export async function listComments(args: {
   return all;
 }
 
+/**
+ * Returns the newest comment's `created_at` for an issue, or null.
+ *
+ * The per-issue "List issue comments" endpoint only accepts `since`,
+ * `per_page` and `page` and always returns comments in ascending ID order
+ * (`sort`/`direction` exist only on the repo-wide `/issues/comments`
+ * endpoint and are silently ignored here). So the newest comment is page
+ * N of size 1, where N is the issue's comment count — one request in the
+ * normal case.
+ *
+ * `commentCount` comes from the issue object and can be stale. If it
+ * over-counts (a comment was deleted), page N is past the end and returns
+ * `[]`; we then make exactly one fallback request for the 100-comment page
+ * that holds comment `commentCount - 1` and take its last entry, which
+ * covers any deficit that still lands on that page. If it under-counts (a
+ * comment arrived after the issue list was fetched), page N is a slightly
+ * older comment — acceptable for a "last reply" hint.
+ */
 export async function latestComment(args: {
   owner: string;
   repo: string;
   issueNumber: number;
+  /** The issue's `comments` count, from the issue list response. */
+  commentCount: number;
   installationToken: string;
   fetchFn?: typeof fetch;
 }): Promise<{ createdAt: string } | null> {
+  if (args.commentCount <= 0) return null;
   const fetchFn = args.fetchFn ?? fetch;
-  const url =
-    `https://api.github.com/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}/issues/${args.issueNumber}/comments` +
-    `?per_page=1&sort=created&direction=desc`;
-  const response = await fetchFn(url, { headers: githubHeaders(args.installationToken) });
-  if (!response.ok) return null;
-  const items = (await response.json()) as Array<{ created_at: string }>;
-  if (items.length === 0) return null;
-  return { createdAt: items[0]!.created_at };
+  const base =
+    `https://api.github.com/repos/${encodeURIComponent(args.owner)}/${encodeURIComponent(args.repo)}/issues/${args.issueNumber}/comments`;
+  const fetchPage = async (
+    perPage: number,
+    page: number,
+  ): Promise<Array<{ created_at: string }> | null> => {
+    const response = await fetchFn(`${base}?per_page=${perPage}&page=${page}`, {
+      headers: githubHeaders(args.installationToken),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as Array<{ created_at: string }>;
+  };
+
+  const exact = await fetchPage(1, args.commentCount);
+  if (exact === null) return null;
+  if (exact.length > 0) return { createdAt: exact[0]!.created_at };
+
+  // Stale (over-counted) issue.comments — one fallback request.
+  if (args.commentCount <= 1) return null;
+  const fallbackPage = Math.max(1, Math.ceil((args.commentCount - 1) / 100));
+  const items = await fetchPage(100, fallbackPage);
+  if (items === null || items.length === 0) return null;
+  return { createdAt: items[items.length - 1]!.created_at };
 }
 
 function githubHeaders(token: string): Record<string, string> {

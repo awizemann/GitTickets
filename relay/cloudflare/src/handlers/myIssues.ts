@@ -94,6 +94,7 @@ export async function handleMyIssues(
         owner: env.githubOwner,
         repo: env.githubRepo,
         issueNumber: issue.number,
+        commentCount: issue.comments,
         installationToken: token,
       });
       latestReplyAt = latest?.createdAt ?? null;
