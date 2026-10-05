@@ -172,6 +172,16 @@ thread on each one. Drop it wherever suits your app — a tab, a window, a sheet
 GitTicketsMyIssuesView(onNew: { showingReport = true })
 ```
 
+**In a sheet**, pass `onClose` to get a "Done" button (Escape on macOS) instead
+of wrapping the view in your own toolbar. It shows on the list only, not on a
+pushed report. Omit it in a tab or window, which have their own way out.
+
+```swift
+.sheet(isPresented: $showingMyReports) {
+    GitTicketsMyIssuesView(onClose: { showingMyReports = false })
+}
+```
+
 **Refreshing.** The screen refreshes on first appearance, from a toolbar
 Refresh control (⌘R), whenever the scene becomes active again, and — on iOS —
 by pull-to-refresh. The toolbar control is the only one a macOS user can reach

@@ -40,12 +40,49 @@ public struct GitTicketsMyIssuesView: View {
     private let detail: (SubmittedIssue) -> IssueDetailView
     /// Optional "Report an issue" action (toolbar + empty-state button).
     private let onNew: (() -> Void)?
+    /// Optional close action. When set, the root screen shows a "Done" toolbar
+    /// button (Escape on macOS) that calls it. An explicit closure rather than
+    /// `@Environment(\.dismiss)`: inside a `Window` scene `dismiss` closes the
+    /// whole window, so the adopter decides what closing means.
+    private let onClose: (() -> Void)?
 
     /// Back-compat default — wires the package's singletons. Tries to refresh
     /// from the active submitter first; falls back to the cache when the
     /// network fails AND the cache has data (preferable UX to showing a
     /// `failed` card for someone who already has local rows to look at).
+    ///
+    /// - Parameter onNew: Optional "Report an issue" action (toolbar + empty
+    ///   state).
+    //
+    // DO NOT merge this with the `onClose:` overload below into one init with
+    // two defaulted closures. In an adopter target built in Swift 5 language
+    // mode, the existing trailing-closure call `GitTicketsMyIssuesView { … }`
+    // would then bind (SE-0286 backward scan) to the LAST closure — `onClose` —
+    // with only a deprecation warning: the Report button silently disappears
+    // and "Done" opens the form instead. Keeping this one-closure init intact,
+    // and giving the overload a non-defaulted `onClose`, makes `X { … }` still
+    // resolve here in both Swift 5 and Swift 6 modes.
     public init(onNew: (() -> Void)? = nil) {
+        self.init(onNew: onNew, closeAction: nil)
+    }
+
+    /// Back-compat default with a close action — for presenting the screen in
+    /// a sheet.
+    ///
+    /// - Parameters:
+    ///   - onNew: Optional "Report an issue" action (toolbar + empty state).
+    ///   - onClose: Close action. When non-`nil`, the list shows a "Done"
+    ///     toolbar button (Escape on macOS) that calls it; `nil` shows none.
+    //
+    // `onClose` deliberately has NO default — see the comment on
+    // `init(onNew:)` for why these two are separate overloads.
+    public init(onNew: (() -> Void)? = nil, onClose: (() -> Void)?) {
+        self.init(onNew: onNew, closeAction: onClose)
+    }
+
+    /// Shared body of the two back-compat inits. Labelled `closeAction:` so it
+    /// can never take part in overload resolution of the public ones.
+    private init(onNew: (() -> Void)?, closeAction onClose: (() -> Void)?) {
         self.init(
             loadDetailed: {
                 do {
@@ -63,6 +100,7 @@ public struct GitTicketsMyIssuesView: View {
             kindFor: { GitTickets.cachedReport(for: $0)?.kind },
             isClosed: { _ in false },
             onNew: onNew,
+            onClose: onClose,
             detail: { IssueDetailView(issue: $0) }
         )
     }
@@ -74,11 +112,15 @@ public struct GitTicketsMyIssuesView: View {
     ///   shows the ordinary "No reports yet" state when it returns nothing. Use
     ///   the `loadDetailed:` initializer if your loader knows how many
     ///   submissions it looked up.
+    ///
+    /// - Parameter onClose: Optional close action. When set, the list shows a
+    ///   "Done" toolbar button (Escape on macOS) that calls it; `nil` shows none.
     public init(
         loadIssues: @escaping () async throws -> [SubmittedIssue],
         kindFor: @escaping (UUID) -> ReportKind? = { _ in nil },
         isClosed: @escaping (SubmittedIssue) -> Bool = { _ in false },
         onNew: (() -> Void)? = nil,
+        onClose: (() -> Void)? = nil,
         detail: @escaping (SubmittedIssue) -> IssueDetailView
     ) {
         self.init(
@@ -89,6 +131,7 @@ public struct GitTicketsMyIssuesView: View {
             kindFor: kindFor,
             isClosed: isClosed,
             onNew: onNew,
+            onClose: onClose,
             detail: detail
         )
     }
@@ -96,17 +139,22 @@ public struct GitTicketsMyIssuesView: View {
     /// Full-control init whose loader also reports how many submissions were
     /// looked up, letting the screen distinguish "no reports" from "we could
     /// not find your reports".
+    ///
+    /// - Parameter onClose: Optional close action. When set, the list shows a
+    ///   "Done" toolbar button (Escape on macOS) that calls it; `nil` shows none.
     public init(
         loadDetailed: @escaping () async throws -> MyIssuesRefresh,
         kindFor: @escaping (UUID) -> ReportKind? = { _ in nil },
         isClosed: @escaping (SubmittedIssue) -> Bool = { _ in false },
         onNew: (() -> Void)? = nil,
+        onClose: (() -> Void)? = nil,
         detail: @escaping (SubmittedIssue) -> IssueDetailView
     ) {
         self.loadIssues = loadDetailed
         self.kindFor = kindFor
         self.isClosed = isClosed
         self.onNew = onNew
+        self.onClose = onClose
         self.detail = detail
     }
 
@@ -146,6 +194,18 @@ public struct GitTicketsMyIssuesView: View {
             #endif
             .navigationDestination(for: SubmittedIssue.self) { detail($0) }
             .toolbar {
+                // `.cancellationAction`, not `.confirmationAction`: on a macOS
+                // sheet the confirmation slot becomes the default button and
+                // would claim Return; on iOS the leading slot leaves the
+                // trailing side to Refresh / Report. Attached to the root
+                // content, so it does not appear on the pushed detail screen,
+                // where the leading slot belongs to the Back button.
+                if showsCloseButton {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done", action: close)
+                            .keyboardShortcut(.cancelAction)
+                    }
+                }
                 if let onNew {
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: onNew) { Image(systemName: "square.and.pencil") }
@@ -164,6 +224,14 @@ public struct GitTicketsMyIssuesView: View {
         }
         .task { await reload() }
     }
+
+    // MARK: Close
+
+    /// Whether the toolbar shows the "Done" button. Internal for tests.
+    var showsCloseButton: Bool { onClose != nil }
+
+    /// The "Done" button's action. Internal for tests.
+    func close() { onClose?() }
 
     // MARK: List
 
