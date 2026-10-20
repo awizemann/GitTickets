@@ -29,6 +29,7 @@ public struct GitTicketsView: View {
 
     private let configuration: Configuration?
     private let onSubmitted: (SubmittedIssue) -> Void
+    private let showsToolbarCancel: Bool
 
     /// Theme the view actually paints with. Prefers the theme stored on the
     /// active ``Configuration`` (set at app launch via
@@ -41,18 +42,37 @@ public struct GitTicketsView: View {
         configuration?.theme ?? envTheme
     }
 
+    /// - Parameters:
+    ///   - prefill: Opens the form with these values filled in. Everything
+    ///     stays editable and nothing is sent until the person submits.
+    ///   - showsToolbarCancel: Set `false` when the host's own container
+    ///     already provides a Cancel, so the form doesn't add a second one to
+    ///     the macOS toolbar. The Cancel in the bottom action bar stays.
     public init(
         configuration: Configuration? = GitTickets.configuration,
+        prefill: TicketPrefill? = nil,
+        showsToolbarCancel: Bool = true,
         onSubmitted: @escaping (SubmittedIssue) -> Void = { _ in }
     ) {
         self.configuration = configuration
         self.onSubmitted = onSubmitted
+        self.showsToolbarCancel = showsToolbarCancel
+        _kind = State(initialValue: prefill?.kind ?? .bug)
+        _title = State(initialValue: prefill?.title ?? "")
+        _bodyText = State(initialValue: prefill?.body ?? "")
+        _hostDiagnostics = State(initialValue: Self.redactedHostDiagnostics(
+            prefill?.diagnostics,
+            policy: configuration?.diagnostics ?? .default
+        ))
     }
 
     // MARK: Form state
-    @State private var kind: ReportKind = .bug
-    @State private var title: String = ""
-    @State private var bodyText: String = ""
+    @State private var kind: ReportKind
+    @State private var title: String
+    @State private var bodyText: String
+    /// Diagnostics supplied by the host via ``TicketPrefill``, already
+    /// redacted. `nil` once the person removes them.
+    @State private var hostDiagnostics: String?
     @State private var consented = false
     @State private var diagnosticsExpanded = true   // transparency: always open by default
     @State private var diagnostics: DiagnosticsBlob?
@@ -124,8 +144,10 @@ public struct GitTicketsView: View {
             }
             .toolbar {
                 #if os(macOS)
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                if showsToolbarCancel {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                    }
                 }
                 #endif
             }
@@ -210,6 +232,13 @@ public struct GitTicketsView: View {
                 isExpanded: $diagnosticsExpanded,
                 theme: theme
             )
+            if let hostDiagnostics {
+                HostDiagnosticsCard(
+                    text: hostDiagnostics,
+                    theme: theme,
+                    onRemove: { self.hostDiagnostics = nil }
+                )
+            }
         }
     }
 
@@ -308,7 +337,18 @@ public struct GitTicketsView: View {
     }
 
     private var consentMessage: String {
-        isPublicRepo
+        Self.consentMessage(
+            override: configuration?.privacy.consentText,
+            isPublic: isPublicRepo,
+            repoSlug: repoSlug
+        )
+    }
+
+    /// Consent copy. A non-empty host override wins; otherwise the default
+    /// names the repo. Static so tests can pin both cases.
+    static func consentMessage(override: String?, isPublic: Bool, repoSlug: String) -> String {
+        if let override, !override.isEmpty { return override }
+        return isPublic
             ? "I understand this report and the diagnostics above will be posted publicly to \(repoSlug)."
             : "I understand this report and the diagnostics above will be posted to \(repoSlug)."
     }
@@ -367,8 +407,11 @@ public struct GitTicketsView: View {
             body: bodyText,
             screenshot: screenshot,
             attachments: attachments,
-            includeDiagnostics: diagnostics != nil,
-            diagnosticsBlob: diagnostics?.text
+            includeDiagnostics: diagnostics != nil || hostDiagnostics != nil,
+            diagnosticsBlob: Self.combinedDiagnostics(
+                collected: diagnostics?.text,
+                host: hostDiagnostics
+            )
         )
         Task {
             do {
@@ -389,6 +432,20 @@ public struct GitTicketsView: View {
     }
 
     // MARK: - Static helpers
+
+    /// Runs host-supplied diagnostics through the same redactors as the
+    /// collected blob. Blank text counts as none.
+    static func redactedHostDiagnostics(_ text: String?, policy: DiagnosticsPolicy) -> String? {
+        guard let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else { return nil }
+        return RedactionPipeline.redact(trimmed, with: policy.redactors)
+    }
+
+    /// The blob that's sent: collected diagnostics first, then the host's.
+    static func combinedDiagnostics(collected: String?, host: String?) -> String? {
+        let parts = [collected, host].compactMap { $0 }.filter { !$0.isEmpty }
+        return parts.isEmpty ? nil : parts.joined(separator: "\n\n")
+    }
 
     /// Display name for the auto-captured screenshot. Matches the name
     /// `RelaySubmitter` uploads it under, so the preview names the same file the

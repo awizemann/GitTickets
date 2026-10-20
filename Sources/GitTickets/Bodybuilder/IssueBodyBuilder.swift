@@ -75,6 +75,44 @@ enum IssueBodyBuilder {
         attachments: [UploadedAttachment],
         attachmentNames: AttachmentNameDisplay = .filename
     ) -> String {
+        let rawDiagnostics = diagnostics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let assemble = { (diagnostics: String) in
+            assembleBody(
+                report: report,
+                diagnostics: diagnostics,
+                screenshotURL: screenshotURL,
+                attachments: attachments,
+                attachmentNames: attachmentNames
+            )
+        }
+
+        // GitHub rejects bodies over its limit. Only the diagnostics are cut —
+        // never the person's own words. Each pass shrinks `keep` by at least
+        // the note's length, so the loop terminates.
+        var body = assemble(rawDiagnostics)
+        var keep = rawDiagnostics.unicodeScalars.count
+        while body.unicodeScalars.count > maxBodyLength, keep > 0 {
+            let overflow = body.unicodeScalars.count - maxBodyLength
+            keep = max(0, keep - overflow - trimmedNote.unicodeScalars.count)
+            let kept = String(String.UnicodeScalarView(rawDiagnostics.unicodeScalars.prefix(keep)))
+            body = assemble(kept + trimmedNote)
+        }
+        return body
+    }
+
+    /// GitHub's maximum issue body length, in characters.
+    static let maxBodyLength = 65_536
+
+    /// Appended to diagnostics that were cut to fit ``maxBodyLength``.
+    static let trimmedNote = "\n…trimmed to fit GitHub's issue size limit"
+
+    private static func assembleBody(
+        report: Report,
+        diagnostics: String,
+        screenshotURL: URL?,
+        attachments: [UploadedAttachment],
+        attachmentNames: AttachmentNameDisplay
+    ) -> String {
         var sections: [String] = []
 
         let trimmedBody = report.body.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -86,8 +124,8 @@ enum IssueBodyBuilder {
             sections.append("![screenshot](\(escapeURLForMarkdown(screenshotURL)))")
         }
 
-        if let diagnostics, !diagnostics.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let trimmedDiagnostics = diagnostics.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !diagnostics.isEmpty {
+            let trimmedDiagnostics = diagnostics
             // Choose a fence longer than the longest run of backticks
             // anywhere inside the body so the inner content can't close the
             // fence prematurely (a single ``` in a log line would otherwise

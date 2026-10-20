@@ -8,6 +8,34 @@ The SDK and the relay templates version independently.
 
 _Nothing yet._
 
+## [2.7.0] — 2026-10-19
+
+Additive minor for apps that present the report form themselves. No breaking
+change: every new parameter has a default that keeps 2.6.1's behaviour.
+Platform floor unchanged at macOS 14 / iOS 18. No relay changes.
+
+### Added
+
+- **`GitTicketsView(prefill: TicketPrefill?)`** opens the form filled in.
+  `TicketPrefill(title:body:diagnostics:kind:)` — all optional. Fields stay
+  editable; nothing is sent until the person presses Submit. `diagnostics`
+  shows as "Details from the app" under the collected diagnostics, is run
+  through `DiagnosticsPolicy.redactors`, and has a Remove button — it is sent
+  only if the person keeps it.
+- **`GitTicketsView(showsToolbarCancel: Bool = true)`**. Pass `false` when
+  your sheet already has Cancel; the form then adds no macOS toolbar Cancel.
+  The Cancel beside Submit is unchanged.
+- **`PrivacyPolicy.consentText: String?`** replaces the consent row's copy,
+  which names the repo (`owner/name`) by default. `nil` or empty keeps the
+  default. Pair it with `bannerText` to keep an internal repo name off screen.
+
+### Changed
+
+- **Issue bodies are kept under GitHub's 65,536-character limit.** If the
+  assembled body is too long, only the diagnostics are cut, ending with
+  "…trimmed to fit GitHub's issue size limit". The person's own text is never
+  cut. Previously such a report failed at GitHub.
+
 ## [2.6.1] — 2026-10-05
 
 Patch. No public API change; platform floor unchanged at macOS 14 / iOS 18.
@@ -682,6 +710,7 @@ roadmap as a v1.x point release.
 
 ---
 
+[2.7.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.7.0
 [2.6.1]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.1
 [2.6.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.0
 [2.5.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.5.0
@@ -693,4 +722,4 @@ roadmap as a v1.x point release.
 [2.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.0.0
 [1.1.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awizemann/GitTickets/releases/tag/v1.0.0
-[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.6.1...HEAD
+[Unreleased]: https://github.com/awizemann/GitTickets/compare/v2.7.0...HEAD

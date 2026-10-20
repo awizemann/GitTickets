@@ -51,6 +51,21 @@ If you opt out across the board, you can argue the SDK collects nothing
 and drop all four declarations — but you've also lost most of what makes
 the diagnostics blob useful for actual support.
 
+## Hiding the repo name
+
+By default the form names the destination repo (`owner/name`) twice: in the
+privacy banner and in the consent row above Submit. If that name is
+internal, override both:
+
+```swift
+PrivacyPolicy(
+    bannerText: "Your report goes to the Loom team.",
+    consentText: "I understand this report and the diagnostics above will be sent to the Loom team."
+)
+```
+
+`nil` or an empty string keeps the default for either one.
+
 ## Attachment filenames
 
 By default an attachment renders in the issue body as a markdown link whose

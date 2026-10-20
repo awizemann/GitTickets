@@ -35,7 +35,7 @@ Or in `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/GitTickets", from: "2.6.1"),
+    .package(url: "https://github.com/<owner>/GitTickets", from: "2.7.0"),
 ]
 ```
 
@@ -111,6 +111,33 @@ See [`Examples/MacSampleApp/`](../Examples/MacSampleApp/) for the full
 SwiftUI macOS pattern with `Window(id:)`, or
 [`Examples/iOSSampleApp/`](../Examples/iOSSampleApp/) for the sheet
 pattern on iOS.
+
+#### Options for hosts that present the form themselves
+
+```swift
+GitTicketsView(
+    prefill: TicketPrefill(
+        title: "Problem with a reply",
+        body: "What went wrong:\n",
+        diagnostics: "agent: planner\nrun: 7f3c…",   // never message text
+        kind: .bug                                    // or .featureRequest / .question
+    ),
+    showsToolbarCancel: false   // your sheet already has Cancel
+)
+```
+
+- **`prefill`** opens the form filled in. Every field stays editable and
+  nothing is sent until the person presses Submit. `diagnostics` appears as
+  "Details from the app" under the collected diagnostics, goes through your
+  `DiagnosticsPolicy.redactors`, and is sent only if the person keeps it (it
+  has a Remove button). If the finished issue body would pass GitHub's
+  65,536-character limit, the diagnostics are cut and end with a
+  "…trimmed" note — the person's own text is never cut.
+- **`showsToolbarCancel: false`** drops the form's macOS toolbar Cancel when
+  your container already provides one. The Cancel beside Submit stays.
+- To keep an internal repo name off screen, set both
+  `PrivacyPolicy(bannerText:)` and `PrivacyPolicy(consentText:)` — each
+  names the repo by default. See [privacy.md](privacy.md#hiding-the-repo-name).
 
 ### AppKit
 

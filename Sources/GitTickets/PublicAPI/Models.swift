@@ -11,6 +11,34 @@ public enum ReportKind: String, Sendable, Hashable, CaseIterable, Codable {
     case question
 }
 
+/// Values a host app can open ``GitTicketsView`` with, e.g. for a
+/// "Report this reply" or crash-report entry point.
+///
+/// Every field stays editable, and nothing is sent until the person presses
+/// Submit. ``diagnostics`` is shown in the form's diagnostics section, passed
+/// through ``DiagnosticsPolicy/redactors``, and sent only if the person keeps
+/// it. If the assembled issue body would exceed GitHub's 65,536-character
+/// limit, the diagnostics are cut and end with a "…trimmed" note.
+public struct TicketPrefill: Sendable, Hashable {
+    public var title: String?
+    public var body: String?
+    public var diagnostics: String?
+    /// `nil` keeps the form's default (``ReportKind/bug``).
+    public var kind: ReportKind?
+
+    public init(
+        title: String? = nil,
+        body: String? = nil,
+        diagnostics: String? = nil,
+        kind: ReportKind? = nil
+    ) {
+        self.title = title
+        self.body = body
+        self.diagnostics = diagnostics
+        self.kind = kind
+    }
+}
+
 /// A single attachment included with a ``Report``.
 ///
 /// Currently used for inline images (PNG, JPEG, HEIC). Other types are

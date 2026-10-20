@@ -317,3 +317,44 @@ struct CardSurface: ViewModifier {
 extension View {
     func cardSurface(theme: GitTicketsTheme) -> some View { modifier(CardSurface(theme: theme)) }
 }
+
+/// Diagnostics the host app supplied through ``TicketPrefill``. Shown in full
+/// next to the collected blob, with Remove so the person decides whether it's
+/// sent.
+struct HostDiagnosticsCard: View {
+    let text: String
+    let theme: GitTicketsTheme
+    let onRemove: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "doc.text")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(theme.resolvedAccent)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Details from the app").font(.footnote.weight(.semibold))
+                    Text("Sent with your report unless you remove it.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                Button("Remove", role: .destructive, action: onRemove)
+                    .font(.footnote)
+                    .accessibilityLabel("Remove details from the app")
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+
+            Divider().overlay(GTSurface.hairline)
+            ScrollView {
+                Text(DiagnosticsRendering.highlighted(text, accent: theme.resolvedAccent))
+                    .font(theme.monospacedFont)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14).padding(.vertical, 12)
+            }
+            .frame(maxHeight: 220)
+            .background(GTSurface.ground)
+        }
+        .cardSurface(theme: theme)
+    }
+}

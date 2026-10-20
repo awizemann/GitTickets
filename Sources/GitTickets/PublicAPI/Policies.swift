@@ -389,20 +389,30 @@ public struct PrivacyPolicy: Sendable {
     ///   decided to capture, and this flag does not second-guess that.
     public var allowsScreenshotCapture: Bool
 
-    /// - Note: `attachmentNames` and `allowsScreenshotCapture` are defaulted
-    ///   and trailing so the older
+    /// Override the consent row's copy. `nil` (or empty) keeps the default,
+    /// which names the destination repo as `owner/name`.
+    ///
+    /// Set it when the repo name is internal and shouldn't be shown to the
+    /// person filing the report. Pair it with ``bannerText``, which also names
+    /// the repo by default.
+    public var consentText: String?
+
+    /// - Note: `attachmentNames`, `allowsScreenshotCapture` and `consentText`
+    ///   are defaulted and trailing so the older
     ///   `PrivacyPolicy(bannerText:requireExplicitConsent:)` call keeps
     ///   compiling unchanged.
     public init(
         bannerText: String? = nil,
         requireExplicitConsent: Bool = true,
         attachmentNames: AttachmentNameDisplay = .filename,
-        allowsScreenshotCapture: Bool = true
+        allowsScreenshotCapture: Bool = true,
+        consentText: String? = nil
     ) {
         self.bannerText = bannerText
         self.requireExplicitConsent = requireExplicitConsent
         self.attachmentNames = attachmentNames
         self.allowsScreenshotCapture = allowsScreenshotCapture
+        self.consentText = consentText
     }
 
     public static let `default` = PrivacyPolicy()

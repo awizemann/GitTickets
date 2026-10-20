@@ -539,4 +539,47 @@ final class IssueBodyBuilderTests: XCTestCase {
         XCTAssertEqual(new.bannerText, "Custom.")
         XCTAssertFalse(new.requireExplicitConsent)
     }
+
+    // MARK: - GitHub size limit
+
+    func test_bodyUnderLimitIsNotTrimmed() {
+        let diagnostics = String(repeating: "a", count: 1_000)
+        let output = IssueBodyBuilder.build(report: makeReport(), diagnostics: diagnostics, screenshotURL: nil, attachments: [])
+        XCTAssertTrue(output.contains(diagnostics))
+        XCTAssertFalse(output.contains("trimmed"))
+    }
+
+    func test_oversizedDiagnosticsAreTrimmedToFitGitHubLimit() {
+        let body = String(repeating: "b", count: 20_000)
+        let diagnostics = String(repeating: "x", count: 80_000)
+        let output = IssueBodyBuilder.build(
+            report: makeReport(body: body),
+            diagnostics: diagnostics,
+            screenshotURL: nil,
+            attachments: []
+        )
+        XCTAssertLessThanOrEqual(output.unicodeScalars.count, IssueBodyBuilder.maxBodyLength)
+        XCTAssertTrue(output.contains(body), "the person's own text must never be cut")
+        XCTAssertTrue(output.contains(IssueBodyBuilder.trimmedNote))
+        XCTAssertTrue(output.hasSuffix(CorrelationMarker.render(for: fixedID)))
+        // Trims only as much as needed, not the whole block.
+        XCTAssertGreaterThan(output.unicodeScalars.count, IssueBodyBuilder.maxBodyLength - 200)
+    }
+
+    func test_trimCountsMultiByteCharactersAndKeepsFenceIntact() {
+        // Backtick runs force a longer fence; emoji are multi-byte. Neither may
+        // push the result over the limit or leave the fence unclosed.
+        let diagnostics = String(repeating: "🚀 ```` log\n", count: 8_000)
+        let output = IssueBodyBuilder.build(report: makeReport(), diagnostics: diagnostics, screenshotURL: nil, attachments: [])
+        XCTAssertLessThanOrEqual(output.unicodeScalars.count, IssueBodyBuilder.maxBodyLength)
+        XCTAssertTrue(output.contains("`````text"))
+        XCTAssertTrue(output.contains(IssueBodyBuilder.trimmedNote + "\n`````"))
+    }
+
+    func test_fiftyKilobyteCrashReportFitsWithoutTrimming() {
+        let diagnostics = "{" + String(repeating: "\"k\":1,", count: 50_000 / 6) + "}"
+        let output = IssueBodyBuilder.build(report: makeReport(), diagnostics: diagnostics, screenshotURL: nil, attachments: [])
+        XCTAssertTrue(output.contains(diagnostics))
+        XCTAssertFalse(output.contains(IssueBodyBuilder.trimmedNote))
+    }
 }
