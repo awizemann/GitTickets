@@ -188,10 +188,13 @@ private struct FieldChrome: ViewModifier {
                     .strokeBorder(isFocused ? theme.resolvedAccent : GTSurface.hairlineStrong,
                                   lineWidth: isFocused ? 1.5 : 1)
             )
+            // Focus halo: drawn entirely OUTSIDE the field edge (3pt band, 3pt out) and concentric with it
+            // (radius + 3), so it never overlaps the 1.5pt accent border; the old -2 inset with the same radius
+            // overlapped it by 1pt and thickened the corners.
             .overlay(
-                RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: theme.cornerRadius + 3, style: .continuous)
                     .strokeBorder(theme.resolvedAccent.opacity(isFocused ? 0.28 : 0), lineWidth: 3)
-                    .padding(-2)
+                    .padding(-3)
             )
             .animation(.easeInOut(duration: 0.12), value: isFocused)
     }

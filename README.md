@@ -56,8 +56,8 @@ If your users *do* have GitHub accounts (developer tool, internal app), use `.de
 
 ## Status
 
-**v2.7.0 is the current release** — an additive minor for apps that present
-the form themselves. `GitTicketsView(prefill:)` opens it filled in (title,
+**v2.7.1 is the current release** (a visual fix to 2.7.0, an additive minor for apps that present
+the form themselves). `GitTicketsView(prefill:)` opens it filled in (title,
 body, kind, and app-supplied diagnostics the person can remove);
 `showsToolbarCancel: false` drops the duplicate Cancel inside your own sheet;
 `PrivacyPolicy(consentText:)` replaces the repo name in the consent row.

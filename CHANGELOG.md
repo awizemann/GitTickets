@@ -8,6 +8,18 @@ The SDK and the relay templates version independently.
 
 _Nothing yet._
 
+## [2.7.1] — 2026-10-21
+
+Visual fix only. No API change, no relay changes.
+
+### Fixed
+- **Focused form fields no longer have heavy corners.** The focus halo (a 3pt band at 0.28 accent
+  opacity) was inset by 2pt with the same corner radius as the field, so it overlapped the 1.5pt accent
+  border by 1pt and was not concentric with it, putting extra ink on the corners. The halo now sits
+  entirely outside the field edge (`.padding(-3)`) with radius `cornerRadius + 3`, so the two never
+  overlap and the corners match the edges. The dashed attachment box's 0.4-opacity border is a single
+  stroke with no overlay and is unchanged.
+
 ## [2.7.0] — 2026-10-19
 
 Additive minor for apps that present the report form themselves. No breaking
@@ -710,6 +722,7 @@ roadmap as a v1.x point release.
 
 ---
 
+[2.7.1]: https://github.com/awizemann/GitTickets/releases/tag/v2.7.1
 [2.7.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.7.0
 [2.6.1]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.1
 [2.6.0]: https://github.com/awizemann/GitTickets/releases/tag/v2.6.0
