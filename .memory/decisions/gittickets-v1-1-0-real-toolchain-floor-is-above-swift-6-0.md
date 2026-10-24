@@ -3,6 +3,7 @@ title: GitTickets v1.1.0 real toolchain floor is above Swift 6.0
 type: note
 permalink: gittickets/decisions/gittickets-v1-1-0-real-toolchain-floor-is-above-swift-6-0
 tags: [swift6, release, ci, toolchain, v1.1.0]
+status: resolved
 source_paths: [Sources/GitTickets/Screenshot/ScreenshotCapture+macOS.swift, .github/workflows/swift.yml, Package.swift, CHANGELOG.md]
 source_paths_inferred: false
 source_sha: 51b13d984b453a892dbb4abd4e63281bf62a2fbb

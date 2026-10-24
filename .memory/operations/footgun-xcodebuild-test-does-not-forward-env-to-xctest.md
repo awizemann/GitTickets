@@ -5,9 +5,11 @@ permalink: gittickets/operations/footgun-xcodebuild-test-does-not-forward-env-to
 tags: [ci, footgun, xcodebuild, testing, snapshot-testing]
 source_paths: [.github/workflows/swift.yml, Tests/GitTicketsTests/UI/SwiftUI/SnapshotTests.swift, .gitignore, Package.swift]
 source_paths_inferred: false
-source_sha: a49118057b2b4e46ad56b052eadac433a8125319
+source_sha: 39e1b2cc02be663f0f76fa266b1bf070ffe34b46
 created: 2026-07-26
 updated: 2026-07-26
+reviewed: 2026-10-05
+reviewed_by: audit:claude-code (background)
 ---
 
 Three CI facts that each cost real debugging time during the v2.0.0 release, all verified by running them rather than reasoning about them. Any future change to .github/workflows/swift.yml or the snapshot suite should be checked against these.

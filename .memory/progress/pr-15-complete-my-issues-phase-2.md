@@ -3,6 +3,7 @@ title: PR 15 Complete — My Issues (Phase 2)
 type: note
 permalink: gittickets/progress/pr-15-complete-my-issues-phase-2
 tags: [progress, pr-15, phase-2, my-issues, swiftui]
+status: resolved
 source_paths: [Sources/GitTickets/PublicAPI/Models.swift, Sources/GitTickets/UI/SwiftUI/GitTicketsMyIssuesView.swift, Sources/GitTickets/UI/SwiftUI/IssueDetailView.swift, Sources/GitTickets/UI/SwiftUI/MarkdownCommentView.swift, relay/vercel/api/comments.ts, relay/cloudflare/src/handlers/comments.ts, relay/vercel/vercel.json, relay/shared/payload-schema.md]
 source_paths_inferred: true
 source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7

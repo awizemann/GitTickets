@@ -2,15 +2,12 @@
 title: Footgun — ScreenCaptureKit Permission Cannot Block Submission
 type: note
 permalink: gittickets/footguns/footgun-screen-capture-kit-permission-cannot-block-submission
-tags:
-- footgun
-- macos
-- permissions
+tags: [footgun, macos, permissions]
 source_sha: 7a91c04dc0c63debdc49916f60c1b50cfd90c3f6
-reviewed: 2026-06-24
-reviewed_by: human
 created: 2026-06-04
 updated: 2026-06-24
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 On macOS, ScreenCaptureKit and `CGWindowListCreateImage` both require Screen Recording permission (System Settings → Privacy & Security). First-time call triggers a permission prompt; if denied, all subsequent calls return empty/black images silently.
@@ -21,4 +18,4 @@ On macOS, ScreenCaptureKit and `CGWindowListCreateImage` both require Screen Rec
 - [pattern] `ScreenshotCapture+macOS.swift` returns `Result<Data, ScreenshotError>` where `.permissionDenied` is a recoverable failure that the form surfaces inline, not as an error sheet. #pattern
 
 ## Relations
-
+- relates_to [[gittickets/progress/pr-12-complete-swiftui-form]]

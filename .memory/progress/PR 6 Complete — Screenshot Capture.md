@@ -2,19 +2,14 @@
 title: PR 6 Complete — Screenshot Capture
 type: note
 permalink: gittickets/progress/pr-6-complete-screenshot-capture
-tags:
-- progress
-- pr-6
-- screenshot
-- macos
-- ios
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Sources/GitTickets/Screenshot/ScreenshotCapture.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+macOS.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+iOS.swift
+tags: [progress, pr-6, screenshot, macos, ios]
+source_paths: [Sources/GitTickets/Screenshot/ScreenshotCapture.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+macOS.swift, Sources/GitTickets/Screenshot/ScreenshotCapture+iOS.swift]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-level wiring lands in PR 12.
@@ -23,7 +18,7 @@ PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-le
 
 - [verified] 78/78 tests green on macOS. iOS Sim build clean. #verification
 - [files-shipped] `Sources/GitTickets/Screenshot/` — `ScreenshotCapture.swift`, `ScreenshotCapture+macOS.swift`, `ScreenshotCapture+iOS.swift`. Plus error-equality tests. #files
-- [decision] macOS uses ScreenCaptureKit's `SCScreenshotManager.captureImage` on macOS 14+; falls back to a one-shot `SCStream` adapter for macOS 13. Skip `CGWindowListCreateImage` — SCK covers our floor and CGWindow is deprecated in macOS 14+. #macos
+- [decision] macOS uses ScreenCaptureKit's `SCScreenshotManager.captureImage` exclusively (macOS 14+ is the package floor). SCStream one-shot adapter was removed in favor of the native API. #macos
 - [decision] iOS uses `UIGraphicsImageRenderer` over `UIWindow.drawHierarchy(in:, afterScreenUpdates: false)`. No permission prompt — entirely in-process. #ios
 - [decision] Capture returns `Result<Data, ScreenshotCaptureError>` — never throws. Errors are recoverable so the form surfaces them inline and lets the user submit text-only. NEVER block submission on screenshot failure. Cross-references [[Footgun — ScreenCaptureKit Permission Cannot Block Submission]]. #invariant
 - [decision] macOS permission detection is by **string-matching** the SCK error text for "permission" / "not granted" / "tccd". Fragile — Apple could change the message — but there's no public `errSCStreamPermissionDenied` constant. Document as a known fragility. #footgun
@@ -41,7 +36,8 @@ PR 6 (Screenshot) shipped 2026-06-04. Platform-specific capture is live; form-le
 - depends_on [[Footgun — ScreenCaptureKit Permission Cannot Block Submission]]
 - follows [[PR 5 Complete — Diagnostics]]
 
-
-
 ## Update (v1.1.0, 2026-06-23)
 "Revisit when migrating to Swift 6" — done. The `@preconcurrency import ScreenCaptureKit` was the correct call and survived the v1.1.0 Swift 6 language-mode migration unchanged (`@preconcurrency` scoped to an Apple module is the legit pattern). See [[Swift 6 Language Mode Migration (v1.1.0)]].
+
+## Update (post-PR-6, 2026-07-25)
+SCStream one-shot adapter removed. Commit 0e8a5b1 refactored to use `SCScreenshotManager.captureImage` unconditionally, as macOS 14 floor makes the native API available always. OneShotStream apparatus was obsolete and deleted; behavioral equivalence preserved.

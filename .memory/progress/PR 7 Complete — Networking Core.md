@@ -2,17 +2,15 @@
 title: PR 7 Complete — Networking Core
 type: note
 permalink: gittickets/progress/pr-7-complete-networking-core
-tags:
-- progress
-- pr-7
-- networking
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Sources/GitTickets/Networking/UserAgent.swift, Sources/GitTickets/Networking/RateLimitBackoff.swift, Sources/GitTickets/Networking/HTTPClient.swift
+tags: [progress, pr-7, networking]
+status: resolved
+source_paths: [Sources/GitTickets/Networking/UserAgent.swift, Sources/GitTickets/Networking/RateLimitBackoff.swift, Sources/GitTickets/Networking/HTTPClient.swift]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 PR 7 (Networking core) shipped 2026-06-04. HTTPClient is the transport substrate PR 8 (relay submitter) and PR 11 (Device Flow) build on.

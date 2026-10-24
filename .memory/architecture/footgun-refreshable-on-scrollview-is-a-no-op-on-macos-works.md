@@ -5,9 +5,11 @@ permalink: gittickets/architecture/footgun-refreshable-on-scrollview-is-a-no-op-
 tags: [footgun, swiftui, macos, refresh, my-issues]
 source_paths: [Sources/GitTickets/UI/SwiftUI/GitTicketsMyIssuesView.swift, Sources/GitTickets/UI/SwiftUI/IssueDetailView.swift, Sources/GitTickets/PublicAPI/Policies.swift]
 source_paths_inferred: false
-source_sha: 004173971607eae22ea35087411d8d7a8c8b70b7
+source_sha: 2060f89c60a6bd87b4475d8fb75c7cd32a5bebe7
 created: 2026-07-26
 updated: 2026-07-26
+reviewed: 2026-10-05
+reviewed_by: audit:claude-code (background)
 ---
 
 Measured 2026-07-26 with two throwaway harnesses, not inferred from documentation.

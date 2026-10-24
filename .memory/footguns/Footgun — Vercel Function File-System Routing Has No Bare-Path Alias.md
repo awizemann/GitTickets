@@ -2,18 +2,14 @@
 title: Footgun — Vercel Function File-System Routing Has No Bare-Path Alias
 type: note
 permalink: gittickets/footguns/footgun-vercel-function-file-system-routing-has-no-bare-path-alias
-tags:
-- footgun
-- vercel
-- relay
-- routing
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: relay/vercel/vercel.json, relay/shared/payload-schema.md
+tags: [footgun, vercel, relay, routing]
+source_paths: [relay/vercel/vercel.json, relay/shared/payload-schema.md]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-10-05
+reviewed_by: audit:claude-code (background)
 ---
 
 Vercel routes API Functions by file-system layout: `api/report.ts` is reachable ONLY at `/api/report` unless the project adds explicit rewrites. The Swift SDK and the wire spec post to the bare path `<base>/report` (matching the Cloudflare Worker, which accepts both forms). Without rewrites, every real client submission to a Vercel relay 404s while curl smoke tests against `/api/report` still pass — the gap stays hidden until a real adopter integrates.

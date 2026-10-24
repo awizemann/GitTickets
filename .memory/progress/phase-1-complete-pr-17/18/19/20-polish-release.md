@@ -2,22 +2,15 @@
 title: Phase 1 Complete — PR 17 / 18 / 19 / 20 Polish + Release
 type: note
 permalink: gittickets/progress/phase-1-complete-pr-17/18/19/20-polish-release
-tags:
-- progress
-- pr-17
-- pr-18
-- pr-19
-- pr-20
-- phase-1
-- release
-- v1.0.0
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, Examples/README.md, docs/getting-started.md, docs/relay-deployment.md, docs/device-flow.md, docs/theming.md, docs/diagnostics.md, docs/privacy.md, docs/threat-model.md, docs/architecture.md, README.md, CHANGELOG.md
+tags: [progress, pr-17, pr-18, pr-19, pr-20, phase-1, release, v1.0.0]
+status: resolved
+source_paths: [Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, Examples/README.md, docs/getting-started.md, docs/relay-deployment.md, docs/device-flow.md, docs/theming.md, docs/diagnostics.md, docs/privacy.md, docs/threat-model.md, docs/architecture.md, README.md, CHANGELOG.md]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-06-24
+reviewed_by: human
 ---
 
 Phase 1 is feature-complete and release-prepped. Four PRs landed in one pass: docs (PR 17), privacy manifest (PR 18), example apps (PR 19), and release prep (PR 20). User runs the actual `git tag` + `git push --tags` when ready.

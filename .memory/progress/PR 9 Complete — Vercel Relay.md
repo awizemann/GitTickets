@@ -2,19 +2,14 @@
 title: PR 9 Complete — Vercel Relay
 type: note
 permalink: gittickets/progress/pr-9-complete-vercel-relay
-tags:
-- progress
-- pr-9
-- relay
-- vercel
-- typescript
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: relay/README.md, relay/shared/payload-schema.md, .github/workflows/relay-vercel.yml
+tags: [progress, pr-9, relay, vercel, typescript]
+source_paths: [relay/README.md, relay/shared/payload-schema.md, .github/workflows/relay-vercel.yml]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-10-05
+reviewed_by: audit:claude-code (background)
 ---
 
 PR 9 (Vercel relay) shipped 2026-06-05. The TypeScript serverless functions match the locked SDK wire contract; HMAC vector is asserted byte-for-byte on both sides.

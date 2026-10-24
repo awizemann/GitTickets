@@ -3,6 +3,7 @@ title: PR 18 Complete — Privacy Manifest
 type: note
 permalink: gittickets/progress/pr-18-complete-privacy-manifest
 tags: [progress, pr-18, privacy, app-store]
+status: resolved
 source_paths: [Sources/GitTickets/PrivacyInfo.xcprivacy, Package.swift, docs/privacy.md]
 source_paths_inferred: true
 source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7

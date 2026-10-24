@@ -2,19 +2,14 @@
 title: PR 10 Complete — Cloudflare Worker
 type: note
 permalink: gittickets/progress/pr-10-complete-cloudflare-worker
-tags:
-- progress
-- pr-10
-- relay
-- cloudflare
-- workers
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: .github/workflows/relay-cloudflare.yml
+tags: [progress, pr-10, relay, cloudflare, workers]
+source_paths: [.github/workflows/relay-cloudflare.yml]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-10-05
+reviewed_by: audit:claude-code (background)
 ---
 
 PR 10 (Cloudflare Worker) shipped 2026-06-05. The relay tier is feature-complete on both supported runtimes; the same HMAC vector locks the contract across all three implementations (Swift SDK + Vercel + Cloudflare).

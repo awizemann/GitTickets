@@ -2,20 +2,15 @@
 title: PR 3 Complete — Bodybuilder
 type: note
 permalink: gittickets/progress/pr-3-complete-bodybuilder
-tags:
-- progress
-- pr-3
-- bodybuilder
-source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
-reviewed: 2026-06-24
-reviewed_by: human
-source_paths: Sources/GitTickets/Bodybuilder/CorrelationMarker.swift, Sources/GitTickets/Bodybuilder/BodyTemplates.swift, Sources/GitTickets/Bodybuilder/IssueBodyBuilder.swift
+tags: [progress, pr-3, bodybuilder]
+source_paths: [Sources/GitTickets/Bodybuilder/CorrelationMarker.swift, Sources/GitTickets/Bodybuilder/BodyTemplates.swift, Sources/GitTickets/Bodybuilder/IssueBodyBuilder.swift]
 source_paths_inferred: true
+source_sha: ed614c17366c18af31b5728d8d6a64d03b3745b7
 created: 2026-06-06
 updated: 2026-07-12
+reviewed: 2026-06-24
+reviewed_by: human
 ---
-
-PR 3 (Bodybuilder) shipped 2026-06-04. The markdown assembly + UUID correlation layer is live; submitters in PR 8+ wire to it.
 
 ## Observations
 
@@ -25,10 +20,11 @@ PR 3 (Bodybuilder) shipped 2026-06-04. The markdown assembly + UUID correlation 
 - [decision] Extractor returns the FIRST matching marker when multiple are present (e.g. if the user copy-pastes from another issue). Documented in code + test. #api
 - [decision] Marker is ALWAYS rendered last in the assembled body. Belt-and-suspenders so the extractor regex doesn't trip on stray HTML comments earlier (e.g. embedded in user-pasted markdown). Test `test_markerIsAlwaysLast` enforces. #invariant
 - [decision] Diagnostics rendered in a `\`\`\`text` fenced block. Title-cased "### Diagnostics" header. Section omitted entirely when diagnostics blob is nil or whitespace-only. #wire-format
-- [decision] Attachments rendered as `![filename](url)` for `image/*` MIME types, `[filename](url)` for others. v1 only ships image attachments through the relay; the link branch is forward-looking. #wire-format
+- [decision] Attachments support two rendering modes via the `attachmentNames` parameter (defaults to `.filename` for backward compatibility): `.filename` renders as `![filename](url)` or `[filename](url)`; `.generic` renders as `![image 1](url)` or `[attachment 2](url)` using 1-based positional labels. Image MIME types trigger `![]()` syntax; others use `[]()`. v1 only ships image attachments through the relay; the link branch is forward-looking. #wire-format
 - [decision] Screenshot rendered as `![screenshot](url)` inline AFTER the user body, BEFORE diagnostics. Sets visual context before debug data. #ux
 - [decision] `BodyTemplates.defaultLabels` returns `["bug"]`, `["enhancement"]`, `["question"]` per kind. The relay/submitter adds `gittickets` to the final label list. #wire-format
 - [decision] `UploadedAttachment` is `internal` (not surfaced in `PublicAPI/`). It's only meaningful after the relay upload step — exposing it to adopters would confuse the API surface. #api
+- [decision] Markdown link display text (filenames and generic labels) folds CR/LF to spaces before escaping. This prevents bare line breaks from ending the GFM paragraph and breaking the link syntax. #wire-format
 
 ## Relations
 

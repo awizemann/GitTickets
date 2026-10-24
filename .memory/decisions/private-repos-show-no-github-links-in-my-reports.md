@@ -16,3 +16,8 @@ Decided by Alan 2026-10-05 for v2.6.0 after ScarfRack (private repo, relay mode)
 - [decision] When repo.visibility == .private, Issue Detail shows no GitHub link or GitHub-pointing copy, regardless of auth mode (Alan overruled a device-flow exception) #my-reports #privacy
 - [convention] The public/private rule lives in one internal helper RepoVisibility.isPublic(_:) (nil config = public) used by both the form and Issue Detail — don't add a second copy #my-reports
 - [convention] IssueHeader/IssueStateCard expose linkURL: URL? and the body renders `if let linkURL`; tests assert on linkURL so they run on CI — a Link built directly from issue.issueURL would only be caught by the local snapshot suite #testing
+
+## Relations
+- implements [[PR 15 Complete — My Issues (Phase 2)]]
+- refines_auth_boundary_of [[PR 11 Complete — Device Flow Submitter]]
+- enforces_architecture_constraint_from [[Architecture — Client SDK + Optional Relay]]

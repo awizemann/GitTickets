@@ -16,3 +16,7 @@ Found 2026-10-05 adding onClose to GitTicketsMyIssuesView. The package compiles 
 - [gotcha] Adding a second defaulted closure parameter after an existing one changes what `X { ... }` binds to in Swift 5 language mode (SE-0286 backward scan) — only a deprecation warning, silent behaviour change #swift #api
 - [convention] When adding a closure parameter to a public init that callers use with a trailing closure, keep the old init intact and add an overload whose new closure has NO default; verify with a scratch package that has one .v5 and one .v6 target #api
 - [fact] GitTicketsMyIssuesView keeps init(onNew:) unchanged and adds init(onNew:onClose:) with non-defaulted onClose for exactly this reason #my-reports
+
+## Relations
+- relates_to [[gittickets/decisions/swift-6-language-mode-migration-v1-1-0]]
+- relates_to [[gittickets/footguns/footgun-sendable-lies-in-public-types]]
