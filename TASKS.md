@@ -19,6 +19,8 @@
 
 ## Done
 
+- [x] 2.6.1: move "Report an issue" button next to Refresh (id: t-b4b8c687) (added: 2026-10-05) (priority: high)
+- [x] 2.6.1: fix flaky hosted Done-button test on CI (id: t-0e6049c9) (added: 2026-10-05) (priority: high)
 - [x] Relay: Node floor says 20, wrangler 4 needs 22 (id: t-0d1d72e0) (added: 2026-10-05) (priority: low)
 - [x] Release v2.6.0: version, CHANGELOG, README, tag locally (id: t-8931f47c) (added: 2026-10-05)
 - [x] 2.6.0: reply alert API (unreadReplyCount + checkForReplies) (id: t-444cd5d7) (added: 2026-10-05) (priority: high)
