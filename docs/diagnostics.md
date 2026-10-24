@@ -152,13 +152,29 @@ non-matching span survives unchanged.
 
 ## Disabling diagnostics entirely
 
+In `GitTicketsView`, the collected diagnostics are always sent when they
+have content. Collapsing the diagnostics card only hides it; it does **not**
+leave the blob out of the report. To send nothing, turn every section off:
+
 ```swift
-GitTicketsView()
-    .environment(\.gitTicketsTheme, .default)
-// The user can untoggle the diagnostics DisclosureGroup; doing so sets
-// `report.includeDiagnostics = false` and the blob is omitted from the
-// posted body.
+GitTickets.configure(Configuration(
+    repo: repo,
+    auth: auth,
+    diagnostics: DiagnosticsPolicy(
+        includeOSVersion: false,
+        includeAppVersion: false,
+        includeDeviceModel: false,
+        includeLocale: false,
+        includeMemoryPressure: false,
+        includeFreeDisk: false
+        // osLogSubsystems defaults to [] — leave it empty
+    )
+))
 ```
+
+An empty blob is dropped from the issue body. Diagnostics a host passes in
+through `TicketPrefill` are separate: the person can remove those with the
+card's Remove button.
 
 For programmatic callers using `GitTickets.submit(_:)` directly, pass
 `includeDiagnostics: false` to the `Report` initializer.
