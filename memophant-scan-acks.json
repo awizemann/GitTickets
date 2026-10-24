@@ -1,0 +1,10 @@
+{
+  "acknowledgments" : [
+    {
+      "lineHash" : "sha256:0e0e60dcc000d016f87e93288d2961384af5dd617592b3d3044e472d7fdd829d",
+      "path" : ".memory/footguns/Footgun — GitHub App Private Key Newline Corruption.md",
+      "rule" : "Private key header (no key body)"
+    }
+  ],
+  "version" : 1
+}
